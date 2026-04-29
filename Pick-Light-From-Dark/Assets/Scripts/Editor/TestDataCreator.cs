@@ -12,7 +12,7 @@ namespace Game.Editor
     /// </summary>
     public class TestDataCreator
     {
-        [MenuItem("Tools/《灯下黑》/创建测试数据")]
+        [MenuItem("Tools/《灯下黑》/📦 创建测试数据")]
         public static void CreateTestData()
         {
             string folderPath = "Assets/Resources/TestData";
@@ -46,8 +46,8 @@ namespace Game.Editor
 
             AssetDatabase.CreateAsset(levelConfig, $"{folderPath}/TestLevelConfig.asset");
 
-            // 创建卡牌数据
-            CardData cardData = new CardData
+            // 创建卡牌1：翻身
+            CardData card1 = new CardData
             {
                 id = 1,
                 cardName = "翻身",
@@ -62,19 +62,59 @@ namespace Game.Editor
                 exciteDelta = -5,
                 interruptPanicAdd = 10
             };
+            CardDataContainer cardContainer1 = ScriptableObject.CreateInstance<CardDataContainer>();
+            cardContainer1.cardData = card1;
+            AssetDatabase.CreateAsset(cardContainer1, $"{folderPath}/Card1_TurnOver.asset");
 
-            // 创建卡牌数据容器
-            CardDataContainer cardContainer = ScriptableObject.CreateInstance<CardDataContainer>();
-            cardContainer.cardData = cardData;
+            // 创建卡牌2：深呼吸
+            CardData card2 = new CardData
+            {
+                id = 2,
+                cardName = "深呼吸",
+                description = "深呼吸放松，降低慌乱值",
+                iconPath = "Icons/card_breathe",
+                segments = new List<Segment>
+                {
+                    new Segment(2f, true),
+                    new Segment(2f, false)
+                },
+                panicDelta = -10,
+                exciteDelta = 0,
+                interruptPanicAdd = 15
+            };
+            CardDataContainer cardContainer2 = ScriptableObject.CreateInstance<CardDataContainer>();
+            cardContainer2.cardData = card2;
+            AssetDatabase.CreateAsset(cardContainer2, $"{folderPath}/Card2_DeepBreath.asset");
 
-            AssetDatabase.CreateAsset(cardContainer, $"{folderPath}/TestCardData.asset");
+            // 创建卡牌3：假寐
+            CardData card3 = new CardData
+            {
+                id = 3,
+                cardName = "假寐",
+                description = "假装睡觉，大幅降低情绪值但风险较高",
+                iconPath = "Icons/card_fakesleep",
+                segments = new List<Segment>
+                {
+                    new Segment(1.5f, true),
+                    new Segment(3f, false),
+                    new Segment(1.5f, true)
+                },
+                panicDelta = -15,
+                exciteDelta = -10,
+                interruptPanicAdd = 20
+            };
+            CardDataContainer cardContainer3 = ScriptableObject.CreateInstance<CardDataContainer>();
+            cardContainer3.cardData = card3;
+            AssetDatabase.CreateAsset(cardContainer3, $"{folderPath}/Card3_FakeSleep.asset");
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
             Debug.Log($"测试数据已创建到: {folderPath}");
             Debug.Log("- TestLevelConfig: 关卡配置");
-            Debug.Log("- TestCardData: 测试卡牌（翻身）");
+            Debug.Log("- Card1_TurnOver: 翻身卡牌");
+            Debug.Log("- Card2_DeepBreath: 深呼吸卡牌");
+            Debug.Log("- Card3_FakeSleep: 假寐卡牌");
         }
     }
 }
