@@ -181,6 +181,10 @@ namespace Game.AI
         /// </summary>
         void PerformInspectionCheck()
         {
+            // 如果游戏已结束，不再检查
+            if (gameFlow != null && gameFlow.IsGameOver())
+                return;
+
             // 检查条件是否满足
             bool isCaught = CheckPlayerCaught();
 

@@ -183,11 +183,13 @@ namespace Game.System
         void OnGameWin()
         {
             Debug.Log("[EVENT] 游戏胜利！");
+            CancelInvoke();
         }
 
         void OnGameLose(string reason)
         {
             Debug.Log($"[EVENT] 游戏失败: {reason}");
+            CancelInvoke();
         }
 
         void OnTeacherStateChanged(TeacherState newState)
