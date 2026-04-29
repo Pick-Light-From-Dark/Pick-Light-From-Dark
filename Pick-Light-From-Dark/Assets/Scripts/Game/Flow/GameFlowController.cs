@@ -18,6 +18,7 @@ namespace Game.Flow
         [SerializeField] private bool isGameOver;
         [SerializeField] private float remainingTime;
         [SerializeField] private bool hasStartedFirstFrame; // 是否已经过了第一帧
+        [SerializeField] private bool isInitialized = false; // 是否已经初始化
 
         private LevelConfigSO levelConfig;
         private EmotionSystem emotionSystem;
@@ -29,7 +30,7 @@ namespace Game.Flow
         public void Initialize(LevelConfigSO config)
         {
             Debug.Log($"[GameFlow] InstanceID:{GetInstanceID()} === Initialize 开始 ===");
-            Debug.Log($"[GameFlow] InstanceID:{GetInstanceID()} 当前状态: isGameOver={isGameOver}, isPaused={isPaused}, hasStartedFirstFrame={hasStartedFirstFrame}, remainingTime={remainingTime:F2}");
+            Debug.Log($"[GameFlow] InstanceID:{GetInstanceID()} 当前状态: isInitialized={isInitialized}, isGameOver={isGameOver}, isPaused={isPaused}, hasStartedFirstFrame={hasStartedFirstFrame}, remainingTime={remainingTime:F2}");
 
             levelConfig = config;
             emotionSystem = EmotionSystem.Instance;
@@ -47,6 +48,9 @@ namespace Game.Flow
             isGameOver = false;
             hasStartedFirstFrame = false;
 
+            // 标记为已初始化
+            isInitialized = true;
+
             // 取消所有待执行的Invoke
             CancelInvoke();
 
@@ -56,7 +60,7 @@ namespace Game.Flow
             Debug.Log($"[GameFlow] InstanceID:{GetInstanceID()} 关卡 {levelConfig.levelName} 开始");
             Debug.Log($"[GameFlow] InstanceID:{GetInstanceID()} 时间限制: {remainingTime}秒, 生命值: {levelConfig.maxLives}");
             Debug.Log($"[GameFlow] InstanceID:{GetInstanceID()} 当前时间流速: {Time.timeScale}x");
-            Debug.Log($"[GameFlow] InstanceID:{GetInstanceID()} 初始化后状态: isGameOver={isGameOver}, hasStartedFirstFrame={hasStartedFirstFrame}, remainingTime={remainingTime:F2}");
+            Debug.Log($"[GameFlow] InstanceID:{GetInstanceID()} 初始化后状态: isInitialized={isInitialized}, isGameOver={isGameOver}, hasStartedFirstFrame={hasStartedFirstFrame}, remainingTime={remainingTime:F2}");
 
             // 触发游戏开始事件
             EventCenter.Instance.EventTrigger(E_EventType.GameStart);
@@ -65,13 +69,10 @@ namespace Game.Flow
 
         void Update()
         {
-            if (isGameOver || isPaused) return;
+            // 如果还未初始化，不执行任何逻辑
+            if (!isInitialized) return;
 
-            // 如果remainingTime<=0，说明还未Initialize，不执行Update逻辑
-            if (remainingTime <= 0)
-            {
-                return;
-            }
+            if (isGameOver || isPaused) return;
 
             // 检测是否有多个实例在同时运行（仅在前10帧检测）
             if (Time.frameCount <= 10)
