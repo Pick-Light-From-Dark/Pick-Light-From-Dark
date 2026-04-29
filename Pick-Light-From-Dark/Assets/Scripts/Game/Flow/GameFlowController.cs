@@ -60,23 +60,24 @@ namespace Game.Flow
             if (!hasStartedFirstFrame)
             {
                 hasStartedFirstFrame = true;
-                Debug.Log($"[GameFlow] 跳过第一帧，避免场景加载时间影响倒计时");
+                Debug.Log($"[GameFlow] InstanceID:{GetInstanceID()} 跳过第一帧，避免场景加载时间影响倒计时");
                 return;
             }
 
-            // 更新倒计时
-            float deltaTime = Time.deltaTime;
+            // 更新倒计时，使用安全的deltaTime
+            float deltaTime = Mathf.Min(Time.deltaTime, 0.1f); // 限制最大deltaTime为0.1秒
             remainingTime -= deltaTime;
 
-            // 调试：第一帧输出时间信息
-            if (Time.frameCount <= 10)
+            // 调试：输出时间信息
+            if (Time.frameCount <= 10 || remainingTime < 1f)
             {
-                Debug.Log($"[GameFlow] Frame:{Time.frameCount} deltaTime:{deltaTime:F4} remainingTime:{remainingTime:F2} timeScale:{Time.timeScale}");
+                Debug.Log($"[GameFlow] InstanceID:{GetInstanceID()} Frame:{Time.frameCount} deltaTime:{Time.deltaTime:F4} clamped:{deltaTime:F4} remainingTime:{remainingTime:F2} timeScale:{Time.timeScale}");
             }
 
             // 检查时间耗尽
             if (remainingTime <= 0)
             {
+                Debug.LogWarning($"[GameFlow] InstanceID:{GetInstanceID()} 时间耗尽! remainingTime={remainingTime:F2}");
                 GameLose("时间耗尽");
             }
         }
