@@ -18,9 +18,9 @@ MonoBehaviour:
     description: "\u5728\u5E8A\u4E0A\u7FFB\u4E2A\u8EAB\uFF0C\u964D\u4F4E\u5C11\u91CF\u5174\u594B\u503C"
     iconPath: Icons/card_turnover
     segments:
-    - duration: 1
+    - duration: 2
       isInterruptible: 1
-    - duration: 1
+    - duration: 2
       isInterruptible: 0
     panicDelta: 0
     exciteDelta: -5

@@ -13,15 +13,15 @@ MonoBehaviour:
   m_Name: TestLevelConfig
   m_EditorClassIdentifier: 
   levelId: 1
-  levelName: "\u6D4B\u8BD5\u5173\u5361"
-  timeLimit: 300
+  levelName: "\u4E00\u952E\u6D4B\u8BD5\u5173\u5361"
+  timeLimit: 60
   initialPanic: 35
   initialExcite: 35
   criticalValue: 100
-  patrolIntervals: {x: 5, y: 10}
-  patrolTime: {x: 3, y: 5}
-  eyeCheckDuration: {x: 2, y: 3}
-  flashCheckDuration: {x: 3, y: 5}
+  patrolIntervals: {x: 3, y: 5}
+  patrolTime: {x: 2, y: 3}
+  eyeCheckDuration: {x: 1.5, y: 2.5}
+  flashCheckDuration: {x: 2, y: 3}
   flashPanicPerSec: 10
   initialCards: 010000000200000003000000
   maxLives: 2

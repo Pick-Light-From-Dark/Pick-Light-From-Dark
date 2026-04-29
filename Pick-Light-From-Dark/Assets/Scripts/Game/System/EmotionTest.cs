@@ -28,7 +28,7 @@ namespace Game.System
 
         void RunTest()
         {
-            Debug.Log("=== 情绪值系统测试开始 ===");
+            Debug.LogError("=== 情绪值系统测试 ===");
 
             // 获取或创建情绪值系统
             emotionSystem = EmotionSystem.Instance;
@@ -37,11 +37,11 @@ namespace Game.System
             if (testLevelConfig != null)
             {
                 emotionSystem.Initialize(testLevelConfig);
-                Debug.Log($"✓ 初始化成功: {emotionSystem.GetEmotionInfo()}");
+                Debug.LogError($"[INIT] {emotionSystem.GetEmotionInfo()}");
             }
             else
             {
-                Debug.LogError("✗ 未配置testLevelConfig");
+                Debug.LogError("[FAIL] 未配置testLevelConfig");
                 return;
             }
 
@@ -63,48 +63,48 @@ namespace Game.System
 
         void TestIncreasePanic()
         {
-            Debug.Log("\n--- 测试: 增加慌乱值 ---");
+            Debug.LogError("[TEST] 增加慌乱值 +10");
             emotionSystem.ChangePanic(10);
         }
 
         void TestDecreaseExcite()
         {
-            Debug.Log("\n--- 测试: 降低兴奋值 ---");
+            Debug.LogError("[TEST] 降低兴奋值 -5");
             emotionSystem.ChangeExcite(-5);
         }
 
         void TestCriticalCheck()
         {
-            Debug.Log("\n--- 测试: 临界值检查 ---");
+            Debug.LogError("[TEST] 临界值检查");
             bool isCritical = emotionSystem.IsCaughtByCriticalValue();
-            Debug.Log($"是否超标: {isCritical}");
+            Debug.LogError($"[RESULT] 是否超标: {isCritical}");
         }
 
         void TestEyeClose()
         {
-            Debug.Log("\n--- 测试: 闭眼降低情绪值 ---");
+            Debug.LogError("[TEST] 闭眼降低情绪值");
             emotionSystem.DecreaseEmotionWhileEyeClose(1f);
         }
 
         void EndTest()
         {
-            Debug.Log("\n=== 情绪值系统测试完成 ===");
-            Debug.Log($"最终状态: {emotionSystem.GetEmotionInfo()}");
+            Debug.LogError("[DONE] 情绪值系统测试完成");
+            Debug.LogError($"[FINAL] {emotionSystem.GetEmotionInfo()}");
         }
 
         void OnEmotionChanged(EmotionInfo info)
         {
-            Debug.Log($"[事件] 情绪值变化 - {info}");
+            Debug.LogError($"[EVENT] {info}");
         }
 
         void OnPanicChanged(int value)
         {
-            Debug.Log($"[事件] 慌乱值: {value}");
+            Debug.LogError($"[EVENT] 慌乱值: {value}");
         }
 
         void OnExciteChanged(int value)
         {
-            Debug.Log($"[事件] 兴奋值: {value}");
+            Debug.LogError($"[EVENT] 兴奋值: {value}");
         }
 
         void OnDestroy()
