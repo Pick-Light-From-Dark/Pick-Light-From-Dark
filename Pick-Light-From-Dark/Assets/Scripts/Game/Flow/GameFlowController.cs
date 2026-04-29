@@ -67,6 +67,12 @@ namespace Game.Flow
         {
             if (isGameOver || isPaused) return;
 
+            // 如果remainingTime<=0，说明还未Initialize，不执行Update逻辑
+            if (remainingTime <= 0)
+            {
+                return;
+            }
+
             // 检测是否有多个实例在同时运行（仅在前10帧检测）
             if (Time.frameCount <= 10)
             {
