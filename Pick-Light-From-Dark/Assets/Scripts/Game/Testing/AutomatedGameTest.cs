@@ -36,31 +36,23 @@ namespace Game.Testing
             // 在测试开始前，强制清理所有可能存在的旧实例
             Debug.Log("[TEST] === 测试启动：清理所有旧实例 ===");
 
-            // 查找所有GameObject（包括DontDestroyOnLoad中的）
-            GameObject[] allObjects = GameObject.FindObjectsOfType<GameObject>(includeInactive: true);
             int destroyedCount = 0;
 
-            foreach (GameObject obj in allObjects)
+            // 使用Resources.FindObjectsOfTypeAll找到所有对象（包括inactive和DontDestroyOnLoad）
+            GameFlowController[] oldFlows = Resources.FindObjectsOfTypeAll<GameFlowController>();
+            foreach (var flow in oldFlows)
             {
-                // 查找GameFlowController组件（包括inactive的）
-                GameFlowController flow = obj.GetComponentInChildren<GameFlowController>(includeInactive: true);
-                if (flow != null && obj != gameObject)
-                {
-                    Debug.Log($"[TEST]   销毁旧GameFlowController InstanceID:{flow.GetInstanceID()} from {obj.name}");
-                    DestroyImmediate(obj);
-                    destroyedCount++;
-                    continue;
-                }
+                Debug.Log($"[TEST]   销毁旧GameFlowController InstanceID:{flow.GetInstanceID()} from {flow.gameObject.name}");
+                DestroyImmediate(flow.gameObject);
+                destroyedCount++;
+            }
 
-                // 查找EmotionSystem组件（包括inactive的）
-                EmotionSystem emotion = obj.GetComponentInChildren<EmotionSystem>(includeInactive: true);
-                if (emotion != null && obj != gameObject)
-                {
-                    Debug.Log($"[TEST]   销毁旧EmotionSystem InstanceID:{emotion.GetInstanceID()} from {obj.name}");
-                    DestroyImmediate(obj);
-                    destroyedCount++;
-                    continue;
-                }
+            EmotionSystem[] oldEmotions = Resources.FindObjectsOfTypeAll<EmotionSystem>();
+            foreach (var emotion in oldEmotions)
+            {
+                Debug.Log($"[TEST]   销毁旧EmotionSystem InstanceID:{emotion.GetInstanceID()} from {emotion.gameObject.name}");
+                DestroyImmediate(emotion.gameObject);
+                destroyedCount++;
             }
 
             Debug.Log($"[TEST] 清理完成，共销毁 {destroyedCount} 个旧实例");
