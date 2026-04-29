@@ -1,6 +1,7 @@
 using UnityEngine;
 using Game.Emotion;
 using Game.Config;
+using Game.Data;
 
 namespace Game.System
 {
@@ -45,9 +46,9 @@ namespace Game.System
             }
 
             // 监听事件
-            EventCenter.Instance.AddEventListener(E_EventType.EmotionChanged, OnEmotionChanged);
-            EventCenter.Instance.AddEventListener(E_EventType.PanicChanged, OnPanicChanged);
-            EventCenter.Instance.AddEventListener(E_EventType.ExciteChanged, OnExciteChanged);
+            EventCenter.Instance.AddEventListener<EmotionInfo>(E_EventType.EmotionChanged, OnEmotionChanged);
+            EventCenter.Instance.AddEventListener<int>(E_EventType.PanicChanged, OnPanicChanged);
+            EventCenter.Instance.AddEventListener<int>(E_EventType.ExciteChanged, OnExciteChanged);
 
             // 自动测试
             if (autoTest)
@@ -109,9 +110,9 @@ namespace Game.System
         void OnDestroy()
         {
             // 移除事件监听
-            EventCenter.Instance.RemoveEventListener(E_EventType.EmotionChanged, OnEmotionChanged);
-            EventCenter.Instance.RemoveEventListener(E_EventType.PanicChanged, OnPanicChanged);
-            EventCenter.Instance.RemoveEventListener(E_EventType.ExciteChanged, OnExciteChanged);
+            EventCenter.Instance.RemoveEventListener<EmotionInfo>(E_EventType.EmotionChanged, OnEmotionChanged);
+            EventCenter.Instance.RemoveEventListener<int>(E_EventType.PanicChanged, OnPanicChanged);
+            EventCenter.Instance.RemoveEventListener<int>(E_EventType.ExciteChanged, OnExciteChanged);
         }
     }
 }
