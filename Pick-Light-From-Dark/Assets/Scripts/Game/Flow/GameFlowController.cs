@@ -17,6 +17,7 @@ namespace Game.Flow
         [SerializeField] private bool isPaused;
         [SerializeField] private bool isGameOver;
         [SerializeField] private float remainingTime;
+        [SerializeField] private bool hasStartedFirstFrame; // 是否已经过了第一帧
 
         private LevelConfigSO levelConfig;
         private EmotionSystem emotionSystem;
@@ -29,6 +30,9 @@ namespace Game.Flow
             levelConfig = config;
             emotionSystem = EmotionSystem.Instance;
 
+            // 重置时间流速为正常
+            Time.timeScale = 1f;
+
             // 初始化情绪值系统
             emotionSystem.Initialize(levelConfig);
 
@@ -37,9 +41,11 @@ namespace Game.Flow
 
             isPaused = false;
             isGameOver = false;
+            hasStartedFirstFrame = false;
 
             Debug.Log($"[GameFlow] 关卡 {levelConfig.levelName} 开始");
             Debug.Log($"[GameFlow] 时间限制: {remainingTime}秒, 生命值: {levelConfig.maxLives}");
+            Debug.Log($"[GameFlow] 当前时间流速: {Time.timeScale}x");
 
             // 触发游戏开始事件
             EventCenter.Instance.EventTrigger(E_EventType.GameStart);
@@ -50,8 +56,23 @@ namespace Game.Flow
         {
             if (isGameOver || isPaused) return;
 
+            // 跳过第一帧以避免场景加载导致的大deltaTime
+            if (!hasStartedFirstFrame)
+            {
+                hasStartedFirstFrame = true;
+                Debug.Log($"[GameFlow] 跳过第一帧，避免场景加载时间影响倒计时");
+                return;
+            }
+
             // 更新倒计时
-            remainingTime -= Time.deltaTime;
+            float deltaTime = Time.deltaTime;
+            remainingTime -= deltaTime;
+
+            // 调试：第一帧输出时间信息
+            if (Time.frameCount <= 10)
+            {
+                Debug.Log($"[GameFlow] Frame:{Time.frameCount} deltaTime:{deltaTime:F4} remainingTime:{remainingTime:F2} timeScale:{Time.timeScale}");
+            }
 
             // 检查时间耗尽
             if (remainingTime <= 0)

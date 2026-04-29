@@ -40,13 +40,21 @@ namespace Game.System
             playerState = PlayerState.Instance;
             eyeCloseSystem = EyeCloseSystem.Instance;
 
-            // 创建AI实例
-            GameObject teacherObj = new GameObject("TeacherAI");
-            teacherAI = teacherObj.AddComponent<TeacherAI>();
+            // 查找或创建AI实例
+            teacherAI = FindObjectOfType<TeacherAI>();
+            if (teacherAI == null)
+            {
+                GameObject teacherObj = new GameObject("TeacherAI");
+                teacherAI = teacherObj.AddComponent<TeacherAI>();
+            }
 
-            // 创建读条系统实例
-            GameObject cardObj = new GameObject("CardReadingSystem");
-            cardReadingSystem = cardObj.AddComponent<CardReadingSystem>();
+            // 查找或创建读条系统实例
+            cardReadingSystem = FindObjectOfType<CardReadingSystem>();
+            if (cardReadingSystem == null)
+            {
+                GameObject cardObj = new GameObject("CardReadingSystem");
+                cardReadingSystem = cardObj.AddComponent<CardReadingSystem>();
+            }
 
             // 监听事件
             SetupEventListeners();
@@ -250,8 +258,11 @@ namespace Game.System
         {
             if (!isInitialized) return;
 
+            // 设置字体大小
+            GUI.skin.label.fontSize = 28;
+
             // 显示游戏状态
-            GUILayout.BeginArea(new Rect(10, 10, 400, 300));
+            GUILayout.BeginArea(new Rect(10, 10, 600, 500));
             GUILayout.Label($"=== 游戏状态 ===");
             GUILayout.Label($"运行时间: {gameTime:F1}秒");
             GUILayout.Label($"剩余时间: {gameFlow.GetRemainingTime():F1}秒");
