@@ -186,7 +186,7 @@ namespace Game.AI
 
             if (isCaught)
             {
-                Debug.LogWarning($"[TeacherAI] 玩家被抓！检查类型: {currentInspectType}");
+                Debug.Log($"[TeacherAI] 玩家被抓！检查类型: {currentInspectType}");
 
                 // 触发被抓事件
                 EventCenter.Instance.EventTrigger(E_EventType.PlayerCaught);
@@ -239,19 +239,19 @@ namespace Game.AI
                 // 如果在读条且是不可打断片段，闭眼也没用
                 if (isInUninterruptibleSegment)
                 {
-                    Debug.LogWarning($"[TeacherAI] 眼神检查发现：不可打断片段期间，闭眼无效！");
+                    Debug.Log($"[TeacherAI] 眼神检查发现：不可打断片段期间，闭眼无效！");
                     return true;
                 }
 
                 if (!playerInBed)
                 {
-                    Debug.LogWarning($"[TeacherAI] 眼神检查发现：玩家未卧床");
+                    Debug.Log($"[TeacherAI] 眼神检查发现：玩家未卧床");
                     return true;
                 }
 
                 if (!playerEyesClosed)
                 {
-                    Debug.LogWarning($"[TeacherAI] 眼神检查发现：玩家未闭眼");
+                    Debug.Log($"[TeacherAI] 眼神检查发现：玩家未闭眼");
                     return true;
                 }
             }
@@ -261,25 +261,25 @@ namespace Game.AI
                 // 如果在读条且是不可打断片段，闭眼也没用
                 if (isInUninterruptibleSegment)
                 {
-                    Debug.LogWarning($"[TeacherAI] 手电筒检查发现：不可打断片段期间，闭眼无效！");
+                    Debug.Log($"[TeacherAI] 手电筒检查发现：不可打断片段期间，闭眼无效！");
                     return true;
                 }
 
                 if (!playerInBed)
                 {
-                    Debug.LogWarning($"[TeacherAI] 手电筒检查发现：玩家未卧床");
+                    Debug.Log($"[TeacherAI] 手电筒检查发现：玩家未卧床");
                     return true;
                 }
 
                 if (!playerEyesClosed)
                 {
-                    Debug.LogWarning($"[TeacherAI] 手电筒检查发现：玩家未闭眼");
+                    Debug.Log($"[TeacherAI] 手电筒检查发现：玩家未闭眼");
                     return true;
                 }
 
                 if (isEmotionCritical)
                 {
-                    Debug.LogWarning($"[TeacherAI] 手电筒检查发现：情绪值超标 {totalEmotion} >= {levelConfig.criticalValue}");
+                    Debug.Log($"[TeacherAI] 手电筒检查发现：情绪值超标 {totalEmotion} >= {levelConfig.criticalValue}");
                     return true;
                 }
 

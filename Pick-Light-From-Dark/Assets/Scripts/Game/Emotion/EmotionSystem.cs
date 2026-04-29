@@ -75,7 +75,7 @@ namespace Game.Emotion
             bool isCritical = (panicValue + exciteValue) >= criticalValue;
             if (isCritical)
             {
-                Debug.LogWarning($"[EmotionSystem] 情绪值超标！总和:{panicValue + exciteValue} >= 临界:{criticalValue}");
+                Debug.Log($"[EmotionSystem] 情绪值超标！总和:{panicValue + exciteValue} >= 临界:{criticalValue}");
             }
             return isCritical;
         }

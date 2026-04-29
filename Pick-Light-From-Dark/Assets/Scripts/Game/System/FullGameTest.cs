@@ -156,12 +156,12 @@ namespace Game.System
 
         void OnPlayerCaught()
         {
-            Debug.LogError("[TEST] ⚠️ 玩家被抓！观察老师判定逻辑");
+            Debug.Log("[TEST] ⚠️ 玩家被抓！观察老师判定逻辑");
         }
 
         void OnEyeCloseStart()
         {
-            Debug.LogWarning("[TEST] ⚠️ 闭眼过久，时间开始加速！");
+            Debug.Log("[TEST] ⚠️ 闭眼过久，时间开始加速！");
         }
 
         void OnGUI()

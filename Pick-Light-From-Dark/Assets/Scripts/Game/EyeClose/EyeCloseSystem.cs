@@ -76,7 +76,7 @@ namespace Game.EyeClose
             isTimeAccelerated = true;
             Time.timeScale = accelerationMultiplier;
 
-            Debug.LogWarning($"[EyeCloseSystem] 闭眼过久({eyeCloseTimer:F1}秒)，时间加速 x{accelerationMultiplier}");
+            Debug.Log($"[EyeCloseSystem] 闭眼过久({eyeCloseTimer:F1}秒)，时间加速 x{accelerationMultiplier}");
             EventCenter.Instance.EventTrigger(E_EventType.EyeCloseStart);
         }
 

@@ -231,7 +231,7 @@ namespace Game.System
 
         void OnPlayerCaught()
         {
-            Debug.LogError("[TEST] 玩家被抓！测试查寝判定");
+            Debug.Log("[TEST] 玩家被抓！测试查寝判定");
         }
 
         void OnDestroy()
