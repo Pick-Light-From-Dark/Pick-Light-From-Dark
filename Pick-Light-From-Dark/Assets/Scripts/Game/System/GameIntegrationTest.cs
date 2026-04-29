@@ -64,11 +64,11 @@ namespace Game.System
         {
             if (testLevelConfig == null)
             {
-                Debug.LogError("[FAIL] 未配置testLevelConfig");
+                Debug.LogError("[TEST FAIL] 未配置testLevelConfig");
                 return;
             }
 
-            Debug.LogError("[PASS] 游戏系统初始化开始");
+            Debug.Log("[TEST] 游戏系统初始化开始");
 
             // 初始化各个系统
             gameFlow.Initialize(testLevelConfig);
@@ -76,9 +76,9 @@ namespace Game.System
             cardReadingSystem.Initialize(testLevelConfig);
 
             isInitialized = true;
-            Debug.LogError($"[INFO] 目标: 在{testLevelConfig.timeLimit}秒内存活");
-            Debug.LogError("[INFO] 5秒后自动测试卡牌读条");
-            Debug.LogError("[INFO] 10秒后自动测试打断功能");
+            Debug.Log($"[TEST] 目标: 在{testLevelConfig.timeLimit}秒内存活");
+            Debug.Log("[TEST] 5秒后自动测试卡牌读条");
+            Debug.Log("[TEST] 10秒后自动测试打断功能");
 
             // 5秒后测试卡牌读条
             Invoke(nameof(TestCardReading), 5f);
@@ -89,9 +89,13 @@ namespace Game.System
 
         void TestCardReading()
         {
-            if (!isInitialized || gameFlow.IsGameOver()) return;
+            if (!isInitialized || gameFlow.IsGameOver())
+            {
+                Debug.LogError("[TEST FAIL] 测试卡牌时游戏未初始化或已结束");
+                return;
+            }
 
-            Debug.LogError("[TEST] 开始卡牌读条测试");
+            Debug.Log("[TEST] 开始卡牌读条测试");
 
             // 创建测试卡牌
             CardData testCard = new CardData
@@ -115,11 +119,15 @@ namespace Game.System
 
         void TestCardInterrupt()
         {
-            if (!isInitialized || gameFlow.IsGameOver()) return;
+            if (!isInitialized || gameFlow.IsGameOver())
+            {
+                Debug.LogError("[TEST FAIL] 测试打断时游戏未初始化或已结束");
+                return;
+            }
 
-            Debug.LogError("[TEST] 测试打断功能");
+            Debug.Log("[TEST] 测试打断功能");
             bool success = cardReadingSystem.InterruptReading();
-            Debug.LogError($"[RESULT] 打断测试: {(success ? "成功" : "失败")}");
+            Debug.Log($"[TEST] 打断测试: {(success ? "成功" : "失败（正常，因为卡牌可能已完成）")}");
         }
 
         void SetupEventListeners()
@@ -147,57 +155,57 @@ namespace Game.System
 
         void OnGameStart()
         {
-            Debug.LogError("[EVENT] 游戏开始");
+            Debug.Log("[EVENT] 游戏开始");
         }
 
         void OnGamePause()
         {
-            Debug.LogError("[EVENT] 游戏暂停");
+            Debug.Log("[EVENT] 游戏暂停");
         }
 
         void OnGameResume()
         {
-            Debug.LogError("[EVENT] 游戏恢复");
+            Debug.Log("[EVENT] 游戏恢复");
         }
 
         void OnGameWin()
         {
-            Debug.LogError("[EVENT] 游戏胜利！");
+            Debug.Log("[EVENT] 游戏胜利！");
         }
 
         void OnGameLose(string reason)
         {
-            Debug.LogError($"[EVENT] 游戏失败: {reason}");
+            Debug.Log($"[EVENT] 游戏失败: {reason}");
         }
 
         void OnTeacherStateChanged(TeacherState newState)
         {
-            Debug.LogError($"[AI] 老师状态: {newState}");
+            Debug.Log($"[AI] 老师状态: {newState}");
         }
 
         void OnInspectStart(InspectType inspectType)
         {
-            Debug.LogError($"[AI] 开始检查: {inspectType}");
+            Debug.Log($"[AI] 开始检查: {inspectType}");
         }
 
         void OnInspectEnd()
         {
-            Debug.LogError("[AI] 检查结束");
+            Debug.Log("[AI] 检查结束");
         }
 
         void OnCardReadStart(CardInstance card)
         {
-            Debug.LogError($"[CARD] 读条开始: {card.data.cardName}");
+            Debug.Log($"[CARD] 读条开始: {card.data.cardName}");
         }
 
         void OnCardReadComplete(CardInstance card)
         {
-            Debug.LogError($"[CARD] 读条完成: {card.data.cardName}");
+            Debug.Log($"[CARD] 读条完成: {card.data.cardName}");
         }
 
         void OnCardReadInterrupt(CardInstance card)
         {
-            Debug.LogError($"[CARD] 读条打断: {card.data.cardName}");
+            Debug.Log($"[CARD] 读条打断: {card.data.cardName}");
         }
 
         void OnEmotionChanged(EmotionInfo info)
@@ -205,7 +213,7 @@ namespace Game.System
             // 每5秒输出一次即可
             if (Time.frameCount % 300 == 0)
             {
-                Debug.LogError($"[EMOTION] {info}");
+                Debug.Log($"[EMOTION] {info}");
             }
         }
 
