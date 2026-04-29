@@ -114,9 +114,11 @@ namespace Game.Testing
             // 初始化游戏
             gameFlow.Initialize(testLevelConfig);
 
-            yield return new WaitForSeconds(testDelay);
+            // 等待一帧让Initialize完成
+            yield return new WaitForEndOfFrame();
+            yield return new WaitForEndOfFrame(); // 确保第一帧已经跳过
 
-            // 验证游戏状态
+            // 验证游戏状态（第一帧后立即检查，避免时间流逝）
             TestAssertions.AssertFalse(gameFlow.IsGameOver(), "游戏初始化后未结束");
             TestAssertions.AssertFalse(gameFlow.IsPaused(), "游戏初始化后未暂停");
             TestAssertions.AssertEqual(testLevelConfig.timeLimit, gameFlow.GetRemainingTime(), "倒计时初始化正确", 1f);
