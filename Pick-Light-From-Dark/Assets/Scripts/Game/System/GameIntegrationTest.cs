@@ -282,7 +282,8 @@ namespace Game.System
             GUILayout.Label($"=== 玩家状态 ===");
             GUILayout.Label($"卧床: {playerState.IsInBed()}");
             GUILayout.Label($"闭眼: {playerState.IsEyesClosed()} (按C键切换)");
-            GUILayout.Label($"闭眼时长: {eyeCloseSystem.GetEyeCloseDuration():F1}秒 / {eyeCloseSystem.IsTimeAccelerated() ? "时间加速中" : "正常"}");
+            string timeStatus = eyeCloseSystem.IsTimeAccelerated() ? "时间加速中" : "正常";
+            GUILayout.Label($"闭眼时长: {eyeCloseSystem.GetEyeCloseDuration():F1}秒 / {timeStatus}");
 
             GUILayout.EndArea();
         }
