@@ -95,6 +95,10 @@ namespace Game.Flow
 
             isGameOver = true;
             Time.timeScale = 1f;
+
+            // 取消所有待执行的Invoke（比如ResumeGame）
+            CancelInvoke();
+
             Debug.Log("[GameFlow] 游戏胜利！");
             EventCenter.Instance.EventTrigger(E_EventType.LevelComplete);
             EventCenter.Instance.EventTrigger(E_EventType.GameWin);
@@ -109,6 +113,10 @@ namespace Game.Flow
 
             isGameOver = true;
             Time.timeScale = 1f;
+
+            // 取消所有待执行的Invoke（比如ResumeGame）
+            CancelInvoke();
+
             Debug.Log($"[GameFlow] 游戏失败: {reason}");
             EventCenter.Instance.EventTrigger(E_EventType.GameLose, reason);
         }
@@ -118,6 +126,12 @@ namespace Game.Flow
         /// </summary>
         public void OnPlayerCaught()
         {
+            if (isGameOver)
+            {
+                Debug.Log("[GameFlow] 游戏已结束，忽略玩家被抓事件");
+                return;
+            }
+
             Debug.Log("[GameFlow] 处理玩家被抓逻辑");
 
             // 这里可以处理生命值扣除逻辑
