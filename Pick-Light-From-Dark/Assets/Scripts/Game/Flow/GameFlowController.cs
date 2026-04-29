@@ -118,10 +118,7 @@ namespace Game.Flow
         /// </summary>
         public void OnPlayerCaught()
         {
-            Debug.Log("[GameFlow] 玩家被抓！");
-
-            // 触发被抓事件
-            EventCenter.Instance.EventTrigger(E_EventType.PlayerCaught);
+            Debug.Log("[GameFlow] 处理玩家被抓逻辑");
 
             // 这里可以处理生命值扣除逻辑
             // 如果生命值归零则游戏失败
