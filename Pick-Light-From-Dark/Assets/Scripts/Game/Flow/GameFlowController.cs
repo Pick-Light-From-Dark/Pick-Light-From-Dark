@@ -73,7 +73,14 @@ namespace Game.Flow
                 updateCount++;
                 if (updateCount > 1)
                 {
-                    Debug.LogError($"[GameFlow] InstanceID:{GetInstanceID()} Frame:{Time.frameCount} 检测到多个实例在Update！当前updateCount={updateCount}这会导致时间倒计时常出错！");
+                    // 查找所有GameFlowController组件
+                    GameFlowController[] allControllers = FindObjectsOfType<GameFlowController>();
+                    Debug.LogError($"[GameFlow] InstanceID:{GetInstanceID()} Frame:{Time.frameCount} 检测到Update被多次调用！当前updateCount={updateCount}");
+                    Debug.LogError($"[GameFlow] 当前场景中有 {allControllers.Length} 个GameFlowController组件：");
+                    for (int i = 0; i < allControllers.Length; i++)
+                    {
+                        Debug.LogError($"[GameFlow]   [{i}] InstanceID:{allControllers[i].GetInstanceID()} GameObject:{allControllers[i].gameObject.name} Active:{allControllers[i].gameObject.activeInHierarchy}");
+                    }
                 }
             }
 
