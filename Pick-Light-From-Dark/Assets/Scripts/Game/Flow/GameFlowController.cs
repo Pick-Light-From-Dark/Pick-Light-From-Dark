@@ -50,6 +50,9 @@ namespace Game.Flow
             // 取消所有待执行的Invoke
             CancelInvoke();
 
+            // 重置多实例检测计数器
+            updateCount = 0;
+
             Debug.Log($"[GameFlow] InstanceID:{GetInstanceID()} 关卡 {levelConfig.levelName} 开始");
             Debug.Log($"[GameFlow] InstanceID:{GetInstanceID()} 时间限制: {remainingTime}秒, 生命值: {levelConfig.maxLives}");
             Debug.Log($"[GameFlow] InstanceID:{GetInstanceID()} 当前时间流速: {Time.timeScale}x");

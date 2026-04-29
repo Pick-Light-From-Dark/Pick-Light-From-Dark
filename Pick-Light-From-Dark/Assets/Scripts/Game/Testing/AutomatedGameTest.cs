@@ -42,8 +42,8 @@ namespace Game.Testing
 
             foreach (GameObject obj in allObjects)
             {
-                // 查找GameFlowController组件
-                GameFlowController flow = obj.GetComponent<GameFlowController>();
+                // 查找GameFlowController组件（包括inactive的）
+                GameFlowController flow = obj.GetComponentInChildren<GameFlowController>(includeInactive: true);
                 if (flow != null && obj != gameObject)
                 {
                     Debug.Log($"[TEST]   销毁旧GameFlowController InstanceID:{flow.GetInstanceID()} from {obj.name}");
@@ -52,8 +52,8 @@ namespace Game.Testing
                     continue;
                 }
 
-                // 查找EmotionSystem组件
-                EmotionSystem emotion = obj.GetComponent<EmotionSystem>();
+                // 查找EmotionSystem组件（包括inactive的）
+                EmotionSystem emotion = obj.GetComponentInChildren<EmotionSystem>(includeInactive: true);
                 if (emotion != null && obj != gameObject)
                 {
                     Debug.Log($"[TEST]   销毁旧EmotionSystem InstanceID:{emotion.GetInstanceID()} from {obj.name}");
