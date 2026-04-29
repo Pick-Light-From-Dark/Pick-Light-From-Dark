@@ -76,19 +76,34 @@ namespace Game.Testing
         {
             Debug.Log("\n[测试1] 初始化系统...");
 
-            // 检查是否存在多个GameFlowController实例
-            GameFlowController[] allFlows = FindObjectsOfType<GameFlowController>();
-            Debug.Log($"[TEST] 发现 {allFlows.Length} 个 GameFlowController 实例");
-            if (allFlows.Length > 1)
+            // 清理场景中所有旧的GameFlowController实例（防止场景预存实例干扰）
+            GameFlowController[] oldFlows = FindObjectsOfType<GameFlowController>();
+            if (oldFlows.Length > 0)
             {
-                Debug.LogError($"[TEST FAIL] 发现多个 GameFlowController 实例！这会导致时间倒计时常出错。");
-                for (int i = 0; i < allFlows.Length; i++)
+                Debug.Log($"[TEST] 发现场景中有 {oldFlows.Length} 个旧的GameFlowController实例，正在清理...");
+                foreach (var oldFlow in oldFlows)
                 {
-                    Debug.LogError($"[TEST]   实例 {i}: InstanceID={allFlows[i].GetInstanceID()}");
+                    Debug.Log($"[TEST]   删除旧实例 InstanceID:{oldFlow.GetInstanceID()}");
+                    DestroyImmediate(oldFlow.gameObject);
                 }
+                // 等待一帧让DestroyImmediate生效
+                yield return null;
             }
 
-            // 获取系统实例
+            // 清理场景中所有旧的EmotionSystem实例
+            EmotionSystem[] oldEmotions = FindObjectsOfType<EmotionSystem>();
+            if (oldEmotions.Length > 0)
+            {
+                Debug.Log($"[TEST] 发现场景中有 {oldEmotions.Length} 个旧的EmotionSystem实例，正在清理...");
+                foreach (var oldEmotion in oldEmotions)
+                {
+                    Debug.Log($"[TEST]   删除旧实例 InstanceID:{oldEmotion.GetInstanceID()}");
+                    DestroyImmediate(oldEmotion.gameObject);
+                }
+                yield return null;
+            }
+
+            // 现在获取系统实例（会自动创建新的单例）
             gameFlow = GameFlowController.Instance;
             emotionSystem = EmotionSystem.Instance;
             playerState = PlayerState.Instance;
