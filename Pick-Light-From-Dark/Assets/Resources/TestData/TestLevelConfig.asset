@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   levelId: 1
   levelName: "\u4E00\u952E\u6D4B\u8BD5\u5173\u5361"
-  timeLimit: 60
+  timeLimit: 300
   initialPanic: 35
   initialExcite: 35
   criticalValue: 100

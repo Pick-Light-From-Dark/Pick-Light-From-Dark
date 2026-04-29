@@ -299,6 +299,10 @@ namespace Game.AI
 
         void OnStateTimerComplete()
         {
+            // 游戏结束时不再转换状态
+            if (gameFlow != null && gameFlow.IsGameOver())
+                return;
+
             switch (currentState)
             {
                 case TeacherState.Idle:
