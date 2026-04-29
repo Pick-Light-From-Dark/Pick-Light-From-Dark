@@ -106,9 +106,9 @@ namespace Game.Emotion
         {
             EmotionInfo info = GetEmotionInfo();
             // 触发事件
-            EventCenter.Instance.EventTrigger(GameEvents.EmotionChanged, info);
-            EventCenter.Instance.EventTrigger(GameEvents.PanicChanged, panicValue);
-            EventCenter.Instance.EventTrigger(GameEvents.ExciteChanged, exciteValue);
+            EventCenter.Instance.EventTrigger(E_EventType.EmotionChanged, info);
+            EventCenter.Instance.EventTrigger(E_EventType.PanicChanged, panicValue);
+            EventCenter.Instance.EventTrigger(E_EventType.ExciteChanged, exciteValue);
         }
 
         /// <summary>

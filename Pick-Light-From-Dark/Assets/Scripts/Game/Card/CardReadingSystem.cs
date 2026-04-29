@@ -47,7 +47,7 @@ namespace Game.Card
             Debug.Log($"[CardReadingSystem] 开始读条: {card.data.cardName}");
 
             // 触发读条开始事件
-            EventCenter.Instance.EventTrigger(GameEvents.CardReadStart, card);
+            EventCenter.Instance.EventTrigger(E_EventType.CardReadStart, card);
         }
 
         void Update()
@@ -96,10 +96,10 @@ namespace Game.Card
             Debug.Log($"[CardReadingSystem] 读条被打断: {currentCard.data.cardName}");
 
             // 增加慌乱值
-            EventCenter.Instance.EventTrigger(GameEvents.PanicChanged, currentCard.data.interruptPanicAdd);
+            EventCenter.Instance.EventTrigger(E_EventType.PanicChanged, currentCard.data.interruptPanicAdd);
 
             // 触发打断事件
-            EventCenter.Instance.EventTrigger(GameEvents.CardReadInterrupt, currentCard);
+            EventCenter.Instance.EventTrigger(E_EventType.CardReadInterrupt, currentCard);
 
             // 清除读条
             ClearReading();
@@ -122,7 +122,7 @@ namespace Game.Card
             currentCard.isUsedSuccess = true;
 
             // 触发完成事件
-            EventCenter.Instance.EventTrigger(GameEvents.CardReadComplete, currentCard);
+            EventCenter.Instance.EventTrigger(E_EventType.CardReadComplete, currentCard);
 
             // 清除读条
             ClearReading();
@@ -136,11 +136,11 @@ namespace Game.Card
             // 修改情绪值
             if (card.data.panicDelta != 0)
             {
-                EventCenter.Instance.EventTrigger(GameEvents.PanicChanged, card.data.panicDelta);
+                EventCenter.Instance.EventTrigger(E_EventType.PanicChanged, card.data.panicDelta);
             }
             if (card.data.exciteDelta != 0)
             {
-                EventCenter.Instance.EventTrigger(GameEvents.ExciteChanged, card.data.exciteDelta);
+                EventCenter.Instance.EventTrigger(E_EventType.ExciteChanged, card.data.exciteDelta);
             }
 
             Debug.Log($"[CardReadingSystem] 应用效果: 慌乱{card.data.panicDelta} 兴奋{card.data.exciteDelta}");

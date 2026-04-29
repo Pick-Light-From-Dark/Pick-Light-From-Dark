@@ -5,6 +5,7 @@ using Game.Emotion;
 using Game.Card;
 using Game.Config;
 using Game.Data;
+using System.Collections.Generic;
 
 namespace Game.System
 {
@@ -97,7 +98,7 @@ namespace Game.System
                 id = 100,
                 cardName = "测试翻身",
                 description = "测试用卡牌",
-                segments = new System.Collections.Generic.List<Segment>
+                segments = new List<Segment>
                 {
                     new Segment(2f, true),
                     new Segment(2f, false)
@@ -123,24 +124,24 @@ namespace Game.System
         void SetupEventListeners()
         {
             // 游戏流程事件
-            EventCenter.Instance.AddEventListener(GameEvents.GameStart, OnGameStart);
-            EventCenter.Instance.AddEventListener(GameEvents.GamePause, OnGamePause);
-            EventCenter.Instance.AddEventListener(GameEvents.GameResume, OnGameResume);
-            EventCenter.Instance.AddEventListener(GameEvents.GameWin, OnGameWin);
-            EventCenter.Instance.AddEventListener(GameEvents.GameLose, OnGameLose);
+            EventCenter.Instance.AddEventListener(E_EventType.GameStart, OnGameStart);
+            EventCenter.Instance.AddEventListener(E_EventType.GamePause, OnGamePause);
+            EventCenter.Instance.AddEventListener(E_EventType.GameResume, OnGameResume);
+            EventCenter.Instance.AddEventListener(E_EventType.GameWin, OnGameWin);
+            EventCenter.Instance.AddEventListener<string>(E_EventType.GameLose, OnGameLose);
 
             // 老师AI事件
-            EventCenter.Instance.AddEventListener(TeacherState, OnTeacherStateChanged);
-            EventCenter.Instance.AddEventListener(GameEvents.TeacherInspectStart, OnInspectStart);
-            EventCenter.Instance.AddEventListener(GameEvents.TeacherInspectEnd, OnInspectEnd);
+            EventCenter.Instance.AddEventListener<TeacherState>(E_EventType.TeacherStateChanged, OnTeacherStateChanged);
+            EventCenter.Instance.AddEventListener<InspectType>(E_EventType.TeacherInspectStart, OnInspectStart);
+            EventCenter.Instance.AddEventListener(E_EventType.TeacherInspectEnd, OnInspectEnd);
 
             // 卡牌事件
-            EventCenter.Instance.AddEventListener(CardInstance, OnCardReadStart);
-            EventCenter.Instance.AddEventListener(CardInstance, OnCardReadComplete);
-            EventCenter.Instance.AddEventListener(CardInstance, OnCardReadInterrupt);
+            EventCenter.Instance.AddEventListener<CardInstance>(E_EventType.CardReadStart, OnCardReadStart);
+            EventCenter.Instance.AddEventListener<CardInstance>(E_EventType.CardReadComplete, OnCardReadComplete);
+            EventCenter.Instance.AddEventListener<CardInstance>(E_EventType.CardReadInterrupt, OnCardReadInterrupt);
 
             // 情绪值事件
-            EventCenter.Instance.AddEventListener(GameEvents.EmotionChanged, OnEmotionChanged);
+            EventCenter.Instance.AddEventListener<EmotionInfo>(E_EventType.EmotionChanged, OnEmotionChanged);
         }
 
         void OnGameStart()
@@ -210,11 +211,10 @@ namespace Game.System
         void OnDestroy()
         {
             // 清理事件监听
-            EventCenter.Instance.RemoveEventListener(GameEvents.GameStart, OnGameStart);
-            EventCenter.Instance.RemoveEventListener(GameEvents.GamePause, OnGamePause);
-            EventCenter.Instance.RemoveEventListener(GameEvents.GameResume, OnGameResume);
-            EventCenter.Instance.RemoveEventListener(GameEvents.GameWin, OnGameWin);
-            EventCenter.Instance.RemoveEventListener(GameEvents.GameLose, OnGameLose);
+            EventCenter.Instance.RemoveEventListener(E_EventType.GameStart, OnGameStart);
+            EventCenter.Instance.RemoveEventListener(E_EventType.GamePause, OnGamePause);
+            EventCenter.Instance.RemoveEventListener(E_EventType.GameResume, OnGameResume);
+            EventCenter.Instance.RemoveEventListener(E_EventType.GameWin, OnGameWin);
         }
 
         void OnGUI()

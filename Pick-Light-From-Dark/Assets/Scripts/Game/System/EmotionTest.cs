@@ -45,9 +45,9 @@ namespace Game.System
             }
 
             // 监听事件
-            EventCenter.Instance.AddEventListener(GameEvents.EmotionChanged, OnEmotionChanged);
-            EventCenter.Instance.AddEventListener(GameEvents.PanicChanged, OnPanicChanged);
-            EventCenter.Instance.AddEventListener(GameEvents.ExciteChanged, OnExciteChanged);
+            EventCenter.Instance.AddEventListener(E_EventType.EmotionChanged, OnEmotionChanged);
+            EventCenter.Instance.AddEventListener(E_EventType.PanicChanged, OnPanicChanged);
+            EventCenter.Instance.AddEventListener(E_EventType.ExciteChanged, OnExciteChanged);
 
             // 自动测试
             if (autoTest)
@@ -109,9 +109,9 @@ namespace Game.System
         void OnDestroy()
         {
             // 移除事件监听
-            EventCenter.Instance.RemoveEventListener(GameEvents.EmotionChanged, OnEmotionChanged);
-            EventCenter.Instance.RemoveEventListener(GameEvents.PanicChanged, OnPanicChanged);
-            EventCenter.Instance.RemoveEventListener(GameEvents.ExciteChanged, OnExciteChanged);
+            EventCenter.Instance.RemoveEventListener(E_EventType.EmotionChanged, OnEmotionChanged);
+            EventCenter.Instance.RemoveEventListener(E_EventType.PanicChanged, OnPanicChanged);
+            EventCenter.Instance.RemoveEventListener(E_EventType.ExciteChanged, OnExciteChanged);
         }
     }
 }

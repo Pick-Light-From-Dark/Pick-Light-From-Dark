@@ -99,7 +99,7 @@ namespace Game.AI
             }
 
             // 触发状态变化事件
-            EventCenter.Instance.EventTrigger(GameEvents.TeacherStateChanged, newState);
+            EventCenter.Instance.EventTrigger(E_EventType.TeacherStateChanged, newState);
         }
 
         void EnterIdle()
@@ -125,7 +125,7 @@ namespace Game.AI
             Debug.Log($"[TeacherAI] 开始接近 ({currentInspectType}检查)，预计 {stateTimer:F1}秒到达");
 
             // 触发脚步声事件
-            EventCenter.Instance.EventTrigger(GameEvents.TeacherFootstepStart, currentInspectType);
+            EventCenter.Instance.EventTrigger(E_EventType.TeacherFootstepStart, currentInspectType);
         }
 
         void EnterInspecting()
@@ -145,7 +145,7 @@ namespace Game.AI
             Debug.Log($"[TeacherAI] 开始检查 ({currentInspectType})，持续 {stateTimer:F1}秒");
 
             // 触发检查开始事件
-            EventCenter.Instance.EventTrigger(GameEvents.TeacherInspectStart, currentInspectType);
+            EventCenter.Instance.EventTrigger(E_EventType.TeacherInspectStart, currentInspectType);
         }
 
         void EnterLeaving()
@@ -158,7 +158,7 @@ namespace Game.AI
             Debug.Log($"[TeacherAI] 离开中，耗时 {stateTimer:F1}秒 (第{patrolCount}次巡逻)");
 
             // 触发检查结束事件
-            EventCenter.Instance.EventTrigger(GameEvents.TeacherInspectEnd);
+            EventCenter.Instance.EventTrigger(E_EventType.TeacherInspectEnd);
         }
 
         void OnStateTimerComplete()
