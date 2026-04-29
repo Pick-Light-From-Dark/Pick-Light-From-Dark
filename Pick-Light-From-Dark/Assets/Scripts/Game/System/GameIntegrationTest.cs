@@ -21,6 +21,7 @@ namespace Game.System
         public EmotionSystem emotionSystem;
         public CardReadingSystem cardReadingSystem;
         public PlayerState playerState;
+        public EyeCloseSystem eyeCloseSystem;
 
         [Header("测试配置")]
         public LevelConfigSO testLevelConfig;
@@ -36,6 +37,7 @@ namespace Game.System
             gameFlow = GameFlowController.Instance;
             emotionSystem = EmotionSystem.Instance;
             playerState = PlayerState.Instance;
+            eyeCloseSystem = EyeCloseSystem.Instance;
 
             // 创建AI实例
             GameObject teacherObj = new GameObject("TeacherAI");
@@ -82,6 +84,7 @@ namespace Game.System
             Debug.Log("[TEST] 5秒后自动测试卡牌读条");
             Debug.Log("[TEST] 10秒后自动测试打断功能");
             Debug.Log("[TEST] 按C键测试闭眼功能");
+            Debug.Log("[TEST] 闭眼10秒后会触发时间加速");
             Debug.Log("[TEST] 默认玩家状态：已卧床");
 
             // 设置默认玩家状态：在床上
@@ -279,6 +282,7 @@ namespace Game.System
             GUILayout.Label($"=== 玩家状态 ===");
             GUILayout.Label($"卧床: {playerState.IsInBed()}");
             GUILayout.Label($"闭眼: {playerState.IsEyesClosed()} (按C键切换)");
+            GUILayout.Label($"闭眼时长: {eyeCloseSystem.GetEyeCloseDuration():F1}秒 / {eyeCloseSystem.IsTimeAccelerated() ? "时间加速中" : "正常"}");
 
             GUILayout.EndArea();
         }
