@@ -24,6 +24,9 @@ namespace Game.AI
 
         private LevelConfigSO levelConfig;
         private GameFlowController gameFlow;
+        private Game.Emotion.EmotionSystem emotionSystem;
+        private Game.Card.CardReadingSystem cardReadingSystem;
+        private Game.Data.PlayerState playerState;
         private float targetDuration;
 
         void Awake()
@@ -38,6 +41,12 @@ namespace Game.AI
         {
             levelConfig = config;
             patrolCount = 0;
+
+            // 获取系统引用
+            emotionSystem = Game.Emotion.EmotionSystem.Instance;
+            cardReadingSystem = FindObjectOfType<Game.Card.CardReadingSystem>();
+            playerState = Game.Data.PlayerState.Instance;
+
             EnterState(TeacherState.Idle);
             Debug.Log("[TeacherAI] 初始化完成");
         }
@@ -65,6 +74,12 @@ namespace Game.AI
                     {
                         approachProgress = Mathf.Max(0f, stateTimer / targetDuration);
                     }
+                }
+
+                // 查寝判定：在检查期间持续判定
+                if (currentState == TeacherState.Inspecting)
+                {
+                    PerformInspectionCheck();
                 }
 
                 if (stateTimer <= 0)
@@ -159,6 +174,123 @@ namespace Game.AI
 
             // 触发检查结束事件
             EventCenter.Instance.EventTrigger(E_EventType.TeacherInspectEnd);
+        }
+
+        /// <summary>
+        /// 执行查寝判定
+        /// </summary>
+        void PerformInspectionCheck()
+        {
+            // 检查条件是否满足
+            bool isCaught = CheckPlayerCaught();
+
+            if (isCaught)
+            {
+                Debug.LogWarning($"[TeacherAI] 玩家被抓！检查类型: {currentInspectType}");
+
+                // 触发被抓事件
+                EventCenter.Instance.EventTrigger(E_EventType.PlayerCaught);
+
+                // 通知游戏流程
+                if (gameFlow != null)
+                {
+                    gameFlow.OnPlayerCaught();
+                }
+
+                // 立即离开
+                EnterState(TeacherState.Leaving);
+            }
+        }
+
+        /// <summary>
+        /// 检查玩家是否被抓
+        /// </summary>
+        bool CheckPlayerCaught()
+        {
+            // 获取玩家状态
+            bool playerInBed = playerState != null && playerState.IsInBed();
+            bool playerEyesClosed = playerState != null && playerState.IsEyesClosed();
+            bool isReading = cardReadingSystem != null && cardReadingSystem.IsReading();
+
+            // 获取当前读条片段
+            Game.Data.Segment currentSegment = null;
+            bool isInUninterruptibleSegment = false;
+
+            if (isReading && cardReadingSystem != null)
+            {
+                currentSegment = cardReadingSystem.GetCurrentSegment();
+                isInUninterruptibleSegment = (currentSegment != null && !currentSegment.isInterruptible);
+            }
+
+            // 获取情绪值
+            int totalEmotion = 0;
+            bool isEmotionCritical = false;
+
+            if (emotionSystem != null)
+            {
+                totalEmotion = emotionSystem.GetTotalEmotion();
+                isEmotionCritical = emotionSystem.IsCaughtByCriticalValue();
+            }
+
+            // 根据检查类型判定
+            if (currentInspectType == InspectType.Eye)
+            {
+                // 眼神检查：只检测卧床 + 闭眼
+                // 如果在读条且是不可打断片段，闭眼也没用
+                if (isInUninterruptibleSegment)
+                {
+                    Debug.LogWarning($"[TeacherAI] 眼神检查发现：不可打断片段期间，闭眼无效！");
+                    return true;
+                }
+
+                if (!playerInBed)
+                {
+                    Debug.LogWarning($"[TeacherAI] 眼神检查发现：玩家未卧床");
+                    return true;
+                }
+
+                if (!playerEyesClosed)
+                {
+                    Debug.LogWarning($"[TeacherAI] 眼神检查发现：玩家未闭眼");
+                    return true;
+                }
+            }
+            else if (currentInspectType == InspectType.Flash)
+            {
+                // 手电筒检查：检测卧床 + 闭眼 + 情绪值不超标
+                // 如果在读条且是不可打断片段，闭眼也没用
+                if (isInUninterruptibleSegment)
+                {
+                    Debug.LogWarning($"[TeacherAI] 手电筒检查发现：不可打断片段期间，闭眼无效！");
+                    return true;
+                }
+
+                if (!playerInBed)
+                {
+                    Debug.LogWarning($"[TeacherAI] 手电筒检查发现：玩家未卧床");
+                    return true;
+                }
+
+                if (!playerEyesClosed)
+                {
+                    Debug.LogWarning($"[TeacherAI] 手电筒检查发现：玩家未闭眼");
+                    return true;
+                }
+
+                if (isEmotionCritical)
+                {
+                    Debug.LogWarning($"[TeacherAI] 手电筒检查发现：情绪值超标 {totalEmotion} >= {levelConfig.criticalValue}");
+                    return true;
+                }
+
+                // 手电筒持续增加慌乱值
+                if (emotionSystem != null)
+                {
+                    emotionSystem.ChangePanic(Mathf.RoundToInt(levelConfig.flashPanicPerSec * Time.deltaTime));
+                }
+            }
+
+            return false;
         }
 
         void OnStateTimerComplete()

@@ -20,6 +20,7 @@ namespace Game.System
         public TeacherAI teacherAI;
         public EmotionSystem emotionSystem;
         public CardReadingSystem cardReadingSystem;
+        public PlayerState playerState;
 
         [Header("测试配置")]
         public LevelConfigSO testLevelConfig;
@@ -34,6 +35,7 @@ namespace Game.System
             // 获取系统实例
             gameFlow = GameFlowController.Instance;
             emotionSystem = EmotionSystem.Instance;
+            playerState = PlayerState.Instance;
 
             // 创建AI实例
             GameObject teacherObj = new GameObject("TeacherAI");
@@ -79,6 +81,11 @@ namespace Game.System
             Debug.Log($"[TEST] 目标: 在{testLevelConfig.timeLimit}秒内存活");
             Debug.Log("[TEST] 5秒后自动测试卡牌读条");
             Debug.Log("[TEST] 10秒后自动测试打断功能");
+            Debug.Log("[TEST] 按C键测试闭眼功能");
+            Debug.Log("[TEST] 默认玩家状态：已卧床");
+
+            // 设置默认玩家状态：在床上
+            playerState.SetInBed(true);
 
             // 5秒后测试卡牌读条
             Invoke(nameof(TestCardReading), 5f);
@@ -151,6 +158,7 @@ namespace Game.System
 
             // 情绪值事件
             EventCenter.Instance.AddEventListener<EmotionInfo>(E_EventType.EmotionChanged, OnEmotionChanged);
+            EventCenter.Instance.AddEventListener(E_EventType.PlayerCaught, OnPlayerCaught);
         }
 
         void OnGameStart()
@@ -217,6 +225,11 @@ namespace Game.System
             }
         }
 
+        void OnPlayerCaught()
+        {
+            Debug.LogError("[TEST] 玩家被抓！测试查寝判定");
+        }
+
         void OnDestroy()
         {
             // 清理事件监听
@@ -224,6 +237,7 @@ namespace Game.System
             EventCenter.Instance.RemoveEventListener(E_EventType.GamePause, OnGamePause);
             EventCenter.Instance.RemoveEventListener(E_EventType.GameResume, OnGameResume);
             EventCenter.Instance.RemoveEventListener(E_EventType.GameWin, OnGameWin);
+            EventCenter.Instance.RemoveEventListener(E_EventType.PlayerCaught, OnPlayerCaught);
         }
 
         void OnGUI()
@@ -260,6 +274,11 @@ namespace Game.System
             var emotionInfo = emotionSystem.GetEmotionInfo();
             GUILayout.Label($"=== 情绪值 ===");
             GUILayout.Label($"{emotionInfo}");
+
+            GUILayout.Space(10);
+            GUILayout.Label($"=== 玩家状态 ===");
+            GUILayout.Label($"卧床: {playerState.IsInBed()}");
+            GUILayout.Label($"闭眼: {playerState.IsEyesClosed()} (按C键切换)");
 
             GUILayout.EndArea();
         }
