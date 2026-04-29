@@ -5,7 +5,6 @@ using Game.Emotion;
 using Game.Card;
 using Game.Config;
 using Game.Data;
-using Framework.EventCenter;
 
 namespace Game.System
 {

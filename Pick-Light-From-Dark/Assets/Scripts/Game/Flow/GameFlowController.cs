@@ -1,5 +1,4 @@
 using UnityEngine;
-using Framework;
 using Game.Config;
 using Game.Emotion;
 
@@ -43,8 +42,8 @@ namespace Game.Flow
             Debug.Log($"[GameFlow] 时间限制: {remainingTime}秒, 生命值: {levelConfig.maxLives}");
 
             // 触发游戏开始事件
-            Framework.EventCenter.EventCenter.Instance.EventTrigger(GameEvents.GameStart);
-            Framework.EventCenter.EventCenter.Instance.EventTrigger(GameEvents.LevelStart, levelConfig.levelId);
+            EventCenter.Instance.EventTrigger(GameEvents.GameStart);
+            EventCenter.Instance.EventTrigger(GameEvents.LevelStart, levelConfig.levelId);
         }
 
         void Update()
@@ -71,7 +70,7 @@ namespace Game.Flow
             isPaused = true;
             Time.timeScale = 0f;
             Debug.Log("[GameFlow] 游戏暂停");
-            Framework.EventCenter.EventCenter.Instance.EventTrigger(GameEvents.GamePause);
+            EventCenter.Instance.EventTrigger(GameEvents.GamePause);
         }
 
         /// <summary>
@@ -84,7 +83,7 @@ namespace Game.Flow
             isPaused = false;
             Time.timeScale = 1f;
             Debug.Log("[GameFlow] 游戏恢复");
-            Framework.EventCenter.EventCenter.Instance.EventTrigger(GameEvents.GameResume);
+            EventCenter.Instance.EventTrigger(GameEvents.GameResume);
         }
 
         /// <summary>
@@ -97,8 +96,8 @@ namespace Game.Flow
             isGameOver = true;
             Time.timeScale = 1f;
             Debug.Log("[GameFlow] 游戏胜利！");
-            Framework.EventCenter.EventCenter.Instance.EventTrigger(GameEvents.LevelComplete);
-            Framework.EventCenter.EventCenter.Instance.EventTrigger(GameEvents.GameWin);
+            EventCenter.Instance.EventTrigger(GameEvents.LevelComplete);
+            EventCenter.Instance.EventTrigger(GameEvents.GameWin);
         }
 
         /// <summary>
@@ -111,7 +110,7 @@ namespace Game.Flow
             isGameOver = true;
             Time.timeScale = 1f;
             Debug.Log($"[GameFlow] 游戏失败: {reason}");
-            Framework.EventCenter.EventCenter.Instance.EventTrigger(GameEvents.GameLose, reason);
+            EventCenter.Instance.EventTrigger(GameEvents.GameLose, reason);
         }
 
         /// <summary>
@@ -122,7 +121,7 @@ namespace Game.Flow
             Debug.Log("[GameFlow] 玩家被抓！");
 
             // 触发被抓事件
-            Framework.EventCenter.EventCenter.Instance.EventTrigger(GameEvents.PlayerCaught);
+            EventCenter.Instance.EventTrigger(GameEvents.PlayerCaught);
 
             // 这里可以处理生命值扣除逻辑
             // 如果生命值归零则游戏失败

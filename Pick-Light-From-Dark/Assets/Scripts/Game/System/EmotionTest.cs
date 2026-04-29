@@ -1,7 +1,6 @@
 using UnityEngine;
 using Game.Emotion;
 using Game.Config;
-using Framework.EventCenter;
 
 namespace Game.System
 {

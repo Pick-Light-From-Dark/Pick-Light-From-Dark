@@ -1,5 +1,4 @@
 using UnityEngine;
-using Framework;
 using Game.Config;
 
 namespace Game.Emotion
@@ -107,9 +106,9 @@ namespace Game.Emotion
         {
             EmotionInfo info = GetEmotionInfo();
             // 触发事件
-            Framework.EventCenter.EventCenter.Instance.EventTrigger(GameEvents.EmotionChanged, info);
-            Framework.EventCenter.EventCenter.Instance.EventTrigger(GameEvents.PanicChanged, panicValue);
-            Framework.EventCenter.EventCenter.Instance.EventTrigger(GameEvents.ExciteChanged, exciteValue);
+            EventCenter.Instance.EventTrigger(GameEvents.EmotionChanged, info);
+            EventCenter.Instance.EventTrigger(GameEvents.PanicChanged, panicValue);
+            EventCenter.Instance.EventTrigger(GameEvents.ExciteChanged, exciteValue);
         }
 
         /// <summary>
