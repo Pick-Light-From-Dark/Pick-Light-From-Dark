@@ -211,8 +211,18 @@ namespace Game.Card
         /// </summary>
         CardData GetCardDataById(int cardId)
         {
-            // 这里需要从配置系统中获取卡牌数据
-            // 暂时返回null，等待卡牌配置系统完善
+            // 从Resources加载所有卡牌数据容器
+            CardDataContainer[] containers = Resources.LoadAll<CardDataContainer>("TestData");
+
+            foreach (var container in containers)
+            {
+                if (container.cardData != null && container.cardData.id == cardId)
+                {
+                    return container.cardData;
+                }
+            }
+
+            Debug.LogWarning($"[CardManager] 未找到ID为 {cardId} 的卡牌数据");
             return null;
         }
 
