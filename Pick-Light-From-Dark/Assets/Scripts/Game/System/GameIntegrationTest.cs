@@ -5,6 +5,7 @@ using Game.Emotion;
 using Game.Card;
 using Game.Config;
 using Game.Data;
+using Game.EyeClose;
 using System.Collections.Generic;
 
 namespace Game.System
@@ -283,7 +284,7 @@ namespace Game.System
             GUILayout.Label($"卧床: {playerState.IsInBed()}");
             GUILayout.Label($"闭眼: {playerState.IsEyesClosed()} (按C键切换)");
             string timeStatus = eyeCloseSystem.IsTimeAccelerated() ? "时间加速中" : "正常";
-            GUILayout.Label($"闭眼时长: {eyeCloseSystem.GetEyeCloseDuration():F1}秒 / {timeStatus}");
+            GUILayout.Label($"闭眼时长: {eyeCloseSystem.GetEyeCloseDuration():F1}秒 ({timeStatus})");
 
             GUILayout.EndArea();
         }
