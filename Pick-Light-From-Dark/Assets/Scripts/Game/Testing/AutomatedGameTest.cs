@@ -33,6 +33,47 @@ namespace Game.Testing
 
         void Start()
         {
+            // 在测试开始前，强制清理所有可能存在的旧实例
+            Debug.Log("[TEST] === 测试启动：清理所有旧实例 ===");
+
+            // 查找所有GameObject（包括DontDestroyOnLoad中的）
+            GameObject[] allObjects = GameObject.FindObjectsOfType<GameObject>(includeInactive: true);
+            int destroyedCount = 0;
+
+            foreach (GameObject obj in allObjects)
+            {
+                // 查找GameFlowController组件
+                GameFlowController flow = obj.GetComponent<GameFlowController>();
+                if (flow != null && obj != gameObject)
+                {
+                    Debug.Log($"[TEST]   销毁旧GameFlowController InstanceID:{flow.GetInstanceID()} from {obj.name}");
+                    DestroyImmediate(obj);
+                    destroyedCount++;
+                    continue;
+                }
+
+                // 查找EmotionSystem组件
+                EmotionSystem emotion = obj.GetComponent<EmotionSystem>();
+                if (emotion != null && obj != gameObject)
+                {
+                    Debug.Log($"[TEST]   销毁旧EmotionSystem InstanceID:{emotion.GetInstanceID()} from {obj.name}");
+                    DestroyImmediate(obj);
+                    destroyedCount++;
+                    continue;
+                }
+            }
+
+            Debug.Log($"[TEST] 清理完成，共销毁 {destroyedCount} 个旧实例");
+            Debug.Log("[TEST] === 开始自动化测试 ===");
+
+            // 等待一帧让销毁生效
+            StartCoroutine(DelayedTestStart());
+        }
+
+        IEnumerator DelayedTestStart()
+        {
+            yield return null; // 等待一帧让DestroyImmediate生效
+            yield return null; // 再等一帧确保完全清理
             StartCoroutine(RunAutomatedTests());
         }
 
@@ -76,34 +117,7 @@ namespace Game.Testing
         {
             Debug.Log("\n[测试1] 初始化系统...");
 
-            // 清理场景中所有旧的GameFlowController实例（防止场景预存实例干扰）
-            GameFlowController[] oldFlows = FindObjectsOfType<GameFlowController>();
-            if (oldFlows.Length > 0)
-            {
-                Debug.Log($"[TEST] 发现场景中有 {oldFlows.Length} 个旧的GameFlowController实例，正在清理...");
-                foreach (var oldFlow in oldFlows)
-                {
-                    Debug.Log($"[TEST]   删除旧实例 InstanceID:{oldFlow.GetInstanceID()}");
-                    DestroyImmediate(oldFlow.gameObject);
-                }
-                // 等待一帧让DestroyImmediate生效
-                yield return null;
-            }
-
-            // 清理场景中所有旧的EmotionSystem实例
-            EmotionSystem[] oldEmotions = FindObjectsOfType<EmotionSystem>();
-            if (oldEmotions.Length > 0)
-            {
-                Debug.Log($"[TEST] 发现场景中有 {oldEmotions.Length} 个旧的EmotionSystem实例，正在清理...");
-                foreach (var oldEmotion in oldEmotions)
-                {
-                    Debug.Log($"[TEST]   删除旧实例 InstanceID:{oldEmotion.GetInstanceID()}");
-                    DestroyImmediate(oldEmotion.gameObject);
-                }
-                yield return null;
-            }
-
-            // 现在获取系统实例（会自动创建新的单例）
+            // 获取系统实例（已经在Start()中清理了旧实例）
             gameFlow = GameFlowController.Instance;
             emotionSystem = EmotionSystem.Instance;
             playerState = PlayerState.Instance;
