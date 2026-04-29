@@ -1,0 +1,134 @@
+using UnityEngine;
+using Framework;
+using Game.Config;
+
+namespace Game.Emotion
+{
+    /// <summary>
+    /// 情绪值信息
+    /// </summary>
+    public struct EmotionInfo
+    {
+        public int panicValue;
+        public int exciteValue;
+        public int totalValue;
+        public int criticalValue;
+
+        public override string ToString()
+        {
+            return $"慌乱:{panicValue} 兴奋:{exciteValue} 总和:{totalValue} 临界:{criticalValue}";
+        }
+    }
+
+    /// <summary>
+    /// 情绪值系统
+    /// 管理玩家的慌乱值和兴奋值
+    /// </summary>
+    public class EmotionSystem : SingletonAutoMono<EmotionSystem>
+    {
+        [SerializeField] private int panicValue;
+        [SerializeField] private int exciteValue;
+
+        private int minPanic = 30, maxPanic = 100;
+        private int minExcite = 30, maxExcite = 100;
+        private int criticalValue;
+
+        /// <summary>
+        /// 初始化情绪值系统
+        /// </summary>
+        public void Initialize(LevelConfigSO levelConfig)
+        {
+            panicValue = levelConfig.initialPanic;
+            exciteValue = levelConfig.initialExcite;
+            criticalValue = levelConfig.criticalValue;
+
+            Debug.Log($"[EmotionSystem] 初始化 - 慌乱:{panicValue} 兴奋:{exciteValue} 临界:{criticalValue}");
+            NotifyEmotionChanged();
+        }
+
+        /// <summary>
+        /// 修改慌乱值
+        /// </summary>
+        public void ChangePanic(int delta)
+        {
+            int oldValue = panicValue;
+            panicValue = Mathf.Clamp(panicValue + delta, minPanic, maxPanic);
+            Debug.Log($"[EmotionSystem] 慌乱值变化: {oldValue} -> {panicValue} (delta:{delta})");
+            NotifyEmotionChanged();
+        }
+
+        /// <summary>
+        /// 修改兴奋值
+        /// </summary>
+        public void ChangeExcite(int delta)
+        {
+            int oldValue = exciteValue;
+            exciteValue = Mathf.Clamp(exciteValue + delta, minExcite, maxExcite);
+            Debug.Log($"[EmotionSystem] 兴奋值变化: {oldValue} -> {exciteValue} (delta:{delta})");
+            NotifyEmotionChanged();
+        }
+
+        /// <summary>
+        /// 检查是否超过临界值
+        /// </summary>
+        public bool IsCaughtByCriticalValue()
+        {
+            bool isCritical = (panicValue + exciteValue) >= criticalValue;
+            if (isCritical)
+            {
+                Debug.LogWarning($"[EmotionSystem] 情绪值超标！总和:{panicValue + exciteValue} >= 临界:{criticalValue}");
+            }
+            return isCritical;
+        }
+
+        /// <summary>
+        /// 获取当前情绪值信息
+        /// </summary>
+        public EmotionInfo GetEmotionInfo()
+        {
+            return new EmotionInfo
+            {
+                panicValue = this.panicValue,
+                exciteValue = this.exciteValue,
+                totalValue = this.panicValue + this.exciteValue,
+                criticalValue = this.criticalValue
+            };
+        }
+
+        /// <summary>
+        /// 获取情绪值总和
+        /// </summary>
+        public int GetTotalEmotion()
+        {
+            return panicValue + exciteValue;
+        }
+
+        private void NotifyEmotionChanged()
+        {
+            EmotionInfo info = GetEmotionInfo();
+            // 触发事件
+            Framework.EventCenter.EventCenter.Instance.EventTrigger(GameEvents.EmotionChanged, info);
+            Framework.EventCenter.EventCenter.Instance.EventTrigger(GameEvents.PanicChanged, panicValue);
+            Framework.EventCenter.EventCenter.Instance.EventTrigger(GameEvents.ExciteChanged, exciteValue);
+        }
+
+        /// <summary>
+        /// 闭眼时持续降低情绪值
+        /// </summary>
+        public void DecreaseEmotionWhileEyeClose(float deltaTime)
+        {
+            // 闭眼每秒降低一定数值
+            int decreasePerSecond = 5;
+            int decrease = Mathf.RoundToInt(decreasePerSecond * deltaTime);
+
+            if (panicValue > minPanic)
+            {
+                ChangePanic(-decrease);
+            }
+            if (exciteValue > minExcite)
+            {
+                ChangeExcite(-decrease);
+            }
+        }
+    }
+}
