@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Game.Data;
 using UnityEngine;
 
 namespace Game.Config
@@ -55,5 +56,8 @@ namespace Game.Config
 
         [Header("生命值")]
         public int maxLives = 2;
+
+        [Header("任务清单")]
+        public List<TaskGoal> taskGoals;
     }
 }

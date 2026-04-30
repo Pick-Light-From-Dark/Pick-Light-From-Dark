@@ -122,7 +122,7 @@ namespace Game.Card
             currentCard.isUsedSuccess = true;
 
             // 触发完成事件
-            EventCenter.Instance.EventTrigger(E_EventType.CardReadComplete, currentCard);
+            EventCenter.Instance.EventTrigger(E_EventType.CardReadComplete, currentCard.data.id);
 
             // 清除读条
             ClearReading();
