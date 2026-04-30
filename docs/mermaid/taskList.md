@@ -1,26 +1,5 @@
-```mermaid
-sequenceDiagram
-    participant P as 玩家
-    participant C as 卡牌实例
-    participant E as 游戏事件 (广播)
-    participant T as 任务管理器
-    participant G as 游戏流程控制器
 
-    P->>C: 拖动卡牌到槽位 (动作开始)
-    Note over C: 阅读持续时间... (等待)
-    C->>C: 阅读成功
-    C->>E: OnCardActionCompleted(卡牌ID)
-    E->>T: 通知订阅监听器
-    Note over T: 匹配卡牌ID与关卡任务
-    T->>T: 当前数量++
-    
-    rect rgb(240, 240, 240)
-        Note over T: 如果所有任务状态 == 已完成
-        T->>G: 请求关卡通关
-        G->>P: 显示胜利界面
-    end
-```
-
+# 任务系统类图
 ```mermaid
 classDiagram
     %% 定义卡牌基础配置数据
@@ -93,4 +72,27 @@ classDiagram
     任务管理器_TaskManager --> 任务目标_TaskGoal : 管理与计数
     任务管理器_TaskManager ..> 游戏事件中心_GameEvents : 监听广播
     卡牌实例_CardInstance ..> 游戏事件中心_GameEvents : 发送成功广播
+```
+# 任务系统序列图
+```mermaid
+sequenceDiagram
+    participant P as 玩家
+    participant C as 卡牌实例
+    participant E as 游戏事件 (广播)
+    participant T as 任务管理器
+    participant G as 游戏流程控制器
+
+    P->>C: 拖动卡牌到槽位 (动作开始)
+    Note over C: 阅读持续时间... (等待)
+    C->>C: 阅读成功
+    C->>E: OnCardActionCompleted(卡牌ID)
+    E->>T: 通知订阅监听器
+    Note over T: 匹配卡牌ID与关卡任务
+    T->>T: 当前数量++
+    
+    rect rgb(240, 240, 240)
+        Note over T: 如果所有任务状态 == 已完成
+        T->>G: 请求关卡通关
+        G->>P: 显示胜利界面
+    end
 ```

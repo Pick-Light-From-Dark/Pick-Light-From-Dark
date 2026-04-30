@@ -9,7 +9,7 @@
 - [x] 确认需求 figma、文字+后端、Lua
 - [x] CardData.cs、LevelConfigSO.cs
 - [ ] 任务、卡牌的系统？  实现
-  - [ ] 任务和卡牌关系？
+  - [x] 任务和卡牌关系？
     - [ ] plan设计
   - [ ] demo实现
 - [ ] 情绪值系统、闭眼系统
