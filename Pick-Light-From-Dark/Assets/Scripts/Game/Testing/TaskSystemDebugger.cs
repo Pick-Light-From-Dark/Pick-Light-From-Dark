@@ -1,4 +1,6 @@
 using UnityEngine;
+using Game.Config;
+using Game.Flow;
 
 namespace Game.Testing
 {
@@ -11,8 +13,36 @@ namespace Game.Testing
         [Tooltip("当前选中的卡牌 ID")]
         public int currentCardID = 1001;
 
+        [Header("关卡配置")]
+        [Tooltip("关卡配置资源（用于初始化）")]
+        public LevelConfigSO levelConfig;
+
         void Update()
         {
+            // I: 初始化游戏（触发 GameFlowController.Initialize）
+            if (Input.GetKeyDown(KeyCode.I))
+            {
+                if (levelConfig != null)
+                {
+                    GameFlowController.Instance.Initialize(levelConfig);
+                    Debug.Log($"[TaskSystemDebugger] 初始化游戏，关卡: {levelConfig.levelName} (ID={levelConfig.levelId})");
+                }
+                else
+                {
+                    // 如果没有在 Inspector 中配置，尝试加载默认测试配置
+                    var testConfig = Resources.Load<LevelConfigSO>("TestData/TestLevelConfig");
+                    if (testConfig != null)
+                    {
+                        GameFlowController.Instance.Initialize(testConfig);
+                        Debug.Log($"[TaskSystemDebugger] 初始化游戏（使用默认测试配置），关卡: {testConfig.levelName} (ID={testConfig.levelId})");
+                    }
+                    else
+                    {
+                        Debug.LogError("[TaskSystemDebugger] 未找到关卡配置，请在 Inspector 中配置 levelConfig 或确保 TestData/TestLevelConfig.asset 存在");
+                    }
+                }
+            }
+
             // Space: 触发 CardReadComplete 事件
             if (Input.GetKeyDown(KeyCode.Space))
             {
