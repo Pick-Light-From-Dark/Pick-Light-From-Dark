@@ -1,5 +1,5 @@
-
 # 任务系统类图
+
 ```mermaid
 classDiagram
     %% 定义卡牌基础配置数据
@@ -73,6 +73,7 @@ classDiagram
     任务管理器_TaskManager ..> 游戏事件中心_GameEvents : 监听广播
     卡牌实例_CardInstance ..> 游戏事件中心_GameEvents : 发送成功广播
 ```
+
 # 任务系统时序图（前端接入参考）
 
 ## 1. 初始化流程
@@ -186,11 +187,11 @@ sequenceDiagram
     rect rgb(240, 255, 240)
         Note over UI: --- 建议补充的 Public API ---
 
-        GetActiveGoals() → IReadOnlyList<TaskGoal><br/>&nbsp;&nbsp;用途：UI 渲染任务列表
+        GetActiveGoals() → IReadOnlyList<TaskGoal><br/>  用途：UI 渲染任务列表
 
-        GetGoalByCardId(cardId) → TaskGoal<br/>&nbsp;&nbsp;用途：UI 高亮当前进行中的任务
+        GetGoalByCardId(cardId) → TaskGoal<br/>  用途：UI 高亮当前进行中的任务
 
-        GetOverallProgress() → (completed, total)<br/>&nbsp;&nbsp;用途：UI 显示整体进度条
+        GetOverallProgress() → (completed, total)<br/>  用途：UI 显示整体进度条
     end
 ```
 
