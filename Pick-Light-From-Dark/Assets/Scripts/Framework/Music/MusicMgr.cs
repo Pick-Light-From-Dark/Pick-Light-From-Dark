@@ -48,11 +48,9 @@ public class MusicMgr : BaseManager<MusicMgr>
     }
 
 
-    //���ű�������
-    public void PlayBKMusic(string name)
+    //���ű������� - ֱ�����ð汾
+    public void PlayBKMusic(AudioClip clip)
     {
-        //��̬�������ű������ֵ���� ���� ����������Ƴ� 
-        //��֤���������ڹ�����ʱҲ�ܲ���
         if(bkMusic == null)
         {
             GameObject obj = new GameObject();
@@ -61,13 +59,18 @@ public class MusicMgr : BaseManager<MusicMgr>
             bkMusic = obj.AddComponent<AudioSource>();
         }
 
-        //���ݴ���ı����������� �����ű�������
+        bkMusic.clip = clip;
+        bkMusic.loop = true;
+        bkMusic.volume = bkMusicValue;
+        bkMusic.Play();
+    }
+
+    //���ű������� - ���붯��ذ汾
+    public void PlayBKMusic(string name)
+    {
         ResMgr.Instance.LoadAsync<AudioClip>("Music/" + name, (clip) =>
         {
-            bkMusic.clip = clip;
-            bkMusic.loop = true;
-            bkMusic.volume = bkMusicValue;
-            bkMusic.Play();
+            PlayBKMusic(clip);
         });
     }
 
