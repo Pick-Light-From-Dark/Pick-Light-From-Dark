@@ -18,7 +18,7 @@ namespace Game.Backend
         private void Start()
         {
             EventCenter.Instance.AddEventListener<int>(E_EventType.CardReadComplete, OnCardReadComplete);
-            EventCenter.Instance.AddEventListener(E_EventType.LevelStart, OnLevelStart);
+            EventCenter.Instance.AddEventListener<int>(E_EventType.LevelStart, OnLevelStart);
             EventCenter.Instance.AddEventListener(E_EventType.GameWin, OnGameWin);
             EventCenter.Instance.AddEventListener<string>(E_EventType.GameLose, OnGameLose);
         }
@@ -26,7 +26,7 @@ namespace Game.Backend
         private void OnDestroy()
         {
             EventCenter.Instance.RemoveEventListener<int>(E_EventType.CardReadComplete, OnCardReadComplete);
-            EventCenter.Instance.RemoveEventListener(E_EventType.LevelStart, OnLevelStart);
+            EventCenter.Instance.RemoveEventListener<int>(E_EventType.LevelStart, OnLevelStart);
             EventCenter.Instance.RemoveEventListener(E_EventType.GameWin, OnGameWin);
             EventCenter.Instance.RemoveEventListener<string>(E_EventType.GameLose, OnGameLose);
         }
@@ -58,11 +58,9 @@ namespace Game.Backend
             Debug.Log($"[LevelRecordManager] 关卡结束 isWin={isWin} 耗时={_currentRecord.timeUsed:F1}s");
         }
 
-        private void OnLevelStart()
+        private void OnLevelStart(int levelId)
         {
-            var config = UnityEngine.Resources.Load<Game.Config.LevelConfigSO>("LevelConfigs/Level_1");
-            if (config != null)
-                StartRecording(config.levelId);
+            StartRecording(levelId);
         }
 
         private void OnCardReadComplete(int cardId)

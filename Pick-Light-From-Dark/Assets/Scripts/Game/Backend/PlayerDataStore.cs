@@ -15,8 +15,23 @@ namespace Game.Backend
 
         private void Awake()
         {
-            _filePath = Path.Combine(Application.persistentDataPath, "player_data.json");
-            Debug.Log($"[PlayerDataStore] 数据文件路径: {_filePath}");
+            try
+            {
+                _filePath = Path.Combine(Application.persistentDataPath, "player_data.json");
+                Debug.Log($"[PlayerDataStore] 数据文件路径: {_filePath}");
+
+                // 验证路径是否有效
+                var directory = Path.GetDirectoryName(_filePath);
+                if (!Directory.Exists(directory))
+                {
+                    Directory.CreateDirectory(directory);
+                    Debug.LogWarning($"[PlayerDataStore] 创建目录: {directory}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[PlayerDataStore] 初始化失败: {ex.Message}\n堆栈: {ex.StackTrace}");
+            }
         }
 
         /// <summary>
@@ -96,11 +111,29 @@ namespace Game.Backend
             try
             {
                 string json = JsonUtility.ToJson(data, true);
+                Debug.Log($"[PlayerDataStore] 准备写入文件，长度: {json.Length} 字符");
+
+                // 验证目录可写
+                var directory = Path.GetDirectoryName(_filePath);
+                if (directory != null && !Directory.Exists(directory))
+                {
+                    Directory.CreateDirectory(directory);
+                }
+
                 File.WriteAllText(_filePath, json);
+                Debug.Log($"[PlayerDataStore] 文件写入成功: {_filePath}");
+            }
+            catch (System.UnauthorizedAccessException ex)
+            {
+                Debug.LogError($"[PlayerDataStore] 权限不足，无法写入文件: {_filePath}\n错误: {ex.Message}");
+            }
+            catch (System.IO.DirectoryNotFoundException ex)
+            {
+                Debug.LogError($"[PlayerDataStore] 目录不存在: {_filePath}\n错误: {ex.Message}");
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[PlayerDataStore] 写入文件失败: {ex.Message}");
+                Debug.LogError($"[PlayerDataStore] 写入文件失败: {_filePath}\n错误类型: {ex.GetType().Name}\n错误信息: {ex.Message}\n堆栈: {ex.StackTrace}");
             }
         }
     }
