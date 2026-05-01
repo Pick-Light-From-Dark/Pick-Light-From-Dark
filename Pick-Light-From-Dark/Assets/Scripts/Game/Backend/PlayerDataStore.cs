@@ -123,11 +123,11 @@ namespace Game.Backend
                 File.WriteAllText(_filePath, json);
                 Debug.Log($"[PlayerDataStore] 文件写入成功: {_filePath}");
             }
-            catch (System.UnauthorizedAccessException ex)
+            catch (global::System.UnauthorizedAccessException ex)
             {
                 Debug.LogError($"[PlayerDataStore] 权限不足，无法写入文件: {_filePath}\n错误: {ex.Message}");
             }
-            catch (System.IO.DirectoryNotFoundException ex)
+            catch (global::System.IO.DirectoryNotFoundException ex)
             {
                 Debug.LogError($"[PlayerDataStore] 目录不存在: {_filePath}\n错误: {ex.Message}");
             }
