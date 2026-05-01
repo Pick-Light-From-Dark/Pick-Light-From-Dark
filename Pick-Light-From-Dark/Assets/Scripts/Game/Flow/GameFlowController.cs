@@ -1,6 +1,7 @@
 using UnityEngine;
 using Game.Config;
 using Game.Emotion;
+using Game.System;
 
 namespace Game.Flow
 {
@@ -40,6 +41,9 @@ namespace Game.Flow
 
             // 初始化情绪值系统
             emotionSystem.Initialize(levelConfig);
+
+            // 初始化任务管理器
+            TaskManager.Instance.Initialize(levelConfig);
 
             // 初始化时间
             remainingTime = levelConfig.timeLimit;
