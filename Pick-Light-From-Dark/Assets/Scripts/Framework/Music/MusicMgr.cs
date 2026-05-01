@@ -4,25 +4,25 @@ using UnityEngine;
 using UnityEngine.Events;
 
 /// <summary>
-/// ������Ч������
+/// 音乐音效管理器
 /// </summary>
 public class MusicMgr : BaseManager<MusicMgr>
 {
-    //�������ֲ������
+    //播放背景音乐的播放器
     private AudioSource bkMusic = null;
 
-    //�������ִ�С
+    //背景音乐大小
     private float bkMusicValue = 0.1f;
 
-    //�������ڲ��ŵ���Ч
+    //用于存在正在播放的音效
     private List<AudioSource> soundList = new List<AudioSource>();
-    //��Ч������С
+    //音效大小
     private float soundValue = 0.1f;
-    //��Ч�Ƿ��ڲ���
+    //音效是否在播放
     private bool soundIsPlay = true;
 
 
-    private MusicMgr() 
+    private MusicMgr()
     {
         MonoMgr.Instance.AddFixedUpdateListener(Update);
     }
@@ -33,13 +33,13 @@ public class MusicMgr : BaseManager<MusicMgr>
         if (!soundIsPlay)
             return;
 
-        //��ͣ�ı������� �����û����Ч������� �������� ���Ƴ�������
-        //Ϊ�˱���߱������Ƴ������� ���ǲ����������
+        //暂停的不处理 对象池那边 如果没有音效正在播放 就会回收到对象池中
+        //为了避免被对象池移除 我们不做处理
         for (int i = soundList.Count - 1; i >= 0; --i)
         {
             if(!soundList[i].isPlaying)
             {
-                //��Ч��������� ����ʹ���� ���ǽ������Ч��Ƭ�ÿ�
+                //音效播放完毕 如果当前没有使用 我们就把音效片段置空
                 soundList[i].clip = null;
                 PoolMgr.Instance.PushObj(soundList[i].gameObject);
                 soundList.RemoveAt(i);
@@ -48,9 +48,10 @@ public class MusicMgr : BaseManager<MusicMgr>
     }
 
 
-    //���ű������� - ֱ�����ð汾
+    //播放背景音乐 - 直接引用版本
     public void PlayBKMusic(AudioClip clip)
     {
+        //动态构造一个背景音乐播放器对象 保证它过场景时不销毁
         if(bkMusic == null)
         {
             GameObject obj = new GameObject();
@@ -65,7 +66,7 @@ public class MusicMgr : BaseManager<MusicMgr>
         bkMusic.Play();
     }
 
-    //���ű������� - ���붯��ذ汾
+    //播放背景音乐 - Resources加载版本
     public void PlayBKMusic(string name)
     {
         ResMgr.Instance.LoadAsync<AudioClip>("Music/" + name, (clip) =>
@@ -74,7 +75,7 @@ public class MusicMgr : BaseManager<MusicMgr>
         });
     }
 
-    //ֹͣ��������
+    //停止背景音乐
     public void StopBKMusic()
     {
         if (bkMusic == null)
@@ -82,7 +83,7 @@ public class MusicMgr : BaseManager<MusicMgr>
         bkMusic.Stop();
     }
 
-    //��ͣ��������
+    //暂停背景音乐
     public void PauseBKMusic()
     {
         if (bkMusic == null)
@@ -90,7 +91,7 @@ public class MusicMgr : BaseManager<MusicMgr>
         bkMusic.Pause();
     }
 
-    //���ñ������ִ�С
+    //设置背景音乐大小
     public void ChangeBKMusicValue(float v)
     {
         bkMusicValue = v;
@@ -100,57 +101,58 @@ public class MusicMgr : BaseManager<MusicMgr>
     }
 
     /// <summary>
-    /// ������Ч
+    /// 播放音效 - 直接引用版本
     /// </summary>
-    /// <param name="name">��Ч����</param>
-    /// <param name="isLoop">�Ƿ�ѭ��</param>
-    /// <param name="isSync">�Ƿ�ͬ������</param>
-    /// <param name="callBack">���ؽ�����Ļص�</param>
-    public void PlaySound(string name, bool isLoop = false, bool isSync = false, UnityAction<AudioSource> callBack = null)
+    public void PlaySound(AudioClip clip, bool isLoop = false, UnityAction<AudioSource> callBack = null)
     {
-        //������Ч��Դ ���в���
+        //从对象池获取音效源 得到对应组件
+        AudioSource source = PoolMgr.Instance.GetObj("Sound/soundObj").GetComponent<AudioSource>();
+        //获取到音效源之前 使用的 停止播放
+        source.Stop();
+
+        source.clip = clip;
+        source.loop = isLoop;
+        source.volume = soundValue;
+        source.Play();
+
+        if(!soundList.Contains(source))
+            soundList.Add(source);
+
+        callBack?.Invoke(source);
+    }
+
+    /// <summary>
+    /// 播放音效 - Resources加载版本
+    /// </summary>
+    public void PlaySound(string name, bool isLoop = false, UnityAction<AudioSource> callBack = null)
+    {
         ResMgr.Instance.LoadAsync<AudioClip>("Sound/" + name, (clip) =>
         {
-            //�ӻ������ȡ����Ч����õ���Ӧ���
-            AudioSource source = PoolMgr.Instance.GetObj("Sound/soundObj").GetComponent<AudioSource>();
-            //���ȡ��������Ч��֮ǰ����ʹ�õ� ������ֹͣ��
-            source.Stop();
-
-            source.clip = clip;
-            source.loop = isLoop;
-            source.volume = soundValue;
-            source.Play();
-            //�洢���� ���ڼ�¼ ����֮���ж��Ƿ�ֹͣ
-            //���ڴӻ������ȡ������ �п���ȡ��һ��֮ǰ����ʹ�õģ�������ʱ��
-            //����������Ҫ�ж� ������û�м�¼��ȥ��¼ ��Ҫ�ظ�ȥ���Ӽ���
-            if(!soundList.Contains(source))
-                soundList.Add(source);
-            //���ݸ��ⲿʹ��
-            callBack?.Invoke(source);
+            PlaySound(clip, isLoop, callBack);
         });
     }
 
     /// <summary>
-    /// ֹͣ������Ч
+    /// 停止音效
     /// </summary>
-    /// <param name="source">��Ч�������</param>
+    /// <param name="source">音效源组件</param>
     public void StopSound(AudioSource source)
     {
         if(soundList.Contains(source))
         {
-            //ֹͣ����
+            //停止播放
             source.Stop();
-            //���������Ƴ�
+            //从列表移除
             soundList.Remove(source);
-            //������ �����Ƭ ����ռ��
+            //把音效片段置空 释放内存
             source.clip = null;
-            //���뻺���
+            //回收到对象池
             PoolMgr.Instance.PushObj(source.gameObject);
         }
     }
 
     /// <summary>
-    /// �ı���Ч��С
+    /// 改变音效大小
     /// </summary>
     /// <param name="v"></param>
     public void ChangeSoundValue(float v)
@@ -163,9 +165,9 @@ public class MusicMgr : BaseManager<MusicMgr>
     }
 
     /// <summary>
-    /// �������Ż�����ͣ������Ч
+    /// 暂停或恢复所有音效
     /// </summary>
-    /// <param name="isPlay">�Ƿ��Ǽ������� trueΪ���� falseΪ��ͣ</param>
+    /// <param name="isPlay">是否是继续播放 true为继续 false为暂停</param>
     public void PlayOrPauseSound(bool isPlay)
     {
         if(isPlay)
@@ -183,11 +185,11 @@ public class MusicMgr : BaseManager<MusicMgr>
     }
 
     /// <summary>
-    /// �����Ч��ؼ�¼ ������ʱ����ջ����֮ǰȥ������
-    /// ��Ҫ������˵���飡����
-    /// ������ʱ����ջ����֮ǰȥ������
-    /// ������ʱ����ջ����֮ǰȥ������
-    /// ������ʱ����ջ����֮ǰȥ������
+    /// 音效清理记录，不用时记得回收回去！
+    /// 重要！如果你在测试时记得在 OnDestory 时把它回收回去
+    /// 空转时会把它回收回去
+    /// 空转时会把它回收回去
+    /// 空转时会把它回收回去
     /// </summary>
     public void ClearSound()
     {
@@ -197,7 +199,7 @@ public class MusicMgr : BaseManager<MusicMgr>
             soundList[i].clip = null;
             PoolMgr.Instance.PushObj(soundList[i].gameObject);
         }
-        //�����Ч�б�
+        //清空音效列表
         soundList.Clear();
     }
 }
