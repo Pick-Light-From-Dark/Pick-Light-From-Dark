@@ -315,4 +315,51 @@ sequenceDiagram
     GameFlow ->> EventC: EventTrigger(LevelStart, levelId)
 ```
 
-> ⚠️ **注意**：`TaskManager` 无独立 `Reset()` 方法。重开依赖场景重建（重新加载关卡场景），所有 Singleton 实例重建并重新执行 `Initialize()`。若需在同一场景内重开（不切换场景），需在 `GameFlowController.Initialize` 中显式调用 `TaskManager.Initialize` 并确保 `_activeGoals` 被清空重建。
+> ⚠️ **注意**：`TaskManager` 无独立 `Reset()` 方法。重开依赖场景重建（重新加载关卡场景），所有 Singleton 实例重建并重新执行 `Initialize()`。若需在同一场景内重开（不切换场景），需在 `GameFlowController.Initialize` 中显式调用 `TaskManager.Initialize` 并确保 `_activeGoals` 被清空重建。```mermaid
+classDiagram
+    class EmotionSystem {
+        %% 核心数值属性
+        -int panicValue
+        -int exciteValue
+        -int minEmotion = 30
+        -int maxEmotion = 100
+        
+        %% 计时器属性
+        -float checkInterval = 0.5f
+        -float currentCheckTimer
+        
+        %% 公共接口方法
+        +AddPanic(int amount)
+        +AddExcite(int amount)
+        +GetTotalEmotion() int
+        
+        %% 内部处理方法
+        -ClampValues()
+        -CheckEmotionState()
+    }
+
+    class EyeCloseSystem {
+        %% 核心状态属性
+        -bool isClosed
+        
+        %% 闭眼数值配置属性
+        -float panicDecreaseRate = 1.0f
+        -float closeDurationThreshold
+        -float timeAccelerateMultiplier
+        
+        %% 计时器属性
+        -float currentCloseTime
+        
+        %% 公共接口方法
+        +ToggleEyeState()
+        +GetIsClosed() bool
+        
+        %% 内部处理方法
+        -Update()
+        -DecreasePanic()
+        -HandleTimeAcceleration()
+    }
+
+    %% 关系连线
+    EmotionSystem <-- EyeCloseSystem : 依赖/通信 (闭眼时调用降低慌乱值)
+```
