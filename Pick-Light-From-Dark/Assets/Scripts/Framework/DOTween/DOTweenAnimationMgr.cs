@@ -1,4 +1,5 @@
 using UnityEngine;
+using DG.Tweening;
 using System.Collections;
 
 namespace Game.DOTween
@@ -28,8 +29,7 @@ namespace Game.DOTween
             canvasGroup.alpha = 0f;
             canvasGroup.gameObject.SetActive(true);
 
-            // TODO: 替换为 DOTween.DOFade(canvasGroup, 1f, uiFadeDuration)
-            StartCoroutine(FadeInCoroutine(canvasGroup, 1f, uiFadeDuration));
+            canvasGroup.DOFade(1f, uiFadeDuration).SetEase(Ease.OutQuad);
         }
 
         /// <summary>
@@ -39,8 +39,9 @@ namespace Game.DOTween
         {
             if (canvasGroup == null) return;
 
-            // TODO: 替换为 DOTween.DOFade(canvasGroup, 0f, uiFadeDuration)
-            StartCoroutine(FadeOutCoroutine(canvasGroup, 0f, uiFadeDuration));
+            canvasGroup.DOFade(0f, uiFadeDuration)
+                .SetEase(Ease.InQuad)
+                .OnComplete(() => canvasGroup.gameObject.SetActive(false));
         }
 
         /// <summary>
@@ -50,8 +51,7 @@ namespace Game.DOTween
         {
             if (card == null) return;
 
-            // TODO: 替换为 DOTween.DOMove(card, targetPos, cardDealDuration).SetEase(Ease.OutQuad)
-            StartCoroutine(MoveToCoroutine(card, targetPos, cardDealDuration));
+            card.DOMove(targetPos, cardDealDuration).SetEase(Ease.OutQuad);
         }
 
         /// <summary>
@@ -59,7 +59,19 @@ namespace Game.DOTween
         /// </summary>
         public void EyeCloseFadeAnimation(Renderer renderer, bool closing)
         {
-            // TODO: 替换为 DOTween.DOColor 和 DOFade 实现渐变
+            if (renderer == null) return;
+
+            if (closing)
+            {
+                // 闭眼渐变
+                renderer.material.DOFade(0f, eyeCloseFadeDuration).SetEase(Ease.InQuad);
+            }
+            else
+            {
+                // 睁眼渐变
+                renderer.material.DOFade(1f, eyeCloseFadeDuration).SetEase(Ease.OutQuad);
+            }
+
             Debug.Log($"[DOTweenAnimationMgr] 闭眼渐变动画: {(closing ? "闭上" : "睁开")}");
         }
 
@@ -69,55 +81,8 @@ namespace Game.DOTween
         public void TimeAccelerateFeedback(bool accelerated)
         {
             // TODO: 实现时间加速时的视觉扭曲效果
+            // 例如：屏幕边缘暗角、时间扭曲粒子等
             Debug.Log($"[DOTweenAnimationMgr] 时间加速反馈: {(accelerated ? "开启" : "关闭")}");
-        }
-
-        // 临时的 Coroutine 实现，待 DOTween 安装后替换
-        private IEnumerator FadeInCoroutine(CanvasGroup canvasGroup, float targetAlpha, float duration)
-        {
-            float timer = 0f;
-            float startAlpha = canvasGroup.alpha;
-
-            while (timer < duration)
-            {
-                timer += Time.deltaTime;
-                canvasGroup.alpha = Mathf.Lerp(startAlpha, targetAlpha, timer / duration);
-                yield return null;
-            }
-
-            canvasGroup.alpha = targetAlpha;
-        }
-
-        private IEnumerator FadeOutCoroutine(CanvasGroup canvasGroup, float targetAlpha, float duration)
-        {
-            float timer = 0f;
-            float startAlpha = canvasGroup.alpha;
-
-            while (timer < duration)
-            {
-                timer += Time.deltaTime;
-                canvasGroup.alpha = Mathf.Lerp(startAlpha, targetAlpha, timer / duration);
-                yield return null;
-            }
-
-            canvasGroup.alpha = targetAlpha;
-            canvasGroup.gameObject.SetActive(false);
-        }
-
-        private IEnumerator MoveToCoroutine<Transform>(Transform obj, Vector3 targetPos, float duration)
-        {
-            float timer = 0f;
-            Vector3 startPos = obj.position;
-
-            while (timer < duration)
-            {
-                timer += Time.deltaTime;
-                float t = timer / duration;
-                obj.position = Vector3.Lerp(startPos, targetPos, t);
-                yield return null;
-            }
-
-            obj.position = targetPos;
         }
     }
 }
