@@ -29,7 +29,6 @@ namespace Game.Testing
         private EyeCloseSystem eyeCloseSystem;
 
         private bool isTesting = false;
-        private int currentTestStep = 0;
 
         void Start()
         {
