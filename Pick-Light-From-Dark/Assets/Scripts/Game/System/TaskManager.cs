@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Game.Config;
 using Game.Data;
 using UnityEngine;
@@ -48,10 +49,13 @@ namespace Game.System
                 if (goal.targetCardId == cardId && goal.state == TaskState.InProgress)
                 {
                     goal.currentCount++;
-                    if (goal.CheckCompleted())
+                    var wasCompleted = goal.CheckCompleted();
+                    if (wasCompleted)
                     {
                         goal.state = TaskState.Completed;
+                        EventCenter.Instance.EventTrigger(E_EventType.TaskGoalCompleted, goal.targetCardId);
                     }
+                    EventCenter.Instance.EventTrigger(E_EventType.TaskProgressChanged, cardId);
                     break;
                 }
             }
@@ -71,6 +75,22 @@ namespace Game.System
                     return;
             }
             EventCenter.Instance.EventTrigger(E_EventType.LevelComplete);
+        }
+
+        public IReadOnlyList<TaskGoal> GetActiveGoals()
+        {
+            return _activeGoals.AsReadOnly();
+        }
+
+        public TaskGoal GetGoalByCardId(int cardId)
+        {
+            return _activeGoals.Find(g => g.targetCardId == cardId && g.state != TaskState.Completed);
+        }
+
+        public (int completed, int total) GetOverallProgress()
+        {
+            int completed = _activeGoals.Count(g => g.state == TaskState.Completed);
+            return (completed, _activeGoals.Count);
         }
     }
 }

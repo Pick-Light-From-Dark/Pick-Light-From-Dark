@@ -87,4 +87,7 @@ public enum E_EventType
     PlayCardCompleteSound,
     PlayCaughtSound,
     PlayEyeCloseSound,
+
+    TaskProgressChanged,
+    TaskGoalCompleted,
 }
