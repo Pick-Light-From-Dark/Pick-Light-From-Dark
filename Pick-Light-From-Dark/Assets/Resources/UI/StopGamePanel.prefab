@@ -601,6 +601,7 @@ GameObject:
   - component: {fileID: 689070137544916438}
   - component: {fileID: 508067559805191147}
   - component: {fileID: 8179249696111711400}
+  - component: {fileID: 7152153898958506487}
   m_Layer: 5
   m_Name: StopGamePanel
   m_TagString: Untagged
@@ -666,6 +667,18 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &7152153898958506487
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4017962467945429817}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8e3d352b86d86c141aea9dad0cce68e5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &4244400554225801303
 GameObject:
   m_ObjectHideFlags: 0

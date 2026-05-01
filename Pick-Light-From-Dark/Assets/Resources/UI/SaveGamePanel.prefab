@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 136147235198368994}
   - component: {fileID: 4770337778853828840}
   m_Layer: 5
-  m_Name: SaveGameBtn
+  m_Name: SaveGameBtn1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -133,7 +133,7 @@ GameObject:
   - component: {fileID: 6200458305574340866}
   - component: {fileID: 8174694443116319396}
   m_Layer: 5
-  m_Name: SaveGameBtn (3)
+  m_Name: SaveGameBtn4
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -251,6 +251,7 @@ GameObject:
   - component: {fileID: 2743119794138201597}
   - component: {fileID: 8648418027041355561}
   - component: {fileID: 8718554646847836533}
+  - component: {fileID: 3956897216583009955}
   m_Layer: 5
   m_Name: SaveGamePanel
   m_TagString: Untagged
@@ -321,6 +322,18 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &3956897216583009955
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4741728784937756441}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f51bb10c5352cf0469eccb3b05b10f4b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &4826833199782898219
 GameObject:
   m_ObjectHideFlags: 0
@@ -334,7 +347,7 @@ GameObject:
   - component: {fileID: 8928187686335757159}
   - component: {fileID: 8518727431075433571}
   m_Layer: 5
-  m_Name: SaveGameBtn (2)
+  m_Name: SaveGameBtn3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -529,7 +542,7 @@ GameObject:
   - component: {fileID: 5178840054124734387}
   - component: {fileID: 8808227601671696565}
   m_Layer: 5
-  m_Name: SaveGameBtn (1)
+  m_Name: SaveGameBtn2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
