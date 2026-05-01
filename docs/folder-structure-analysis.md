@@ -1,213 +1,149 @@
-# 项目文件夹结构分析报告
+# 项目文件夹结构说明
 
-## 🔴 严重问题
-
-### 1. 嵌套重复的 `Assets/Assets/` 文件夹
-
-**问题**:
-```
-Assets/
-└── Assets/          ❌ 重复！
-    ├── Raw and SpriteSheets/
-    ├── Scenes/
-    └── UI Elements/
-```
-
-**原因**: Oxy 的分支创建了 `Assets/Assets/` 结构
-
-**建议**: 移动到正确位置
-```
-Assets/
-├── RawAssets/       (原 Assets/Assets/Raw and SpriteSheets)
-├── _Scenes_UI/      (原 Assets/Assets/Scenes - UI 测试场景)
-└── UIElements/      (原 Assets/Assets/UI Elements)
-```
-
----
-
-### 2. 编辑器工具混在项目资源中
-
-**问题**:
-```
-Assets/
-└── AssetBundles-Browser-master/  ❌ 不应该在这里
-```
-
-**建议**: 移到专门的编辑器工具文件夹
-```
-Assets/
-└── _EditorTools/
-    └── AssetBundlesBrowser/
-```
-
----
-
-## 🟡 中等问题
-
-### 3. System 文件夹与命名空间不一致
-
-**问题**:
-```
-Scripts/Game/System/TaskManager.cs    ❌ 文件夹是 System
-namespace Game.Task                   ✅ 命名空间是 Task
-```
-
-**建议**: 重命名文件夹
-```
-Scripts/Game/System/  →  Scripts/Game/Task/
-```
-
----
-
-### 4. 场景文件分散
-
-**当前分布**:
-```
-Assets/
-├── Scenes/
-│   ├── GameScene.unity       ✅ 主游戏场景
-│   ├── OneClickTest.unity    ⚠️ 测试场景
-│   └── SampleScene.unity     ⚠️ Unity 默认场景
-├── amiao.unity               ⚠️ 在根目录？应该移到 Scenes/
-└── Assets/Scenes/            ⚠️ 重复的 Scenes 文件夹
-```
-
-**建议**: 统一场景管理
-```
-Assets/
-└── Scenes/
-    ├── _Active/
-    │   └── GameScene.unity
-    ├── _Tests/
-    │   ├── OneClickTest.unity
-    │   └── amiao.unity
-    └── _Archive/
-        └── SampleScene.unity
-```
-
----
-
-## 🟢 轻微问题
-
-### 5. 缺少文档文件夹
-
-**问题**: 项目文档分散在根目录
-```
-项目根/
-├── amiao TODO.md       ⚠️ 应该统一管理
-└── docs/               ✅ 已有，但内容可以更丰富
-```
-
-**建议**:
-```
-项目根/
-├── README.md           (项目说明)
-├── docs/
-│   ├── design/         (设计文档)
-│   ├── api/            (API 文档)
-│   ├── integration/    (集成文档)
-│   └── plans/          (施工计划)
-└── .github/
-    └── wiki/           (GitHub Wiki)
-```
-
----
-
-### 6. Sprites 文件夹结构
-
-**当前**:
-```
-Sprites/
-└── Characters/
-    └── LuYing/
-        ├── Blink_01~05.png
-        └── Eff_Sweat.png
-```
-
-**建议**: 按功能分类
-```
-Sprites/
-├── Characters/
-│   ├── LuYing/
-│   │   ├── Idle/
-│   │   ├── Blink/
-│   │   └── Effects/
-│   └── [其他角色]
-├── UI/
-│   ├── Icons/
-│   ├── Buttons/
-│   └── Panels/
-└── Effects/
-```
-
----
-
-## ✅ 推荐的标准文件夹结构
+## 📁 当前结构（2026-05-01）
 
 ```
 Pick-Light-From-Dark/
 ├── Assets/
-│   ├── _Animation/              (动画 - 下划线表示系统资源)
-│   ├── _Audio/                  (音频)
-│   ├── _EditorTools/            (编辑器工具)
-│   │   └── AssetBundlesBrowser/
-│   ├── _Materials/              (材质)
-│   ├── _Prefabs/                (预制体)
-│   │   ├── UI/
-│   │   ├── Cards/
-│   │   └── Characters/
-│   ├── _Scenes/                 (场景)
-│   │   ├── _Active/             (当前使用的)
-│   │   ├── _Tests/              (测试场景)
-│   │   └── _Archive/            (归档)
-│   ├── _Scripts/                (脚本)
-│   │   ├── Framework/           (框架代码)
-│   │   ├── Game/                (游戏逻辑)
-│   │   │   ├── AI/
-│   │   │   ├── Card/
-│   │   │   ├── Config/
-│   │   │   ├── Data/
-│   │   │   ├── Emotion/
-│   │   │   ├── Flow/
-│   │   │   └── Task/            (原 System)
-│   │   ├── UI/
-│   │   └── Editor/
-│   ├── _Sprites/                (图片)
-│   │   ├── Characters/
-│   │   ├── UI/
-│   │   └── Effects/
-│   ├── Resources/               (运行时加载的资源)
-│   │   ├── Card/
-│   │   ├── Font/
-│   │   ├── Sound/
-│   │   ├── TestData/
-│   │   └── UI/
-│   └── StreamingAssets/         (流式资源)
-├── docs/                        (项目文档)
-├── .github/                     (GitHub 配置)
-├── ProjectSettings/             (Unity 项目设置)
-└── README.md                    (项目说明)
-
-说明：
-- 下划线前缀 (_) 表示系统/核心文件夹，排序靠前
-- camelCase 表示功能文件夹
-- 大写开头表示公开资源
+│   ├── Art/                          ← 团队原创素材
+│   │   ├── Animations/               (动画)
+│   │   ├── Characters/               (角色精灵图)
+│   │   ├── UI/                       (UI素材)
+│   │   └── Effects/                  (特效素材)
+│   ├── Audio/                        ← 音频素材
+│   │   ├── Music/                    (背景音乐)
+│   │   └── SFX/                      (音效)
+│   ├── Resources/                    ← 运行时动态加载
+│   │   ├── Card/                     (卡牌数据)
+│   │   ├── Font/                     (字体)
+│   │   ├── Sound/                    (音效源预制体)
+│   │   ├── TestData/                 (测试数据)
+│   │   └── UI/                       (UI预制体)
+│   ├── Scenes/                       ← 场景
+│   │   ├── GameScene.unity           (主游戏场景)
+│   │   └── [其他测试场景]
+│   ├── Scripts/                      ← 代码
+│   │   ├── Framework/                (框架代码)
+│   │   │   ├── EventCenter/          (事件中心)
+│   │   │   ├── Music/                (音乐管理)
+│   │   │   ├── Pool/                 (对象池)
+│   │   │   ├── Res/                  (资源加载-Resources)
+│   │   │   ├── Scene/                (场景管理)
+│   │   │   ├── Singleton/            (单例基类)
+│   │   │   ├── Timer/                (计时器)
+│   │   │   └── UI/                   (UI管理)
+│   │   ├── Game/                     (游戏逻辑)
+│   │   │   ├── AI/                   (老师AI)
+│   │   │   ├── Card/                 (卡牌系统)
+│   │   │   ├── Config/               (配置数据SO)
+│   │   │   ├── Data/                 (数据存储)
+│   │   │   ├── Emotion/              (情绪系统)
+│   │   │   ├── EyeClose/             (闭眼系统)
+│   │   │   ├── Flow/                 (游戏流程)
+│   │   │   ├── Task/                 (任务系统)
+│   │   │   ├── Testing/              (自动化测试)
+│   │   │   └── UI/                   (游戏UI)
+│   │   └── UI/                       (UI基类)
+│   ├── ThirdParty/                   ← 第三方资源
+│   │   ├── TextMesh Pro/             (Unity官方文本)
+│   │   └── UnityUIKit/               (Oxy的UI框架)
+│   └── ProjectSettings/              (Unity项目设置)
+├── docs/                             ← 项目文档
+│   ├── README.md
+│   ├── folder-structure-analysis.md  (本文件)
+│   ├── integration-flow.md           (系统集成说明)
+│   ├── 团队协作指南.md
+│   └── 技术设计说明.md
+└── [其他配置文件]
 ```
 
----
+## 🎯 设计原则
 
-## 🎯 立即行动项
+### 资源组织
 
-1. **紧急**: 移动 `Assets/Assets/` 内容到正确位置
-2. **高优先级**: 重命名 `Scripts/Game/System/` → `Scripts/Game/Task/`
-3. **中优先级**: 整理场景文件到 `_Scenes/_Tests/`
-4. **低优先级**: 创建标准文档结构
+| 文件夹 | 用途 | 加载方式 |
+|--------|------|----------|
+| `Art/` | 团队原创美术素材 | Inspector引用 |
+| `Audio/` | 原始音频文件 | Inspector引用 或 Resources.Load |
+| `Resources/` | 运行时动态加载的资源 | Resources.Load |
+| `Scenes/` | Unity场景文件 | Build Settings |
+| `ThirdParty/` | 第三方素材/工具 | - |
 
----
+### 代码组织
 
-## 📋 需要团队讨论的问题
+| 命名空间 | 文件夹 | 职责 |
+|----------|--------|------|
+| `Framework` | `Scripts/Framework/` | 底层框架，与游戏逻辑无关 |
+| `Game.*` | `Scripts/Game/` | 游戏业务逻辑 |
 
-1. 是否接受下划线前缀命名规范？
-2. `Raw and SpriteSheets` 文件夹的用途是什么？
-3. 是否需要保留所有测试场景？
-4. AssetBundle 的资源加载策略？
+### 命名约定
+
+- **文件夹**：PascalCase（如 `EventCenter`）
+- **命名空间**：与文件夹结构对应（如 `Game.Flow`）
+- **资源加载**：
+  - 原素材优先直接引用（性能好）
+  - 需要动态更新时用 Resources.Load
+
+## 📋 已清理的问题
+
+以下问题已在2026-05-01的整理中解决：
+
+### ✅ 删除 AB 资源系统
+- 删除了未使用的 `ABMgr`, `ABResMgr`, `UWQResMgr`
+- 删除了 `EditorResMgr`（开发期专用，实际未使用）
+- 统一使用 `Resources.Load` + 直接引用两种方式
+
+### ✅ 重构 Game/System → Game/Task
+- 解决了命名空间与文件夹不一致的问题
+- `namespace Game.Task` 现在对应 `Scripts/Game/Task/`
+
+### ✅ 清理重复和空文件夹
+- 删除 `Assets/Assets/` 嵌套结构
+- 删除 `Art/Scenes/`, `Art/Effects/` 空文件夹
+- 删除 `Framework/AB/`, `Framework/EditorRes/`, `Framework/UWQ/` 空文件夹
+- 移除 `Editor/ArtRes/` 未使用资源
+
+### ✅ 整理第三方资源
+- `TextMesh Pro` → `ThirdParty/TextMesh Pro/`
+- `UnityUIKit` → `ThirdParty/UnityUIKit/`
+- `AssetBundles-Browser` → 已删除（未使用）
+
+## 🔄 维护建议
+
+### 添加新素材时
+- 美术原创 → 放 `Art/` 对应子文件夹
+- 音频文件 → 放 `Audio/Music/` 或 `Audio/SFX/`
+- 需要运行时动态加载 → 放 `Resources/`
+
+### 添加新代码时
+- 框架级功能 → `Scripts/Framework/[新模块]/`
+- 游戏业务逻辑 → `Scripts/Game/[新系统]/`
+- 命名空间与文件夹保持一致
+
+### 合并分支时
+- 检查是否创建了 `Assets/Assets/` 嵌套
+- 第三方资源应放入 `ThirdParty/`
+- 不要在根目录创建 `.unity` 场景文件
+
+## 📝 历史问题记录
+
+<details>
+<summary>点击查看已解决的历史问题</summary>
+
+### 1. Assets/Assets/ 嵌套问题（已解决）
+**原问题**：Oxy 的分支创建了嵌套结构
+**解决方案**：移动到正确位置并删除旧文件夹
+
+### 2. AB 系统复杂但未使用（已解决）
+**原问题**：AssetBundle 系统增加复杂度，但实际用的是 Resources
+**解决方案**：删除 AB 相关代码，保留 Resources 加载方式
+
+### 3. System 文件夹命名冲突（已解决）
+**原问题**：`Game.System` 与 .NET 的 `System` 命名空间冲突
+**解决方案**：重命名为 `Game.Task`
+
+### 4. 编辑器工具混在资源中（已解决）
+**原问题**：`AssetBundles-Browser-master` 在 `Assets/` 根目录
+**解决方案**：移入 `ThirdParty/` 或删除（如不需要）
+
+</details>
