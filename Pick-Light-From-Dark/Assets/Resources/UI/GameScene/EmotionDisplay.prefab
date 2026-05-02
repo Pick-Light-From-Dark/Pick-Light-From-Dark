@@ -319,9 +319,23 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   panicValueText: {fileID: 837121175076182235}
-  panicBackground: {fileID: 0}
   exciteValueText: {fileID: 8835987898016522975}
-  exciteBackground: {fileID: 0}
-  safeColor: {r: 0, g: 1, b: 0, a: 1}
-  warningColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
-  dangerColor: {r: 1, g: 0, b: 0, a: 1}
+  panicEmoticonLow: "(´∀｀)"
+  panicEmoticonMid: "(・_・;)"
+  panicEmoticonHigh: (>_<)
+  exciteEmoticonLow: (-_-)
+  exciteEmoticonMid: (^_^)
+  exciteEmoticonHigh: "(≧∀≦)"
+  lowThreshold: 50
+  highThreshold: 75
+  safeColor: {r: 0.4, g: 1, b: 0.4, a: 1}
+  warningColor: {r: 1, g: 0.85, b: 0.2, a: 1}
+  dangerColor: {r: 1, g: 0.3, b: 0.3, a: 1}
+  safeFontSize: 36
+  warningFontSize: 42
+  dangerFontSize: 50
+  panicLabel: "慌乱"
+  exciteLabel: "兴奋"
+  textFormat: "{0} {1}\n{2}"
+  emphasizeOnCritical: 1
+  criticalFontSize: 56

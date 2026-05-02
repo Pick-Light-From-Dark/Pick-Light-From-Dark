@@ -1,6 +1,7 @@
 using UnityEngine;
 using Game.Data;
 using Game.Config;
+using Game.Emotion;
 
 namespace Game.Card
 {
@@ -96,7 +97,7 @@ namespace Game.Card
             Debug.Log($"[CardReadingSystem] 读条被打断: {currentCard.data.cardName}");
 
             // 增加慌乱值
-            EventCenter.Instance.EventTrigger(E_EventType.PanicChanged, currentCard.data.interruptPanicAdd);
+            EmotionSystem.Instance.ChangePanic(currentCard.data.interruptPanicAdd);
 
             // 触发打断事件
             EventCenter.Instance.EventTrigger(E_EventType.CardReadInterrupt, currentCard);
@@ -136,11 +137,11 @@ namespace Game.Card
             // 修改情绪值
             if (card.data.panicDelta != 0)
             {
-                EventCenter.Instance.EventTrigger(E_EventType.PanicChanged, card.data.panicDelta);
+                EmotionSystem.Instance.ChangePanic(card.data.panicDelta);
             }
             if (card.data.exciteDelta != 0)
             {
-                EventCenter.Instance.EventTrigger(E_EventType.ExciteChanged, card.data.exciteDelta);
+                EmotionSystem.Instance.ChangeExcite(card.data.exciteDelta);
             }
 
             Debug.Log($"[CardReadingSystem] 应用效果: 慌乱{card.data.panicDelta} 兴奋{card.data.exciteDelta}");

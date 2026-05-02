@@ -1,141 +1,187 @@
 using UnityEngine;
-using UnityEngine.UI;
 using TMPro;
 using Game.Emotion;
-using Game.Config;
 
 namespace Game.UI
 {
     /// <summary>
     /// 情绪值显示组件
+    /// 以文本加颜文字 颜色与字号呈现 慌乱与兴奋两值
+    /// 所有展示参数皆 SerializeField 暴露 便前端在 Inspector 替换
     /// </summary>
     public class EmotionDisplay : MonoBehaviour
     {
-        [Header("慌乱值显示 (Panic Value)")]
+        [Header("文本组件 必填")]
         [SerializeField] private TextMeshProUGUI panicValueText;
-        [SerializeField] private Image panicBackground;
-
-        [Header("兴奋值显示 (Excite Value)")]
         [SerializeField] private TextMeshProUGUI exciteValueText;
-        [SerializeField] private Image exciteBackground;
 
-        [Header("颜色配置")]
-        [SerializeField] private Color safeColor = Color.green;
-        [SerializeField] private Color warningColor = Color.yellow;
-        [SerializeField] private Color dangerColor = Color.red;
+        [Header("慌乱颜文字 三档 低 中 高")]
+        [SerializeField] private string panicEmoticonLow = "(´∀｀)";
+        [SerializeField] private string panicEmoticonMid = "(・_・;)";
+        [SerializeField] private string panicEmoticonHigh = "(>_<)";
+
+        [Header("兴奋颜文字 三档 低 中 高")]
+        [SerializeField] private string exciteEmoticonLow = "(-_-)";
+        [SerializeField] private string exciteEmoticonMid = "(^_^)";
+        [SerializeField] private string exciteEmoticonHigh = "(≧∀≦)";
+
+        [Header("数值阈值 低档上限 中档上限")]
+        [SerializeField] private int lowThreshold = 50;
+        [SerializeField] private int highThreshold = 75;
+
+        [Header("颜色 三档")]
+        [SerializeField] private Color safeColor = new Color(0.4f, 1f, 0.4f);
+        [SerializeField] private Color warningColor = new Color(1f, 0.85f, 0.2f);
+        [SerializeField] private Color dangerColor = new Color(1f, 0.3f, 0.3f);
+
+        [Header("字号 三档")]
+        [SerializeField] private float safeFontSize = 36f;
+        [SerializeField] private float warningFontSize = 42f;
+        [SerializeField] private float dangerFontSize = 50f;
+
+        [Header("文本标签")]
+        [SerializeField] private string panicLabel = "慌乱";
+        [SerializeField] private string exciteLabel = "兴奋";
+
+        [Header("文本格式  {0}=标签 {1}=数值 {2}=颜文字")]
+        [SerializeField] private string textFormat = "{0} {1}\n{2}";
+
+        [Header("临界态额外强调")]
+        [SerializeField] private bool emphasizeOnCritical = true;
+        [SerializeField] private float criticalFontSize = 56f;
 
         private EmotionSystem emotionSystem;
-        private LevelConfigSO levelConfig;
+        private bool isCritical;
 
         void Start()
         {
-            // 获取情绪系统引用
             emotionSystem = EmotionSystem.Instance;
 
-            // 从GameFlowController获取关卡配置
-            var gameFlow = Game.Flow.GameFlowController.Instance;
-            if (gameFlow != null)
-            {
-                levelConfig = gameFlow.GetLevelConfig();
-            }
-
-            // 注册事件监听
             if (EventCenter.Instance != null)
             {
-                EventCenter.Instance.AddEventListener(E_EventType.PanicChanged, OnPanicChanged);
-                EventCenter.Instance.AddEventListener(E_EventType.ExciteChanged, OnExciteChanged);
+                EventCenter.Instance.AddEventListener<int>(E_EventType.PanicChanged, OnPanicChanged);
+                EventCenter.Instance.AddEventListener<int>(E_EventType.ExciteChanged, OnExciteChanged);
+                EventCenter.Instance.AddEventListener(E_EventType.EmotionCritical, OnEnterCritical);
+                EventCenter.Instance.AddEventListener(E_EventType.EmotionRecovered, OnExitCritical);
             }
 
-            // 初始显示
             UpdateDisplay();
         }
 
         void OnDestroy()
         {
-            // 移除事件监听
             if (EventCenter.Instance != null)
             {
-                EventCenter.Instance.RemoveEventListener(E_EventType.PanicChanged, OnPanicChanged);
-                EventCenter.Instance.RemoveEventListener(E_EventType.ExciteChanged, OnExciteChanged);
+                EventCenter.Instance.RemoveEventListener<int>(E_EventType.PanicChanged, OnPanicChanged);
+                EventCenter.Instance.RemoveEventListener<int>(E_EventType.ExciteChanged, OnExciteChanged);
+                EventCenter.Instance.RemoveEventListener(E_EventType.EmotionCritical, OnEnterCritical);
+                EventCenter.Instance.RemoveEventListener(E_EventType.EmotionRecovered, OnExitCritical);
             }
         }
 
         /// <summary>
-        /// 慌乱值变化事件
+        /// 慌乱值变化 携 int 当前值
         /// </summary>
-        private void OnPanicChanged()
+        private void OnPanicChanged(int panic)
         {
             UpdateDisplay();
         }
 
         /// <summary>
-        /// 兴奋值变化事件
+        /// 兴奋值变化 携 int 当前值
         /// </summary>
-        private void OnExciteChanged()
+        private void OnExciteChanged(int excite)
         {
             UpdateDisplay();
         }
 
         /// <summary>
-        /// 更新显示
+        /// 进入临界态 整体强调
+        /// </summary>
+        private void OnEnterCritical()
+        {
+            isCritical = true;
+            UpdateDisplay();
+        }
+
+        /// <summary>
+        /// 退出临界态 还原常态
+        /// </summary>
+        private void OnExitCritical()
+        {
+            isCritical = false;
+            UpdateDisplay();
+        }
+
+        /// <summary>
+        /// 据当前情绪值刷新两文本
         /// </summary>
         private void UpdateDisplay()
         {
             if (emotionSystem == null) return;
+            var info = emotionSystem.GetEmotionInfo();
 
-            var emotionInfo = emotionSystem.GetEmotionInfo();
-
-            // 更新慌乱值
-            if (panicValueText != null)
-            {
-                panicValueText.text = $"{emotionInfo.panicValue:F0}";
-            }
-
-            // 更新兴奋值
-            if (exciteValueText != null)
-            {
-                exciteValueText.text = $"{emotionInfo.exciteValue:F0}";
-            }
-
-            // 更新背景颜色
-            UpdateBackgroundColor();
+            ApplyToText(panicValueText, info.panicValue, panicLabel,
+                panicEmoticonLow, panicEmoticonMid, panicEmoticonHigh);
+            ApplyToText(exciteValueText, info.exciteValue, exciteLabel,
+                exciteEmoticonLow, exciteEmoticonMid, exciteEmoticonHigh);
         }
 
         /// <summary>
-        /// 更新背景颜色
+        /// 据数值挑档 套用颜文字 颜色 字号 与文本
         /// </summary>
-        private void UpdateBackgroundColor()
+        private void ApplyToText(TMP_Text text, int value, string label,
+            string emoLow, string emoMid, string emoHigh)
         {
-            if (emotionSystem == null || levelConfig == null) return;
+            if (text == null) return;
 
-            var emotionInfo = emotionSystem.GetEmotionInfo();
-            float totalEmotion = emotionInfo.panicValue + emotionInfo.exciteValue;
-            float criticalValue = levelConfig.criticalValue;
+            int level = GetLevel(value);
+            string emoticon;
+            Color color;
+            float size;
 
-            Color targetColor = safeColor;
-
-            if (totalEmotion > criticalValue)
+            switch (level)
             {
-                targetColor = dangerColor;
-            }
-            else if (totalEmotion > 50)
-            {
-                targetColor = warningColor;
+                case 0:
+                    emoticon = emoLow;
+                    color = safeColor;
+                    size = safeFontSize;
+                    break;
+                case 1:
+                    emoticon = emoMid;
+                    color = warningColor;
+                    size = warningFontSize;
+                    break;
+                default:
+                    emoticon = emoHigh;
+                    color = dangerColor;
+                    size = dangerFontSize;
+                    break;
             }
 
-            if (panicBackground != null)
+            if (isCritical && emphasizeOnCritical)
             {
-                panicBackground.color = targetColor;
+                color = dangerColor;
+                size = criticalFontSize;
             }
 
-            if (exciteBackground != null)
-            {
-                exciteBackground.color = targetColor;
-            }
+            text.text = string.Format(textFormat, label, value, emoticon);
+            text.color = color;
+            text.fontSize = size;
         }
 
         /// <summary>
-        /// 设置文本组件引用
+        /// 数值档位 0低 1中 2高
+        /// </summary>
+        private int GetLevel(int value)
+        {
+            if (value <= lowThreshold) return 0;
+            if (value <= highThreshold) return 1;
+            return 2;
+        }
+
+        /// <summary>
+        /// 设置文本组件引用 测试用
         /// </summary>
         public void SetPanicValueText(TextMeshProUGUI text)
         {
@@ -145,16 +191,6 @@ namespace Game.UI
         public void SetExciteValueText(TextMeshProUGUI text)
         {
             exciteValueText = text;
-        }
-
-        public void SetPanicBackground(Image image)
-        {
-            panicBackground = image;
-        }
-
-        public void SetExciteBackground(Image image)
-        {
-            exciteBackground = image;
         }
     }
 }

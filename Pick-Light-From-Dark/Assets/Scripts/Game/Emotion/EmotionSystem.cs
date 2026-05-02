@@ -31,6 +31,7 @@ namespace Game.Emotion
         private int minPanic = 30, maxPanic = 100;
         private int minExcite = 30, maxExcite = 100;
         private int criticalValue;
+        private bool wasCritical;
 
         /// <summary>
         /// 初始化情绪值系统
@@ -109,6 +110,20 @@ namespace Game.Emotion
             EventCenter.Instance.EventTrigger(E_EventType.EmotionChanged, info);
             EventCenter.Instance.EventTrigger(E_EventType.PanicChanged, panicValue);
             EventCenter.Instance.EventTrigger(E_EventType.ExciteChanged, exciteValue);
+
+            // 临界跨界检测
+            bool isCritical = (panicValue + exciteValue) >= criticalValue;
+            if (isCritical && !wasCritical)
+            {
+                Debug.Log("[EmotionSystem] 进入临界态 触发 EmotionCritical");
+                EventCenter.Instance.EventTrigger(E_EventType.EmotionCritical);
+            }
+            else if (!isCritical && wasCritical)
+            {
+                Debug.Log("[EmotionSystem] 退出临界态 触发 EmotionRecovered");
+                EventCenter.Instance.EventTrigger(E_EventType.EmotionRecovered);
+            }
+            wasCritical = isCritical;
         }
 
         /// <summary>
