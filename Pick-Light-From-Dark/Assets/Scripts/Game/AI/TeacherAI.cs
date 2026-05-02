@@ -42,6 +42,7 @@ namespace Game.AI
         {
             levelConfig = config;
             patrolCount = 0;
+            flashPanicAccumulated = 0f;
 
             // 获取系统引用
             emotionSystem = Game.Emotion.EmotionSystem.Instance;

@@ -41,6 +41,7 @@ namespace Game.Emotion
             panicValue = levelConfig.initialPanic;
             exciteValue = levelConfig.initialExcite;
             criticalValue = levelConfig.criticalValue;
+            wasCritical = false;
 
             Debug.Log($"[EmotionSystem] 初始化 - 慌乱:{panicValue} 兴奋:{exciteValue} 临界:{criticalValue}");
             NotifyEmotionChanged();
