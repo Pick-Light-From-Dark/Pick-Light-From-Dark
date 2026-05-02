@@ -3,7 +3,7 @@ using Game.Emotion;
 using Game.Config;
 using Game.Data;
 
-namespace Game.System
+namespace Game.Test
 {
     /// <summary>
     /// 情绪值系统测试脚本

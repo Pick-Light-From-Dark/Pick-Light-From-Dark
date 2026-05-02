@@ -33,7 +33,7 @@ namespace Game.Editor
 
             // 创建测试脚本
             GameObject testObj = new GameObject("EmotionTest");
-            var emotionTest = testObj.AddComponent<Game.System.EmotionTest>();
+            var emotionTest = testObj.AddComponent<Game.Test.EmotionTest>();
 
             // 尝试自动加载测试数据
             var testLevelConfig = AssetDatabase.LoadAssetAtPath<Game.Config.LevelConfigSO>("Assets/Resources/TestData/TestLevelConfig.asset");

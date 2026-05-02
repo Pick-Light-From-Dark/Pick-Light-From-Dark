@@ -29,7 +29,7 @@ namespace Game.Editor
 
             // 创建DataManager并添加测试脚本
             GameObject dataManagerObj = new GameObject("DataManager");
-            var dataTest = dataManagerObj.AddComponent<Game.System.DataTest>();
+            var dataTest = dataManagerObj.AddComponent<Game.Test.DataTest>();
 
             // 尝试自动加载测试数据
             var testLevelConfig = AssetDatabase.LoadAssetAtPath<Game.Config.LevelConfigSO>("Assets/Resources/TestData/TestLevelConfig.asset");
