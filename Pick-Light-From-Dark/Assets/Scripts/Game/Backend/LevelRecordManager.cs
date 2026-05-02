@@ -72,7 +72,7 @@ namespace Game.Backend
             _currentRecord.cardUses.Add(entry);
 
             // 同步任务目标状态
-            var goal = Game.System.TaskManager.Instance.GetGoalByCardId(cardId);
+            var goal = Game.Task.TaskManager.Instance.GetGoalByCardId(cardId);
             if (goal != null)
             {
                 SyncSingleGoal(goal);
@@ -99,7 +99,7 @@ namespace Game.Backend
             if (_currentRecord == null) return;
 
             _currentRecord.taskGoals.Clear();
-            var goals = Game.System.TaskManager.Instance.GetActiveGoals();
+            var goals = Game.Task.TaskManager.Instance.GetActiveGoals();
             foreach (var goal in goals)
             {
                 var record = new TaskGoalRecord(
