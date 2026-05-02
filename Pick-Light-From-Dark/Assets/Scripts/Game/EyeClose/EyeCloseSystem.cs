@@ -77,7 +77,7 @@ namespace Game.EyeClose
             Time.timeScale = accelerationMultiplier;
 
             Debug.Log($"[EyeCloseSystem] 闭眼过久({eyeCloseTimer:F1}秒)，时间加速 x{accelerationMultiplier}");
-            EventCenter.Instance.EventTrigger(E_EventType.EyeCloseStart);
+            EventCenter.Instance.EventTrigger(E_EventType.EyeCloseTimeAccelerated);
         }
 
         /// <summary>
@@ -91,7 +91,7 @@ namespace Game.EyeClose
             Time.timeScale = 1f;
 
             Debug.Log($"[EyeCloseSystem] 睁眼，恢复正常时间流速");
-            EventCenter.Instance.EventTrigger(E_EventType.EyeCloseEnd);
+            EventCenter.Instance.EventTrigger(E_EventType.EyeCloseTimeNormal);
         }
 
         /// <summary>

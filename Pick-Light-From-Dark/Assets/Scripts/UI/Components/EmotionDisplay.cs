@@ -65,6 +65,7 @@ namespace Game.UI
                 EventCenter.Instance.AddEventListener(E_EventType.EmotionRecovered, OnExitCritical);
             }
 
+            Debug.Log($"[EmotionDisplay] Start panicText={(panicValueText != null)} exciteText={(exciteValueText != null)} emotionSystem={(emotionSystem != null)}");
             UpdateDisplay();
         }
 

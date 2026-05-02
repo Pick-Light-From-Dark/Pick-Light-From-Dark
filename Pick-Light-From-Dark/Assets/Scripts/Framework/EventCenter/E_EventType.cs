@@ -80,6 +80,14 @@ public enum E_EventType
     PlayerEyeCloseChanged,
     EyeCloseStart,
     EyeCloseEnd,
+    /// <summary>
+    /// 闭眼超 10 秒 时间开始加速
+    /// </summary>
+    EyeCloseTimeAccelerated,
+    /// <summary>
+    /// 时间恢复常速
+    /// </summary>
+    EyeCloseTimeNormal,
 
     TeacherStateChanged,
     TeacherInspectStart,
