@@ -17,14 +17,11 @@ namespace Game.Card
         [SerializeField] private float readTime;
         [SerializeField] private int currentSegmentIndex;
 
-        private LevelConfigSO levelConfig;
-
         /// <summary>
-        /// 初始化卡牌读条系统
+        /// 初始化卡牌读条系统（占位，供将来扩展）
         /// </summary>
         public void Initialize(LevelConfigSO config)
         {
-            levelConfig = config;
             isReading = false;
             Debug.Log("[CardReadingSystem] 初始化完成");
         }
