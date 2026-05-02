@@ -1,7 +1,6 @@
 using UnityEngine;
 using Game.Config;
 using Game.Emotion;
-using Game.System;
 
 namespace Game.Flow
 {
@@ -23,6 +22,7 @@ namespace Game.Flow
 
         private LevelConfigSO levelConfig;
         private EmotionSystem emotionSystem;
+        private Task.TaskManager taskManager;
         private static int updateCount = 0; // 用于检测是否有多个实例在Update
 
         /// <summary>
@@ -35,6 +35,7 @@ namespace Game.Flow
 
             levelConfig = config;
             emotionSystem = EmotionSystem.Instance;
+            taskManager = Task.TaskManager.Instance;
 
             // 重置时间流速为正常
             Time.timeScale = 1f;
@@ -42,8 +43,8 @@ namespace Game.Flow
             // 初始化情绪值系统
             emotionSystem.Initialize(levelConfig);
 
-            // 初始化任务管理器
-            TaskManager.Instance.Initialize(levelConfig);
+            // 初始化任务系统
+            taskManager.Initialize(levelConfig);
 
             // 初始化时间
             remainingTime = levelConfig.timeLimit;

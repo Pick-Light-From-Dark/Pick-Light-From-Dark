@@ -2,7 +2,7 @@ using UnityEngine;
 using Game.Data;
 using Game.Config;
 
-namespace Game.System
+namespace Game.Test
 {
     /// <summary>
     /// 数据类测试脚本

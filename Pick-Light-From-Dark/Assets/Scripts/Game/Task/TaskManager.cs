@@ -4,7 +4,7 @@ using Game.Config;
 using Game.Data;
 using UnityEngine;
 
-namespace Game.System
+namespace Game.Task
 {
     /// <summary>
     /// 任务管理器 — 管理关卡任务进度与通关判定
@@ -13,21 +13,18 @@ namespace Game.System
     {
         private List<TaskGoal> _activeGoals = new List<TaskGoal>();
         private LevelConfigSO _levelConfig;
+        [SerializeField] private bool isInitialized = false;
 
         private void Start()
         {
             EventCenter.Instance.AddEventListener<int>(E_EventType.CardReadComplete, OnCardReadComplete);
         }
 
-        private void OnDestroy()
-        {
-            EventCenter.Instance.RemoveEventListener<int>(E_EventType.CardReadComplete, OnCardReadComplete);
-        }
-
         public void Initialize(LevelConfigSO config)
         {
             _levelConfig = config;
             _activeGoals.Clear();
+            isInitialized = true;
 
             if (config.taskGoals != null)
             {
@@ -39,7 +36,13 @@ namespace Game.System
                     };
                     _activeGoals.Add(taskGoal);
                 }
+                Debug.Log($"[TaskManager] 初始化完成，共 {_activeGoals.Count} 个任务目标");
             }
+        }
+
+        private void OnDestroy()
+        {
+            EventCenter.Instance.RemoveEventListener<int>(E_EventType.CardReadComplete, OnCardReadComplete);
         }
 
         public void HandleCardCompleted(int cardId)
@@ -64,6 +67,12 @@ namespace Game.System
 
         private void OnCardReadComplete(int cardId)
         {
+            // 防止在初始化前处理事件
+            if (!isInitialized)
+            {
+                Debug.LogWarning($"[TaskManager] 收到卡牌完成事件但未初始化，cardId={cardId}");
+                return;
+            }
             HandleCardCompleted(cardId);
         }
 
