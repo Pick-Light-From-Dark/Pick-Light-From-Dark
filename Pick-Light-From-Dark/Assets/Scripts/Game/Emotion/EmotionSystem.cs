@@ -129,11 +129,9 @@ namespace Game.Emotion
         /// <summary>
         /// 闭眼时持续降低情绪值
         /// </summary>
-        public void DecreaseEmotionWhileEyeClose(float deltaTime)
+        public void DecreaseEmotionWhileEyeClose(float deltaTime, float decreaseRate = 5f)
         {
-            // 闭眼每秒降低一定数值
-            int decreasePerSecond = 5;
-            int decrease = Mathf.RoundToInt(decreasePerSecond * deltaTime);
+            int decrease = Mathf.RoundToInt(decreaseRate * deltaTime);
 
             if (panicValue > minPanic)
             {

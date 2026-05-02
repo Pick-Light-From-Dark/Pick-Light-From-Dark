@@ -1,4 +1,5 @@
 using UnityEngine;
+using Game.Config;
 
 namespace Game.EyeClose
 {
@@ -13,14 +14,15 @@ namespace Game.EyeClose
 
         [Header("闭眼时长")]
         [SerializeField] private float eyeCloseTimer;
-        [SerializeField] private float timeAccelerationThreshold = 10f; // 闭眼10秒后加速时间
+        [SerializeField] private float timeAccelerationThreshold = 10f;
 
         [Header("时间加速")]
-        [SerializeField] private float accelerationMultiplier = 2f; // 加速倍数
+        [SerializeField] private float accelerationMultiplier = 2f;
 
         private Game.Data.PlayerState playerState;
         private Game.Emotion.EmotionSystem emotionSystem;
         private Game.Flow.GameFlowController gameFlow;
+        private LevelConfigSO levelConfig;
         private bool isTimeAccelerated;
 
         void Start()
@@ -29,6 +31,20 @@ namespace Game.EyeClose
             playerState = Game.Data.PlayerState.Instance;
             emotionSystem = Game.Emotion.EmotionSystem.Instance;
             gameFlow = Game.Flow.GameFlowController.Instance;
+        }
+
+        /// <summary>
+        /// 从关卡配置初始化参数
+        /// </summary>
+        public void Initialize(LevelConfigSO config)
+        {
+            levelConfig = config;
+            if (levelConfig != null)
+            {
+                timeAccelerationThreshold = levelConfig.eyeCloseAccelerationThreshold;
+                accelerationMultiplier = levelConfig.eyeCloseAccelerationMultiplier;
+                Debug.Log($"[EyeCloseSystem] 初始化 阈值={timeAccelerationThreshold}s 倍率={accelerationMultiplier}");
+            }
         }
 
         void Update()
@@ -46,7 +62,8 @@ namespace Game.EyeClose
                 // 闭眼降低情绪值
                 if (emotionSystem != null)
                 {
-                    emotionSystem.DecreaseEmotionWhileEyeClose(Time.deltaTime);
+                    float decreaseRate = levelConfig != null ? levelConfig.eyeClosePanicDecreasePerSec : 1f;
+                    emotionSystem.DecreaseEmotionWhileEyeClose(Time.deltaTime, decreaseRate);
                 }
 
                 // 闭眼过久加速时间
