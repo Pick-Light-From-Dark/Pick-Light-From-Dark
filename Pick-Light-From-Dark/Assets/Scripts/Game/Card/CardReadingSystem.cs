@@ -144,7 +144,14 @@ namespace Game.Card
                 EmotionSystem.Instance.ChangeExcite(card.data.exciteDelta);
             }
 
-            Debug.Log($"[CardReadingSystem] 应用效果: 慌乱{card.data.panicDelta} 兴奋{card.data.exciteDelta}");
+            // 床上状态变化
+            if (card.data.bedStateChange != BedStateChange.None)
+            {
+                bool inBed = card.data.bedStateChange == BedStateChange.EnterBed;
+                Game.Data.PlayerState.Instance.SetInBed(inBed);
+            }
+
+            Debug.Log($"[CardReadingSystem] 应用效果: 慌乱{card.data.panicDelta} 兴奋{card.data.exciteDelta} 床上状态{card.data.bedStateChange}");
         }
 
         /// <summary>

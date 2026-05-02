@@ -23,6 +23,16 @@ namespace Game.Data
     }
 
     /// <summary>
+    /// 床上状态变化
+    /// </summary>
+    public enum BedStateChange
+    {
+        None,      // 无变化
+        LeaveBed,  // 离开床
+        EnterBed   // 回到床上
+    }
+
+    /// <summary>
     /// 卡牌数据定义
     /// </summary>
     [Serializable]
@@ -52,6 +62,9 @@ namespace Game.Data
 
         [Header("关卡限制")]
         public List<string> allowedLevelIds; // 填 \"all\" 表示所有关卡可用
+
+        [Header("床上状态")]
+        public BedStateChange bedStateChange = BedStateChange.None;
 
         [Header("特殊效果")]
         [TextArea(2, 4)]
