@@ -38,10 +38,10 @@
 
 ## 第一夜关卡测试案 v2 支持进度
 
-- [ ] CardData 结构完善（缺 cardType / initialStack / bindTaskId / relatedCardIds / allowedLevelIds / specialEffect）
+- [x] CardData 结构完善（cardType / initialStack / bindTaskId / relatedCardIds / allowedLevelIds / specialEffect）
 - [ ] Segment 区间列表支持（可打断/不可打断片段区间 `[start, end]`）
 - [ ] 读条打断进度保存（吃薯片卡特殊效果）
 - [ ] 床上/床下状态与卡牌联动（掀开被子/盖回被子）
-- [ ] EyeCloseSystem 参数走 LevelConfigSO（降率、阈值、倍率）
-- [ ] LevelConfigSO 加 initialInBed 字段
+- [x] EyeCloseSystem 参数走 LevelConfigSO（降率、阈值、倍率）
+- [x] LevelConfigSO 加 initialInBed 字段
 - [ ] TeacherAI 手电筒慌乱值增长实现
