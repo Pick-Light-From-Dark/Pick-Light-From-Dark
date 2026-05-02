@@ -44,4 +44,4 @@
 - [x] 床上/床下状态与卡牌联动（掀开被子/盖回被子）
 - [x] EyeCloseSystem 参数走 LevelConfigSO（降率、阈值、倍率）
 - [x] LevelConfigSO 加 initialInBed 字段
-- [ ] TeacherAI 手电筒慌乱值增长实现
+- [x] TeacherAI 手电筒慌乱值增长实现（修复 RoundToInt 截断 bug）
