@@ -2,7 +2,6 @@ using UnityEngine;
 using Game.Config;
 using Game.Flow;
 using Game.Emotion;
-using Game.System;
 
 namespace Game.Demo
 {
