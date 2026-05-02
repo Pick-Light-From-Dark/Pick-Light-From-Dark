@@ -28,6 +28,7 @@ namespace Game.AI
         private Game.Card.CardReadingSystem cardReadingSystem;
         private Game.Data.PlayerState playerState;
         private float targetDuration;
+        private float flashPanicAccumulated;
 
         void Awake()
         {
@@ -287,10 +288,16 @@ namespace Game.AI
                     return true;
                 }
 
-                // 手电筒持续增加慌乱值
+                // 手电筒持续增加慌乱值（累积小数部分避免 RoundToInt 截断）
                 if (emotionSystem != null)
                 {
-                    emotionSystem.ChangePanic(Mathf.RoundToInt(levelConfig.flashPanicPerSec * Time.deltaTime));
+                    flashPanicAccumulated += levelConfig.flashPanicPerSec * Time.deltaTime;
+                    int increase = Mathf.FloorToInt(flashPanicAccumulated);
+                    if (increase > 0)
+                    {
+                        emotionSystem.ChangePanic(increase);
+                        flashPanicAccumulated -= increase;
+                    }
                 }
             }
 
