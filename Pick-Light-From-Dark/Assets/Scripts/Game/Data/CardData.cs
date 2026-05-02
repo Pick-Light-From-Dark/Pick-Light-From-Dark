@@ -70,6 +70,9 @@ namespace Game.Data
         [TextArea(2, 4)]
         public string specialEffect;
 
+        [Header("特殊效果开关")]
+        public bool saveProgressOnInterrupt = false; // 打断时保存读条进度
+
         /// <summary>
         /// 计算总读条时长（各片段累加）
         /// </summary>

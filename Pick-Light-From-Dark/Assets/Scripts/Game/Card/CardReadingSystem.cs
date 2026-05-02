@@ -41,8 +41,20 @@ namespace Game.Card
             }
 
             currentCard = card;
-            readTime = 0f;
-            currentSegmentIndex = 0;
+
+            // 恢复保存的进度（吃薯片卡特殊效果）
+            if (card.currentReadTime > 0f)
+            {
+                readTime = card.currentReadTime;
+                currentSegmentIndex = card.currentSegmentIndex;
+                Debug.Log($"[CardReadingSystem] 恢复读条进度: {card.data.cardName} 时间={readTime:F2}s 片段={currentSegmentIndex}");
+            }
+            else
+            {
+                readTime = 0f;
+                currentSegmentIndex = 0;
+            }
+
             isReading = true;
 
             Debug.Log($"[CardReadingSystem] 开始读条: {card.data.cardName}");
@@ -94,6 +106,14 @@ namespace Game.Card
                 return false;
             }
 
+            // 保存进度（如果卡牌支持）
+            if (currentCard != null && currentCard.data.saveProgressOnInterrupt)
+            {
+                currentCard.currentReadTime = readTime;
+                currentCard.currentSegmentIndex = currentSegmentIndex;
+                Debug.Log($"[CardReadingSystem] 保存读条进度: {currentCard.data.cardName} 时间={readTime:F2}s 片段={currentSegmentIndex}");
+            }
+
             Debug.Log($"[CardReadingSystem] 读条被打断: {currentCard.data.cardName}");
 
             // 增加慌乱值
@@ -113,6 +133,13 @@ namespace Game.Card
         /// </summary>
         void CompleteReading()
         {
+            // 清除卡牌实例上保存的进度
+            if (currentCard != null)
+            {
+                currentCard.currentReadTime = 0f;
+                currentCard.currentSegmentIndex = 0;
+            }
+
             Debug.Log($"[CardReadingSystem] 读条完成: {currentCard.data.cardName}");
 
             // 应用卡牌效果
