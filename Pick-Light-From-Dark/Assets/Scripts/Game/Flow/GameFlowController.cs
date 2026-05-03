@@ -82,6 +82,21 @@ namespace Game.Flow
             EventCenter.Instance.EventTrigger(E_EventType.LevelStart, levelConfig.levelId);
         }
 
+        void Start()
+        {
+            EventCenter.Instance.AddEventListener(E_EventType.LevelComplete, OnLevelComplete);
+        }
+
+        void OnDestroy()
+        {
+            EventCenter.Instance.RemoveEventListener(E_EventType.LevelComplete, OnLevelComplete);
+        }
+
+        private void OnLevelComplete()
+        {
+            GameWin();
+        }
+
         void Update()
         {
             // 如果还未初始化，不执行任何逻辑
