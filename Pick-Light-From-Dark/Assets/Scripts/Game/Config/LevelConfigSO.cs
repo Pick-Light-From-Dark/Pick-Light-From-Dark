@@ -43,7 +43,7 @@ namespace Game.Config
         public int initialExcite = 35;
 
         [Header("临界情绪值")]
-        public int criticalValue;
+        public int criticalValue = 80;
 
         [Header("闭眼配置")]
         public float eyeClosePanicDecreasePerSec = 1f;
