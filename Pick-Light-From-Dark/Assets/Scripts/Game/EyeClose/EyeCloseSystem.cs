@@ -86,6 +86,9 @@ namespace Game.EyeClose
         public void Initialize(LevelConfigSO config)
         {
             levelConfig = config;
+            // 重置累积状态，避免单例跨关残留导致 OnGameResume 误重新加速
+            eyeCloseTimer = 0f;
+            isTimeAccelerated = false;
             if (levelConfig != null)
             {
                 timeAccelerationThreshold = levelConfig.eyeCloseAccelerationThreshold;

@@ -46,6 +46,12 @@ namespace Game.Flow
             // 初始化任务系统
             taskManager.Initialize(levelConfig);
 
+            // 初始化玩家状态（按 levelConfig.initialInBed 重置卧床/闭眼，避免单例跨关残留）
+            Game.Data.PlayerState.Instance.Initialize(levelConfig);
+
+            // 初始化闭眼系统（让 LevelConfigSO 的 eyeClose 阈值/倍率参数生效，并复位加速状态）
+            Game.EyeClose.EyeCloseSystem.Instance.Initialize(levelConfig);
+
             // 初始化时间
             remainingTime = levelConfig.timeLimit;
 
