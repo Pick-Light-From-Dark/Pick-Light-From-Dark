@@ -46,8 +46,8 @@ namespace Game.Emotion
                 return;
             }
 
-            panicValue = levelConfig.initialPanic;
-            exciteValue = levelConfig.initialExcite;
+            panicValue = Mathf.Clamp(levelConfig.initialPanic, minPanic, maxPanic);
+            exciteValue = Mathf.Clamp(levelConfig.initialExcite, minExcite, maxExcite);
             criticalValue = levelConfig.criticalValue;
             wasCritical = false;
             accumulatedDecrease = 0f;
