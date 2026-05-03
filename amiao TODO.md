@@ -87,4 +87,5 @@
 - [x] Serializable 类默认构造函数缺失 → Segment/TaskGoal/JsonLevelRecord/CardUseEntry/TaskGoalRecord 无参构造函数缺失，Unity JsonUtility 反序列化可能失败
 - [x] DevModeController 除零风险 → GetEmotionEmoji 中 criticalValue 未做零值保护
 - [x] EventCenter 死代码清理 → 未使用的 Claer 拼写错误方法移除
+- [x] DevModeController timeLimit 浮点赋值编译错误 → levelConfig.timeLimit 为 int，原代码赋 600f 导致 CS0266
 
