@@ -40,6 +40,12 @@ namespace Game.AI
         /// </summary>
         public void Initialize(LevelConfigSO config)
         {
+            if (config == null)
+            {
+                Debug.LogError("[TeacherAI] Initialize 失败：config 为 null");
+                return;
+            }
+
             levelConfig = config;
             patrolCount = 0;
             flashPanicAccumulated = 0f;

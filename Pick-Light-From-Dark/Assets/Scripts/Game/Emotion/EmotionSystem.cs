@@ -40,6 +40,12 @@ namespace Game.Emotion
         /// </summary>
         public void Initialize(LevelConfigSO levelConfig)
         {
+            if (levelConfig == null)
+            {
+                Debug.LogError("[EmotionSystem] Initialize 失败：levelConfig 为 null");
+                return;
+            }
+
             panicValue = levelConfig.initialPanic;
             exciteValue = levelConfig.initialExcite;
             criticalValue = levelConfig.criticalValue;

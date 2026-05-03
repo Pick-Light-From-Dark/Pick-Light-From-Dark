@@ -29,6 +29,11 @@ namespace Game.Card
         /// </summary>
         public void Initialize(LevelConfigSO config)
         {
+            if (config == null)
+            {
+                Debug.LogWarning("[CardReadingSystem] Initialize: config 为 null，仅重置读条状态");
+            }
+
             isReading = false;
             Debug.Log("[CardReadingSystem] 初始化完成");
         }

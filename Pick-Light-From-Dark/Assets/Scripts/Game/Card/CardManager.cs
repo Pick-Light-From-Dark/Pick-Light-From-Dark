@@ -41,6 +41,12 @@ namespace Game.Card
         /// </summary>
         public void Initialize(LevelConfigSO config)
         {
+            if (config == null)
+            {
+                Debug.LogError("[CardManager] Initialize 失败：config 为 null");
+                return;
+            }
+
             levelConfig = config;
             handCards = new List<CardInstance>();
             cardHistory = new List<CardUseRecord>();
