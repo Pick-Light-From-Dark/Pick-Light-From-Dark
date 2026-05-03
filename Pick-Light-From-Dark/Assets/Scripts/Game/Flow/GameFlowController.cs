@@ -174,8 +174,9 @@ namespace Game.Flow
             isGameOver = true;
             Time.timeScale = 1f;
 
-            // 取消所有待执行的Invoke（比如ResumeGame）
+            // 取消所有待执行的Invoke和协程（比如ResumeGame的延迟恢复）
             CancelInvoke();
+            StopAllCoroutines();
 
             Debug.Log("[GameFlow] 游戏胜利！");
             EventCenter.Instance.EventTrigger(E_EventType.LevelComplete);
@@ -192,8 +193,9 @@ namespace Game.Flow
             isGameOver = true;
             Time.timeScale = 1f;
 
-            // 取消所有待执行的Invoke（比如ResumeGame）
+            // 取消所有待执行的Invoke和协程（比如ResumeGame的延迟恢复）
             CancelInvoke();
+            StopAllCoroutines();
 
             Debug.Log($"[GameFlow] 游戏失败: {reason}");
             EventCenter.Instance.EventTrigger(E_EventType.GameLose, reason);
@@ -223,7 +225,19 @@ namespace Game.Flow
 
             // 还有生命值：暂停 + 2秒后恢复（让玩家反应）
             PauseGame();
-            Invoke(nameof(ResumeGame), 2f);
+            StartCoroutine(ResumeAfterDelayRealtime(2f));
+        }
+
+        /// <summary>
+        /// 延迟恢复游戏（使用真实时间，不受 timeScale=0 影响）
+        /// </summary>
+        private System.Collections.IEnumerator ResumeAfterDelayRealtime(float delay)
+        {
+            yield return new WaitForSecondsRealtime(delay);
+            if (!isGameOver)
+            {
+                ResumeGame();
+            }
         }
 
         /// <summary>
