@@ -45,3 +45,14 @@
 - [x] EyeCloseSystem 参数走 LevelConfigSO（降率、阈值、倍率）
 - [x] LevelConfigSO 加 initialInBed 字段
 - [x] TeacherAI 手电筒慌乱值增长实现（修复 RoundToInt 截断 bug）
+
+---
+
+## 后端测试套件（Scenes/Amiao/TestPrefabs/）
+
+- [x] 8 套 TestRunner 脚本（Inspector 调参 + OnGUI + ContextMenu + 快捷键）
+  - EmotionSystemTester / EyeCloseSystemTester / PlayerStateTester
+  - CardReadingTester / CardManagerTester / TaskSystemTester
+  - TeacherAITester / GameFlowTester
+- [x] 对应 8 个 .prefab（默认绑 TestLevelConfig）
+- [x] 测试用例文档 README.md（45+ TC，含集成场景示例）
