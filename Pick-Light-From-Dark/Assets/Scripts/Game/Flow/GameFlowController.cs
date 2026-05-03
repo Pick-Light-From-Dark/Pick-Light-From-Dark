@@ -28,6 +28,12 @@ namespace Game.Flow
         /// </summary>
         public void Initialize(LevelConfigSO config)
         {
+            if (config == null)
+            {
+                Debug.LogError("[GameFlow] Initialize 失败：levelConfig 为 null");
+                return;
+            }
+
             Debug.Log($"[GameFlow] InstanceID:{GetInstanceID()} === Initialize 开始 ===");
             Debug.Log($"[GameFlow] InstanceID:{GetInstanceID()} 当前状态: isInitialized={isInitialized}, isGameOver={isGameOver}, isPaused={isPaused}, hasStartedFirstFrame={hasStartedFirstFrame}, remainingTime={remainingTime:F2}");
 
