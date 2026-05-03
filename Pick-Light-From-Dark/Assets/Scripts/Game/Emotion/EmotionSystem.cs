@@ -33,6 +33,7 @@ namespace Game.Emotion
         private int criticalValue;
         private bool wasCritical;
         private float accumulatedDecrease; // 累积小数部分避免 RoundToInt 截断
+        private bool _isNotifying; // 防止事件回调中递归修改情绪值
 
         /// <summary>
         /// 初始化情绪值系统
@@ -108,6 +109,9 @@ namespace Game.Emotion
 
         private void NotifyEmotionChanged()
         {
+            if (_isNotifying) return;
+
+            _isNotifying = true;
             EmotionInfo info = GetEmotionInfo();
             // 触发事件
             EventCenter.Instance.EventTrigger(E_EventType.EmotionChanged, info);
@@ -127,6 +131,7 @@ namespace Game.Emotion
                 EventCenter.Instance.EventTrigger(E_EventType.EmotionRecovered);
             }
             wasCritical = isCritical;
+            _isNotifying = false;
         }
 
         /// <summary>
