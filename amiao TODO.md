@@ -65,3 +65,4 @@
 - [x] UIManager GameLose 订阅签名错误（无参 → `<string>` 泛型版，与触发端签名一致，避免 EventInfo 类型错配抛 NullRef）
 - [x] 补齐 GameFlowController.Initialize 系统初始化链（PlayerState.Initialize + EyeCloseSystem.Initialize），修复 initialInBed 字段定义后无人读取，以及 EyeCloseSystem 阈值/倍率配置在正式流程不生效的问题
 - [x] 补 CardManager.Initialize 链路 + 实装生命值扣除逻辑（修复 maxLives 死字段：之前只 Debug.Log 不影响 gameplay；以及 CardManager 单例跨关残留 + 初始卡牌不发放问题）
+- [x] OnPlayerCaught 中 Invoke(ResumeGame, 2f) 在 timeScale=0 下永久冻结 → 改用 WaitForSecondsRealtime 协程，确保 2 秒真实时间后自动恢复
