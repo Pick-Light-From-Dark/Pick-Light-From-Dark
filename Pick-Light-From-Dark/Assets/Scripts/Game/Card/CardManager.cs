@@ -105,7 +105,7 @@ namespace Game.Card
 
             foreach (var card in handCards)
             {
-                if (card.data.id != keepCardId && !card.isUsed)
+                if (card.data != null && card.data.id != keepCardId && !card.isUsed)
                 {
                     toRemove.Add(card);
                 }
@@ -127,6 +127,8 @@ namespace Game.Card
         /// </summary>
         public void TriggerLinkedCards(CardData usedCard)
         {
+            if (usedCard == null) return;
+
             // 这里需要根据卡牌配置触发关联卡牌
             // 暂时先空实现，等待卡牌配置完善
             Debug.Log($"[CardManager] 检查关联卡牌: {usedCard.cardName}");
@@ -137,6 +139,8 @@ namespace Game.Card
         /// </summary>
         public void RecordCardUse(CardInstance card, bool success)
         {
+            if (card == null || card.data == null) return;
+
             CardUseRecord record = new CardUseRecord(card.data.id, card.data.cardName, success);
             cardHistory.Add(record);
 
