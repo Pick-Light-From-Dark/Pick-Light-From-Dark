@@ -17,6 +17,7 @@ namespace Game.Flow
         [SerializeField] private bool isPaused;
         [SerializeField] private bool isGameOver;
         [SerializeField] private float remainingTime;
+        [SerializeField] private int currentLives;
         [SerializeField] private bool hasStartedFirstFrame; // 是否已经过了第一帧
         [SerializeField] private bool isInitialized = false; // 是否已经初始化
 
@@ -52,8 +53,14 @@ namespace Game.Flow
             // 初始化闭眼系统（让 LevelConfigSO 的 eyeClose 阈值/倍率参数生效，并复位加速状态）
             Game.EyeClose.EyeCloseSystem.Instance.Initialize(levelConfig);
 
+            // 初始化卡牌管理器（重置 handCards / cardHistory / nextInstanceId，并发放初始卡牌）
+            Game.Card.CardManager.Instance.Initialize(levelConfig);
+
             // 初始化时间
             remainingTime = levelConfig.timeLimit;
+
+            // 初始化生命值
+            currentLives = levelConfig.maxLives;
 
             isPaused = false;
             isGameOver = false;
@@ -203,16 +210,28 @@ namespace Game.Flow
                 return;
             }
 
-            Debug.Log("[GameFlow] 处理玩家被抓逻辑");
+            // 扣除生命值
+            currentLives--;
+            Debug.Log($"[GameFlow] 玩家被抓，生命值剩余: {currentLives}/{levelConfig.maxLives}");
 
-            // 这里可以处理生命值扣除逻辑
-            // 如果生命值归零则游戏失败
+            // 生命值耗尽 → 游戏失败
+            if (currentLives <= 0)
+            {
+                GameLose("生命值耗尽");
+                return;
+            }
 
-            // 暂停一下让玩家反应
+            // 还有生命值：暂停 + 2秒后恢复（让玩家反应）
             PauseGame();
-
-            // 2秒后恢复游戏（或者游戏结束）
             Invoke(nameof(ResumeGame), 2f);
+        }
+
+        /// <summary>
+        /// 获取剩余生命值
+        /// </summary>
+        public int GetCurrentLives()
+        {
+            return currentLives;
         }
 
         /// <summary>
