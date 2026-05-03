@@ -44,6 +44,12 @@ namespace Game.Card
                 return;
             }
 
+            if (card.data.segments == null || card.data.segments.Count == 0)
+            {
+                Debug.LogWarning($"[CardReadingSystem] 卡牌 {card.data.cardName} 没有读条片段，无法开始读条");
+                return;
+            }
+
             if (isReading)
             {
                 Debug.LogWarning("[CardReadingSystem] 已有卡牌在读条中");
@@ -210,7 +216,7 @@ namespace Game.Card
         /// </summary>
         public Segment GetCurrentSegment()
         {
-            if (!isReading || currentCard == null)
+            if (!isReading || currentCard == null || currentCard.data == null || currentCard.data.segments == null)
                 return null;
 
             if (currentSegmentIndex < currentCard.data.segments.Count)
@@ -264,7 +270,7 @@ namespace Game.Card
         /// </summary>
         float GetSegmentStartTime(int segmentIndex)
         {
-            if (!isReading || currentCard == null)
+            if (!isReading || currentCard == null || currentCard.data == null || currentCard.data.segments == null)
                 return 0f;
 
             float time = 0f;
