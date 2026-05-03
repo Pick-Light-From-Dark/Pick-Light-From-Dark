@@ -32,6 +32,7 @@ namespace Game.Emotion
         private int minExcite = 30, maxExcite = 100;
         private int criticalValue;
         private bool wasCritical;
+        private float accumulatedDecrease; // 累积小数部分避免 RoundToInt 截断
 
         /// <summary>
         /// 初始化情绪值系统
@@ -42,6 +43,7 @@ namespace Game.Emotion
             exciteValue = levelConfig.initialExcite;
             criticalValue = levelConfig.criticalValue;
             wasCritical = false;
+            accumulatedDecrease = 0f;
 
             Debug.Log($"[EmotionSystem] 初始化 - 慌乱:{panicValue} 兴奋:{exciteValue} 临界:{criticalValue}");
             NotifyEmotionChanged();
@@ -128,19 +130,23 @@ namespace Game.Emotion
         }
 
         /// <summary>
-        /// 闭眼时持续降低情绪值
+        /// 闭眼时持续降低情绪值（累积小数部分避免 RoundToInt 截断）
         /// </summary>
         public void DecreaseEmotionWhileEyeClose(float deltaTime, float decreaseRate = 5f)
         {
-            int decrease = Mathf.RoundToInt(decreaseRate * deltaTime);
-
-            if (panicValue > minPanic)
+            accumulatedDecrease += decreaseRate * deltaTime;
+            int decrease = Mathf.FloorToInt(accumulatedDecrease);
+            if (decrease > 0)
             {
-                ChangePanic(-decrease);
-            }
-            if (exciteValue > minExcite)
-            {
-                ChangeExcite(-decrease);
+                accumulatedDecrease -= decrease;
+                if (panicValue > minPanic)
+                {
+                    ChangePanic(-decrease);
+                }
+                if (exciteValue > minExcite)
+                {
+                    ChangeExcite(-decrease);
+                }
             }
         }
     }
