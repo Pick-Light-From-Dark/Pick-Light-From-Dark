@@ -31,8 +31,8 @@
   - [x] 眨眼机制（EyeCloseSystem + EyeCloseDisplay Prefab）
   - [x] 测试功能
 - [x] 教师ai
-- [ ] 存档系统
-- [ ] dotween 动画集成
+- [ ] 存档系统（评估后跳过，当前仅 PlayerDataStore 做关卡记录持久化）
+- [ ] dotween 动画集成（需 Unity 编辑器导入 DG.Tweening 包，当前仅有 DOTweenAnimationMgr.cs 占位实现）
 
 ---
 
