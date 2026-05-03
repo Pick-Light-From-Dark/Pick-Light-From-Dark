@@ -30,7 +30,7 @@
 - [x] 闭眼系统
   - [x] 眨眼机制（EyeCloseSystem + EyeCloseDisplay Prefab）
   - [x] 测试功能
-- [ ] 教师ai
+- [x] 教师ai
 - [ ] 存档系统
 - [ ] dotween 动画集成
 
