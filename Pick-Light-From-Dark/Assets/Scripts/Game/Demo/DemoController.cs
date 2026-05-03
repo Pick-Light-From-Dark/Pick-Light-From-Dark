@@ -2,6 +2,7 @@ using UnityEngine;
 using Game.Config;
 using Game.Flow;
 using Game.Emotion;
+using Game.AI;
 
 namespace Game.Demo
 {
@@ -50,6 +51,13 @@ namespace Game.Demo
 
             // 初始化游戏流程控制器
             GameFlowController.Instance.Initialize(demoLevelConfig);
+
+            // 初始化教师AI（场景中的 MonoBehaviour，由启动器负责配置）
+            TeacherAI teacherAI = FindObjectOfType<TeacherAI>();
+            if (teacherAI != null)
+            {
+                teacherAI.Initialize(demoLevelConfig);
+            }
 
             isInitialized = true;
 
