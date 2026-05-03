@@ -88,4 +88,5 @@
 - [x] DevModeController 除零风险 → GetEmotionEmoji 中 criticalValue 未做零值保护
 - [x] EventCenter 死代码清理 → 未使用的 Claer 拼写错误方法移除
 - [x] DevModeController timeLimit 浮点赋值编译错误 → levelConfig.timeLimit 为 int，原代码赋 600f 导致 CS0266
+- [x] EmotionSystem.Initialize 初始值未 Clamp → DevModeController 测试案v2 设 initialPanic=15 低于 minPanic=30，初始状态与 ChangePanic 行为不一致
 
