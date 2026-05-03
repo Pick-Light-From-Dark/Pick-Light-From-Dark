@@ -31,6 +31,12 @@ namespace Game.Card
         /// </summary>
         public void StartReading(CardInstance card)
         {
+            if (card == null || card.data == null)
+            {
+                Debug.LogWarning("[CardReadingSystem] 卡牌为空，无法开始读条");
+                return;
+            }
+
             if (isReading)
             {
                 Debug.LogWarning("[CardReadingSystem] 已有卡牌在读条中");
