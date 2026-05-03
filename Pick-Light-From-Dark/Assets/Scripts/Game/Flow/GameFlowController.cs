@@ -111,7 +111,7 @@ namespace Game.Flow
                 if (updateCount > 1)
                 {
                     // 查找所有GameFlowController组件
-                    GameFlowController[] allControllers = FindObjectsOfType<GameFlowController>();
+                    GameFlowController[] allControllers = FindObjectsByType<GameFlowController>(FindObjectsSortMode.None);
                     Debug.LogError($"[GameFlow] InstanceID:{GetInstanceID()} Frame:{Time.frameCount} 检测到Update被多次调用！当前updateCount={updateCount}");
                     Debug.LogError($"[GameFlow] 当前场景中有 {allControllers.Length} 个GameFlowController组件：");
                     for (int i = 0; i < allControllers.Length; i++)

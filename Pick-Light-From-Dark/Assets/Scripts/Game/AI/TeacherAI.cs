@@ -46,7 +46,7 @@ namespace Game.AI
 
             // 获取系统引用
             emotionSystem = Game.Emotion.EmotionSystem.Instance;
-            cardReadingSystem = FindObjectOfType<Game.Card.CardReadingSystem>();
+            cardReadingSystem = FindFirstObjectByType<Game.Card.CardReadingSystem>();
             playerState = Game.Data.PlayerState.Instance;
 
             EnterState(TeacherState.Idle);
