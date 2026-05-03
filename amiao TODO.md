@@ -74,3 +74,17 @@
 - [x] OnPlayerCaught 中 Invoke(ResumeGame, 2f) 在 timeScale=0 下永久冻结 → 改用 WaitForSecondsRealtime 协程，确保 2 秒真实时间后自动恢复
 - [x] DemoController 未初始化 TeacherAI → patrolIntervals/patrolTime 等 Vector2 保持默认值 (0,0)，状态机周期全部失效 → 修复：在 InitializeDemo 中通过 FindObjectOfType 获取并调用 TeacherAI.Initialize
 - [x] GameFlowController 未订阅 LevelComplete 事件 → TaskManager 完成所有任务后触发 LevelComplete 但无人响应，游戏无法自动胜利 → 修复：Start 中订阅 LevelComplete → GameWin()
+- [x] CardReadingSystem Update 缺少游戏状态保护 → 游戏暂停/结束时读条仍继续推进
+- [x] CardReadingSystem segments 空引用风险 → CardData.segments 未初始化时 StartReading 后 Update 直接 NullRef
+- [x] CardManager 公共 API 空引用保护 → DiscardOtherCards/TriggerLinkedCards/RecordCardUse 缺少参数检查
+- [x] PlayerState Update 缺少游戏状态保护 → 游戏暂停/结束时仍能通过 C 键切换闭眼状态
+- [x] 核心运行时 FindObjectOfType/FindObjectsOfType 废弃 API 替换 → Unity 2022.3 已标记 obsolete
+- [x] 测试代码 DestroyImmediate 运行时隐患 → 非编辑器构建中调用 DestroyImmediate 可能导致异常
+- [x] LevelConfigSO.criticalValue 无默认值 → 创建新配置后忘记设置会导致 IsCaughtByCriticalValue 恒为 true，手电筒检查必被抓
+- [x] EmotionSystem NotifyEmotionChanged 无递归保护 → 事件回调中再次调用 ChangePanic/ChangeExcite 会导致无限递归直到栈溢出
+- [x] GameFlowController.Initialize 空引用保护 → 入口缺少 config null 检查，传入 null 后后续 levelConfig 访问直接 NullRef
+- [x] 核心系统 Initialize 统一 null 保护 → EmotionSystem/CardManager/TeacherAI/CardReadingSystem Initialize 入口缺少 config null 检查
+- [x] Serializable 类默认构造函数缺失 → Segment/TaskGoal/JsonLevelRecord/CardUseEntry/TaskGoalRecord 无参构造函数缺失，Unity JsonUtility 反序列化可能失败
+- [x] DevModeController 除零风险 → GetEmotionEmoji 中 criticalValue 未做零值保护
+- [x] EventCenter 死代码清理 → 未使用的 Claer 拼写错误方法移除
+
