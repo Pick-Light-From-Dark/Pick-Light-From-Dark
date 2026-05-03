@@ -147,7 +147,7 @@ namespace Game.Testing.Runners
         /// </summary>
         void EnsureSceneComponents()
         {
-            teacherAI = FindObjectOfType<TeacherAI>();
+            teacherAI = FindFirstObjectByType<TeacherAI>();
             if (teacherAI == null)
             {
                 GameObject teacherGO = new GameObject("TeacherAI");
@@ -155,7 +155,7 @@ namespace Game.Testing.Runners
                 Debug.Log("[FirstLevelDevRunner] 自动创建 TeacherAI");
             }
 
-            cardReadingSystem = FindObjectOfType<CardReadingSystem>();
+            cardReadingSystem = FindFirstObjectByType<CardReadingSystem>();
             if (cardReadingSystem == null)
             {
                 GameObject cardGO = new GameObject("CardReadingSystem");
@@ -163,7 +163,7 @@ namespace Game.Testing.Runners
                 Debug.Log("[FirstLevelDevRunner] 自动创建 CardReadingSystem");
             }
 
-            devMode = FindObjectOfType<DevModeController>();
+            devMode = FindFirstObjectByType<DevModeController>();
             if (devMode == null)
             {
                 devMode = gameObject.AddComponent<DevModeController>();

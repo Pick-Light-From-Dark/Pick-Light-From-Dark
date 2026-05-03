@@ -26,7 +26,7 @@ namespace Game.Editor
             Debug.Log($"开始配置中文字体: {chineseFont.name}");
 
             // 查找场景中所有TextMeshProUGUI组件
-            TextMeshProUGUI[] tmpTexts = GameObject.FindObjectsOfType<TextMeshProUGUI>();
+            TextMeshProUGUI[] tmpTexts = GameObject.FindObjectsByType<TextMeshProUGUI>(FindObjectsSortMode.None);
             int count = 0;
 
             foreach (var tmp in tmpTexts)

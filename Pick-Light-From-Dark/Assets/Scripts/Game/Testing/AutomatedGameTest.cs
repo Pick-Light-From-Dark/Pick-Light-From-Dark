@@ -42,7 +42,7 @@ namespace Game.Testing
             foreach (var flow in oldFlows)
             {
                 Debug.Log($"[TEST]   销毁旧GameFlowController InstanceID:{flow.GetInstanceID()} from {flow.gameObject.name}");
-                DestroyImmediate(flow.gameObject);
+                Destroy(flow.gameObject);
                 destroyedCount++;
             }
 
@@ -50,7 +50,7 @@ namespace Game.Testing
             foreach (var emotion in oldEmotions)
             {
                 Debug.Log($"[TEST]   销毁旧EmotionSystem InstanceID:{emotion.GetInstanceID()} from {emotion.gameObject.name}");
-                DestroyImmediate(emotion.gameObject);
+                Destroy(emotion.gameObject);
                 destroyedCount++;
             }
 
@@ -63,7 +63,7 @@ namespace Game.Testing
 
         IEnumerator DelayedTestStart()
         {
-            yield return null; // 等待一帧让DestroyImmediate生效
+            yield return null; // 等待一帧让Destroy生效
             yield return null; // 再等一帧确保完全清理
             StartCoroutine(RunAutomatedTests());
         }
@@ -115,8 +115,8 @@ namespace Game.Testing
             eyeCloseSystem = EyeCloseSystem.Instance;
 
             // 查找AI和读条系统
-            teacherAI = FindObjectOfType<TeacherAI>();
-            cardReadingSystem = FindObjectOfType<CardReadingSystem>();
+            teacherAI = FindFirstObjectByType<TeacherAI>();
+            cardReadingSystem = FindFirstObjectByType<CardReadingSystem>();
 
             // 验证系统实例
             TestAssertions.AssertNotNull(gameFlow, "GameFlowController实例化");

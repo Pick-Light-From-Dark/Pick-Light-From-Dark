@@ -70,7 +70,7 @@ namespace Game.Testing.Runners
             cardManager = CardManager.Instance;
             taskManager = TaskManager.Instance;
             eyeCloseSystem = EyeCloseSystem.Instance;
-            teacherAI = FindObjectOfType<TeacherAI>();
+            teacherAI = FindFirstObjectByType<TeacherAI>();
 
             Debug.Log("[DevMode] 开发者模式已就绪。按 ` 键切换面板。");
         }

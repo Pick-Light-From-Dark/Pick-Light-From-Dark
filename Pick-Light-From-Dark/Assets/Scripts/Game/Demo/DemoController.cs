@@ -53,7 +53,7 @@ namespace Game.Demo
             GameFlowController.Instance.Initialize(demoLevelConfig);
 
             // 初始化教师AI（场景中的 MonoBehaviour，由启动器负责配置）
-            TeacherAI teacherAI = FindObjectOfType<TeacherAI>();
+            TeacherAI teacherAI = FindFirstObjectByType<TeacherAI>();
             if (teacherAI != null)
             {
                 teacherAI.Initialize(demoLevelConfig);
