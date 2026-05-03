@@ -90,4 +90,5 @@
 - [x] DevModeController timeLimit 浮点赋值编译错误 → levelConfig.timeLimit 为 int，原代码赋 600f 导致 CS0266
 - [x] EmotionSystem.Initialize 初始值未 Clamp → DevModeController 测试案v2 设 initialPanic=15 低于 minPanic=30，初始状态与 ChangePanic 行为不一致
 - [x] PlayerDataStore.LoadOrCreate records null 风险 → JsonUtility.FromJson 后 records 可能为 null，后续 Add 抛 NullRef
+- [x] TaskManager.Initialize taskGoals 元素 null 风险 → Inspector 列表中可能包含 null 元素，访问 targetCardId 抛 NullRef
 
