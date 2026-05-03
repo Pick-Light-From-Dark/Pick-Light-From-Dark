@@ -14,6 +14,8 @@ namespace Game.Data
         [SerializeField] private bool isInBed;
         [SerializeField] private bool isEyesClosed;
 
+        private Game.Flow.GameFlowController gameFlow;
+
         /// <summary>
         /// 关卡初始化：根据配置重置玩家状态，避免单例跨关残留
         /// </summary>
@@ -85,8 +87,16 @@ namespace Game.Data
             SetEyesClosed(!isEyesClosed);
         }
 
+        void Awake()
+        {
+            gameFlow = Game.Flow.GameFlowController.Instance;
+        }
+
         void Update()
         {
+            if (gameFlow != null && (gameFlow.IsPaused() || gameFlow.IsGameOver()))
+                return;
+
             // C键切换闭眼
             if (Input.GetKeyDown(KeyCode.C))
             {
