@@ -31,6 +31,12 @@
   - [x] 眨眼机制（EyeCloseSystem + EyeCloseDisplay Prefab）
   - [x] 测试功能
 - [x] 教师ai
+- [x] 第一关完整测试场景
+  - [x] DevModeController 开发者模式（OnGUI 调参 + 颜文字 + ContextMenu）
+  - [x] FirstLevelDevRunner 场景运行器（自动聚合系统 + 一键初始化）
+  - [x] FirstLevelDevRunner.prefab（双组件预设）
+  - [x] TeacherAI 音频占位钩子（接近/检查/被抓）
+  - [x] FirstLevelTest.md 测试文档（10 TC + 组合场景）
 - [ ] 存档系统（评估后跳过，当前仅 PlayerDataStore 做关卡记录持久化）
 - [ ] dotween 动画集成（需 Unity 编辑器导入 DG.Tweening 包，当前仅有 DOTweenAnimationMgr.cs 占位实现）
 
