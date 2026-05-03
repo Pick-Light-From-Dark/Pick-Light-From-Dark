@@ -56,3 +56,10 @@
   - TeacherAITester / GameFlowTester
 - [x] 对应 8 个 .prefab（默认绑 TestLevelConfig）
 - [x] 测试用例文档 README.md（45+ TC，含集成场景示例）
+
+---
+
+## 巡检修复记录
+
+- [x] EyeCloseSystem timeScale 与 GameFlowController 状态同步（订阅 GameResume/GameWin/GameLose，修复被抓暂停恢复后加速永久失效）
+- [x] UIManager GameLose 订阅签名错误（无参 → `<string>` 泛型版，与触发端签名一致，避免 EventInfo 类型错配抛 NullRef）
