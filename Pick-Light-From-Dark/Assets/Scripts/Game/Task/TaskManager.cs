@@ -32,6 +32,7 @@ namespace Game.Task
             {
                 foreach (var goal in config.taskGoals)
                 {
+                    if (goal == null) continue;
                     var taskGoal = new TaskGoal(goal.targetCardId, goal.targetCount)
                     {
                         state = TaskState.InProgress
