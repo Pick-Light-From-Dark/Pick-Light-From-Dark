@@ -143,6 +143,9 @@ namespace Game.AI
 
             // 触发脚步声事件
             EventCenter.Instance.EventTrigger(E_EventType.TeacherFootstepStart, currentInspectType);
+
+            // 占位：教师接近音效
+            Debug.Log("[AUDIO] ▶️ 播放教师接近脚步声 (placeholder)");
         }
 
         void EnterInspecting()
@@ -163,6 +166,9 @@ namespace Game.AI
 
             // 触发检查开始事件
             EventCenter.Instance.EventTrigger(E_EventType.TeacherInspectStart, currentInspectType);
+
+            // 占位：检查开始音效
+            Debug.Log("[AUDIO] ▶️ 播放检查开始音效 (placeholder)");
         }
 
         void EnterLeaving()
@@ -193,6 +199,9 @@ namespace Game.AI
             if (isCaught)
             {
                 Debug.Log($"[TeacherAI] 玩家被抓！检查类型: {currentInspectType}");
+
+                // 触发被抓音效（占位）
+                EventCenter.Instance.EventTrigger(E_EventType.PlayCaughtSound);
 
                 // 触发被抓事件
                 EventCenter.Instance.EventTrigger(E_EventType.PlayerCaught);
