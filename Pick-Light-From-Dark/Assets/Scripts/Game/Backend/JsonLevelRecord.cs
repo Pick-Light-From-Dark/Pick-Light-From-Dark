@@ -14,6 +14,8 @@ namespace Game.Backend
         public float useTime;   // 相对关卡开始的秒数
         public bool success;    // 读条是否成功
 
+        public CardUseEntry() { }
+
         public CardUseEntry(int cardId, float useTime, bool success)
         {
             this.cardId = cardId;
@@ -32,6 +34,8 @@ namespace Game.Backend
         public int currentCount;
         public int targetCount;
         public string state; // Pending / InProgress / Completed
+
+        public TaskGoalRecord() { }
 
         public TaskGoalRecord(int targetCardId, int currentCount, int targetCount, string state)
         {
@@ -54,6 +58,8 @@ namespace Game.Backend
         public float timeUsed;        // 耗时（秒）
         public List<CardUseEntry> cardUses;
         public List<TaskGoalRecord> taskGoals;
+
+        public JsonLevelRecord() { }
 
         public JsonLevelRecord(int levelId)
         {

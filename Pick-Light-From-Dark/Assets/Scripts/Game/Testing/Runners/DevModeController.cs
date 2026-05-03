@@ -332,6 +332,7 @@ namespace Game.Testing.Runners
 
         string GetEmotionEmoji(int totalValue, int criticalValue)
         {
+            if (criticalValue <= 0) return "(╯°□°)╯";
             float ratio = (float)totalValue / criticalValue;
             if (ratio >= 1.0f) return "(╯°□°)╯"; // 超临界
             if (ratio >= 0.8f) return "(；´Д｀)"; // 高
