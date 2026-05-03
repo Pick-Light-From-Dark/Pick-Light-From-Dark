@@ -36,7 +36,6 @@ namespace Game.Testing.Runners
 
         [Header("卡牌控制")]
         public int addCardId = 2008;
-        public int removeCardInstanceId = 1;
         public List<int> setInitialCards = new List<int> { 2001, 2010 };
 
         [Header("教师AI参数")]
@@ -307,7 +306,7 @@ namespace Game.Testing.Runners
             levelConfig.eyeCheckDuration = new Vector2(3f, 3f);
             levelConfig.flashCheckDuration = new Vector2(3f, 3f);
             levelConfig.flashPanicPerSec = 2;
-            levelConfig.initialCards = new List<int> { 2001, 2010 };
+            levelConfig.initialCards = new List<int>(setInitialCards);
 
             // 任务配置
             var goal = new TaskGoal(2008, 1) { state = TaskState.InProgress };

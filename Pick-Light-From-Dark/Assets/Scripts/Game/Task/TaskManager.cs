@@ -14,6 +14,7 @@ namespace Game.Task
         private List<TaskGoal> _activeGoals = new List<TaskGoal>();
         private LevelConfigSO _levelConfig;
         [SerializeField] private bool isInitialized = false;
+        private bool _hasTriggeredLevelComplete = false;
 
         private void Start()
         {
@@ -24,6 +25,7 @@ namespace Game.Task
         {
             _levelConfig = config;
             _activeGoals.Clear();
+            _hasTriggeredLevelComplete = false;
             isInitialized = true;
 
             if (config.taskGoals != null)
@@ -78,11 +80,14 @@ namespace Game.Task
 
         public void CheckLevelComplete()
         {
+            if (_hasTriggeredLevelComplete) return;
+
             foreach (var goal in _activeGoals)
             {
                 if (goal.state != TaskState.Completed)
                     return;
             }
+            _hasTriggeredLevelComplete = true;
             EventCenter.Instance.EventTrigger(E_EventType.LevelComplete);
         }
 
