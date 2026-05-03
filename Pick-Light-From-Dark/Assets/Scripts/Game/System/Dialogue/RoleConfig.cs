@@ -23,12 +23,19 @@ public class RoleConfig : ScriptableObject
             if (!roleDict.ContainsKey(r.name))
                 roleDict.Add(r.name, r.sprite);
         }
+       
     }
 
-    public Sprite GetRoleSprite(string name)
+    public Sprite GetRoleSprite(string roleName)
     {
-        if (roleDict == null) Init();
-
-        return roleDict.ContainsKey(name) ? roleDict[name] : null;
+        if (roleDict.ContainsKey(roleName))
+        {
+            return roleDict[roleName];  // 返回找到的角色图
+        }
+        else
+        {
+            Debug.LogWarning($"角色立绘未找到：{roleName}");  // 输出未找到的角色名称
+            return null;  // 如果找不到，返回 null
+        }
     }
 }

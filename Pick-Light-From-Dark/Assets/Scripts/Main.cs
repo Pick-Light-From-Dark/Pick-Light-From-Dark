@@ -5,11 +5,11 @@ using UnityEngine;
 public class Main : MonoBehaviour
 {
     // Start is called before the first frame update
-    void Start()
-    {
-        DialogueSystem.Instance.StartDialogue("Dialogue1");
+    //void Start()
+    //{
+    //    DialogueSystem.Instance.StartDialogue(Dialogue1,DialogueSystem.DialogueMode.Gal);
 
-    }
+    //}
 
     // Update is called once per frame
     void Update()
