@@ -10,9 +10,6 @@ namespace Game.Flow
     /// </summary>
     public class GameFlowController : SingletonAutoMono<GameFlowController>
     {
-        [Header("当前关卡配置")]
-        [SerializeField] private LevelConfigSO currentLevelConfig;
-
         [Header("游戏状态")]
         [SerializeField] private bool isPaused;
         [SerializeField] private bool isGameOver;
