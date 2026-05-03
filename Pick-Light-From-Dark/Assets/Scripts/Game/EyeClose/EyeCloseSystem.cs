@@ -31,6 +31,53 @@ namespace Game.EyeClose
             playerState = Game.Data.PlayerState.Instance;
             emotionSystem = Game.Emotion.EmotionSystem.Instance;
             gameFlow = Game.Flow.GameFlowController.Instance;
+
+            // 订阅游戏流程事件，避免 PauseGame/ResumeGame 强制覆写 timeScale 后丢失加速状态
+            EventCenter.Instance.AddEventListener(E_EventType.GameResume, OnGameResume);
+            EventCenter.Instance.AddEventListener(E_EventType.GameWin, OnGameEnd);
+            EventCenter.Instance.AddEventListener<string>(E_EventType.GameLose, OnGameEndWithReason);
+        }
+
+        void OnDestroy()
+        {
+            // EventCenter 是非 Mono 单例，应用周期常驻；RemoveEventListener 内部对 dict 做了存在性判断，安全可调
+            EventCenter.Instance.RemoveEventListener(E_EventType.GameResume, OnGameResume);
+            EventCenter.Instance.RemoveEventListener(E_EventType.GameWin, OnGameEnd);
+            EventCenter.Instance.RemoveEventListener<string>(E_EventType.GameLose, OnGameEndWithReason);
+        }
+
+        /// <summary>
+        /// 游戏恢复后，如果还在加速状态需要重新写入 timeScale
+        /// （PauseGame 把 timeScale 设为 0，ResumeGame 强制写回 1，会丢失加速）
+        /// </summary>
+        private void OnGameResume()
+        {
+            if (isTimeAccelerated)
+            {
+                Time.timeScale = accelerationMultiplier;
+                Debug.Log($"[EyeCloseSystem] 游戏恢复，重新应用闭眼加速 x{accelerationMultiplier}");
+            }
+        }
+
+        /// <summary>
+        /// 游戏结束（胜利）时复位加速状态
+        /// </summary>
+        private void OnGameEnd()
+        {
+            if (isTimeAccelerated)
+            {
+                isTimeAccelerated = false;
+                eyeCloseTimer = 0f;
+                Debug.Log("[EyeCloseSystem] 游戏结束，复位加速状态");
+            }
+        }
+
+        /// <summary>
+        /// 游戏结束（失败）时复位加速状态（GameLose 携带 string 参数）
+        /// </summary>
+        private void OnGameEndWithReason(string reason)
+        {
+            OnGameEnd();
         }
 
         /// <summary>
