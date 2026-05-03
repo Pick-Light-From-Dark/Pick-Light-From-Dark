@@ -97,7 +97,9 @@ namespace Game.Backend
             {
                 string json = File.ReadAllText(_filePath);
                 var data = JsonUtility.FromJson<PlayerDataFile>(json);
-                return data ?? new PlayerDataFile();
+                if (data == null) return new PlayerDataFile();
+                if (data.records == null) data.records = new List<JsonLevelRecord>();
+                return data;
             }
             catch (Exception ex)
             {
