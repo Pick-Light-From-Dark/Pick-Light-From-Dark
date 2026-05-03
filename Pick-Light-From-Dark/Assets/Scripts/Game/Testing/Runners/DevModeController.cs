@@ -292,7 +292,7 @@ namespace Game.Testing.Runners
             // 使用测试案v2参数
             levelConfig.levelId = 1001;
             levelConfig.levelName = "第一夜";
-            levelConfig.timeLimit = 600f;
+            levelConfig.timeLimit = 600;
             levelConfig.maxLives = 2;
             levelConfig.initialInBed = true;
             levelConfig.initialPanic = 15;
