@@ -17,6 +17,13 @@ namespace Game.Card
         [SerializeField] private float readTime;
         [SerializeField] private int currentSegmentIndex;
 
+        private Game.Flow.GameFlowController gameFlow;
+
+        void Awake()
+        {
+            gameFlow = Game.Flow.GameFlowController.Instance;
+        }
+
         /// <summary>
         /// 初始化卡牌读条系统（占位，供将来扩展）
         /// </summary>
@@ -68,6 +75,9 @@ namespace Game.Card
 
         void Update()
         {
+            if (gameFlow != null && (gameFlow.IsPaused() || gameFlow.IsGameOver()))
+                return;
+
             if (!isReading || currentCard == null)
                 return;
 
