@@ -108,4 +108,5 @@
 - [x] TextUtil SplitStrTwice 遗漏的 callBack null 保护 + InputMgr GetInputInfo 回调 null 保护 → 全量 grep 扫描后补漏
 - [x] DemoController taskGoals null 保护 → demoLevelConfig.taskGoals 可能为 null，直接访问 .Count 会抛 NullRef
 - [x] MusicMgr / UIMgr 资源加载与组件获取 null 保护 → Resources.Load / LoadAsync 返回 null 时 Instantiate 抛异常；GetComponent 返回 null 时直接调用方法抛 NullRef
+- [x] PlayerDataStore.SaveLevelRecord record null 保护 → 公共 API 传入 null 时访问 record.levelId 会抛 NullRef
 
