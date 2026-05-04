@@ -126,7 +126,7 @@ public class TextUtil
             strs2 = SplitStr(strs[i], typeTwo);
             if (strs2.Length == 0)
                 continue;
-            callBack.Invoke(strs2[0], strs2[1]);
+            callBack?.Invoke(strs2[0], strs2[1]);
         }
     }
 
