@@ -106,4 +106,5 @@
 - [x] TextUtil 分割方法索引越界与 null 保护 → SplitStrToIntArrTwice/SplitStrTwice 中 ints/strs2 长度为 1 时访问 [1] 越界，且 callBack 未做 null 检查
 - [x] MathUtil 射线/范围检测回调 null 保护 → RayCast/RayCastAll/OverlapBox/OverlapSphere 系列方法中 callBack.Invoke 未做 null 检查，共 12 处，改为 ?.Invoke()
 - [x] TextUtil SplitStrTwice 遗漏的 callBack null 保护 + InputMgr GetInputInfo 回调 null 保护 → 全量 grep 扫描后补漏
+- [x] DemoController taskGoals null 保护 → demoLevelConfig.taskGoals 可能为 null，直接访问 .Count 会抛 NullRef
 
