@@ -178,6 +178,14 @@ namespace Game.EyeClose
         }
 
         /// <summary>
+        /// 获取当前加速倍率
+        /// </summary>
+        public float GetAccelerationMultiplier()
+        {
+            return accelerationMultiplier;
+        }
+
+        /// <summary>
         /// 重置闭眼系统
         /// </summary>
         public void Reset()

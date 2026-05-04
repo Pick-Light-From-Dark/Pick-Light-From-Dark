@@ -82,7 +82,8 @@ namespace Game.UI
             {
                 if (isAccelerated)
                 {
-                    warningText.text = string.Format(accelerationFormat, 2);
+                    float multiplier = eyeCloseSystem.GetAccelerationMultiplier();
+                    warningText.text = string.Format(accelerationFormat, multiplier);
                     warningText.color = warningColor;
                     warningText.fontSize = warningFontSize;
                 }
