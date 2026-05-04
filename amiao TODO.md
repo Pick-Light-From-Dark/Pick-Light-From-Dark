@@ -101,4 +101,5 @@
 - [x] TimerMgr 超时回调无 null 保护 → item.overCallBack.Invoke() 未做 null 检查，TimerItem 回收后 overCallBack 为 null 会抛 NullRef → 改为 ?.Invoke()
 - [x] EventCenter 双向类型不匹配警告 → 泛型与非泛型 EventTrigger 均增加 as-cast 检查，签名错配时输出警告日志，替代之前的静默忽略行为
 - [x] PoolMgr.GetObj Resources.Load null 保护 → 资源路径不存在时 Instantiate(null) 抛 NullRef，增加前置检查并输出明确错误日志
+- [x] MusicMgr.PlaySound 对象池返回 null 保护 → PoolMgr.GetObj("Sound/soundObj") 资源不存在时返回 null，直接 .GetComponent 会抛 NullRef，增加前置检查
 
