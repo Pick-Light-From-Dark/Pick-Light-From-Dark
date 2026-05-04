@@ -98,4 +98,5 @@
 - [x] AutomatedGameTest 时间加速断言时序 bug → Test_EyeCloseSystem 先 SetEyesClosed(false) 再检查 IsTimeAccelerated，但 EyeCloseSystem.Update 睁眼后立即 DisableTimeAcceleration，断言恒为 false
 - [x] EyeCloseDisplay 硬编码加速倍率 → string.Format(accelerationFormat, 2) 固定显示 2x，但 EyeCloseSystem.accelerationMultiplier 由 LevelConfigSO 配置（v2 为 1.5x），显示与实际倍率不符 → 新增 GetAccelerationMultiplier() 获取实际倍率
 - [x] PoolMgr.PushObj 缺少 null 与 key 存在性保护 → poolDic[obj.name].Push(obj) 在 obj 为 null 或 name 不在字典时直接抛异常，增加前置检查与兜底销毁
+- [x] TimerMgr 超时回调无 null 保护 → item.overCallBack.Invoke() 未做 null 检查，TimerItem 回收后 overCallBack 为 null 会抛 NullRef → 改为 ?.Invoke()
 
