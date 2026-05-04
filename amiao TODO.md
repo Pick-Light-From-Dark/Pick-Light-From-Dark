@@ -93,4 +93,5 @@
 - [x] TaskManager.Initialize taskGoals 元素 null 风险 → Inspector 列表中可能包含 null 元素，访问 targetCardId 抛 NullRef
 - [x] CardManager 集合字段未初始化 → handCards / cardHistory 声明时未 new，SingletonAutoMono 创建后 Initialize 前调用 public API 抛 NullRef
 - [x] GameWin 冗余 LevelComplete 事件触发 → TaskManager.CheckLevelComplete 已触发 LevelComplete，GameWin 中再次触发导致双发通知
+- [x] TeacherAI 状态切换间隔零值保护 → LevelConfigSO Vector2 默认值 (0,0) 使 Random.Range 返回 0，stateTimer 立即归零导致状态机疯狂切换
 
