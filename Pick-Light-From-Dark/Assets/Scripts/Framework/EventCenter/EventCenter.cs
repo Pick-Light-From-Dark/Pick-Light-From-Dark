@@ -57,7 +57,11 @@ public class EventCenter: BaseManager<EventCenter>
         if(eventDic.ContainsKey(eventName))
         {
             //ȥִ�ж�Ӧ���߼�
-            (eventDic[eventName] as EventInfo<T>).actions?.Invoke(info);
+            var eventInfo = eventDic[eventName] as EventInfo<T>;
+            if (eventInfo != null)
+                eventInfo.actions?.Invoke(info);
+            else
+                Debug.LogWarning($"[EventCenter] 事件 {eventName} 类型不匹配：触发端携带参数，但监听端为无参版本");
         }
     }
 
@@ -67,11 +71,13 @@ public class EventCenter: BaseManager<EventCenter>
     /// <param name="eventName"></param>
     public void EventTrigger(E_EventType eventName)
     {
-        //���ڹ����ҵ��� ��֪ͨ����ȥ�����߼�
         if (eventDic.ContainsKey(eventName))
         {
-            //ȥִ�ж�Ӧ���߼�
-            (eventDic[eventName] as EventInfo).actions?.Invoke();
+            var eventInfo = eventDic[eventName] as EventInfo;
+            if (eventInfo != null)
+                eventInfo.actions?.Invoke();
+            else
+                Debug.LogWarning($"[EventCenter] 事件 {eventName} 类型不匹配：触发端无参，但监听端携带参数");
         }
     }
 
