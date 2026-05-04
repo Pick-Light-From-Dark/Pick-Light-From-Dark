@@ -205,19 +205,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 757312566}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 757312563}
-        m_TargetAssemblyTypeName: 
-        m_MethodName: 
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: 
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &757312566
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -747,7 +735,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 26b3f31d037201246964bf00876d5f25, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  dialogueText: {fileID: 4900000, guid: ebbed3162d3d5674ca20979294992fdc, type: 3}
+  dialogueText: {fileID: 4900000, guid: 3a63298bcd258be46af3016814f9bcd2, type: 3}
   dialogueSystem: {fileID: 1804003754}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
