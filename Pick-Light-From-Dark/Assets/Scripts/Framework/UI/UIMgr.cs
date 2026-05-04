@@ -73,26 +73,41 @@ public class UIMgr : BaseManager<UIMgr>
     private UIMgr()
     {
         //��̬����Ψһ��Canvas��EventSystem���������
-        uiCamera = GameObject.Instantiate(ResMgr.Instance.Load<GameObject>("UI/UICamera")).GetComponent<Camera>();
+        GameObject uiCameraRes = ResMgr.Instance.Load<GameObject>("UI/UICamera");
+        if (uiCameraRes != null)
+        {
+            uiCamera = GameObject.Instantiate(uiCameraRes).GetComponent<Camera>();
         //ui��������������Ƴ� ר��������ȾUI���
-        GameObject.DontDestroyOnLoad(uiCamera.gameObject);
+            GameObject.DontDestroyOnLoad(uiCamera.gameObject);
+        }
 
         //��̬����Canvas
-        uiCanvas = GameObject.Instantiate(ResMgr.Instance.Load<GameObject>("UI/Canvas")).GetComponent<Canvas>();
+        GameObject uiCanvasRes = ResMgr.Instance.Load<GameObject>("UI/Canvas");
+        if (uiCanvasRes != null)
+        {
+            uiCanvas = GameObject.Instantiate(uiCanvasRes).GetComponent<Canvas>();
         //����ʹ�õ�UI�����
         uiCanvas.worldCamera = uiCamera;
         //���������Ƴ�
-        GameObject.DontDestroyOnLoad(uiCanvas.gameObject);
+            GameObject.DontDestroyOnLoad(uiCanvas.gameObject);
+        }
 
         //�ҵ��㼶������
-        bottomLayer = uiCanvas.transform.Find("Bottom");
-        middleLayer = uiCanvas.transform.Find("Middle");
-        topLayer = uiCanvas.transform.Find("Top");
-        systemLayer = uiCanvas.transform.Find("System");
+        if (uiCanvas != null)
+        {
+            bottomLayer = uiCanvas.transform.Find("Bottom");
+            middleLayer = uiCanvas.transform.Find("Middle");
+            topLayer = uiCanvas.transform.Find("Top");
+            systemLayer = uiCanvas.transform.Find("System");
+        }
 
         //��̬����EventSystem
-        uiEventSystem = GameObject.Instantiate(ResMgr.Instance.Load<GameObject>("UI/EventSystem")).GetComponent<EventSystem>();
-        GameObject.DontDestroyOnLoad(uiEventSystem.gameObject);
+        GameObject uiEventSystemRes = ResMgr.Instance.Load<GameObject>("UI/EventSystem");
+        if (uiEventSystemRes != null)
+        {
+            uiEventSystem = GameObject.Instantiate(uiEventSystemRes).GetComponent<EventSystem>();
+            GameObject.DontDestroyOnLoad(uiEventSystem.gameObject);
+        }
     }
 
     /// <summary>
@@ -178,10 +193,23 @@ public class UIMgr : BaseManager<UIMgr>
             if (father == null)
                 father = middleLayer;
             //�����Ԥ���崴������Ӧ�������� ���ұ���ԭ�������Ŵ�С
+            if (res == null)
+            {
+                Debug.LogError($"[UIMgr] 未找到 UI/{panelName} 资源");
+                panelDic.Remove(panelName);
+                return;
+            }
             GameObject panelObj = GameObject.Instantiate(res, father, false);
 
             //��ȡ��ӦUI������س�ȥ
             T panel = panelObj.GetComponent<T>();
+            if (panel == null)
+            {
+                Debug.LogError($"[UIMgr] 面板预制体 {panelName} 缺少 {typeof(T).Name} 组件");
+                GameObject.Destroy(panelObj);
+                panelDic.Remove(panelName);
+                return;
+            }
             //��ʾ���ʱִ�е�Ĭ�Ϸ���
             panel.ShowMe();
             //����ȥʹ��

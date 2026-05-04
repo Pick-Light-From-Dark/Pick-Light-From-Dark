@@ -113,6 +113,12 @@ public class MusicMgr : BaseManager<MusicMgr>
             return;
         }
         AudioSource source = soundObj.GetComponent<AudioSource>();
+        if (source == null)
+        {
+            Debug.LogError("[MusicMgr] 音效源对象缺少 AudioSource 组件");
+            PoolMgr.Instance.PushObj(soundObj);
+            return;
+        }
         //获取到音效源之前 使用的 停止播放
         source.Stop();
 
