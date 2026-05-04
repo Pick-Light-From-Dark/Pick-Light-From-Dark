@@ -197,7 +197,6 @@ namespace Game.Flow
             StopAllCoroutines();
 
             Debug.Log("[GameFlow] 游戏胜利！");
-            EventCenter.Instance.EventTrigger(E_EventType.LevelComplete);
             EventCenter.Instance.EventTrigger(E_EventType.GameWin);
         }
 
