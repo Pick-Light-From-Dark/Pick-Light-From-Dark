@@ -35,12 +35,20 @@ namespace Game.Config
         public string levelName;
         public int timeLimit;
 
+        [Header("初始状态")]
+        public bool initialInBed = true;
+
         [Header("初始情绪值")]
         public int initialPanic = 35;
         public int initialExcite = 35;
 
         [Header("临界情绪值")]
-        public int criticalValue;
+        public int criticalValue = 80;
+
+        [Header("闭眼配置")]
+        public float eyeClosePanicDecreasePerSec = 1f;
+        public float eyeCloseAccelerationThreshold = 10f;
+        public float eyeCloseAccelerationMultiplier = 2f;
 
         [Header("巡逻配置")]
         public Vector2 patrolIntervals;

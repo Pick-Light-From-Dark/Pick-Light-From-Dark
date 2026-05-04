@@ -33,6 +33,14 @@ namespace Game.UI
             }
         }
 
+        void OnDestroy()
+        {
+            if (cardButton != null)
+            {
+                cardButton.onClick.RemoveListener(OnClick);
+            }
+        }
+
         /// <summary>
         /// 设置卡牌数据
         /// </summary>

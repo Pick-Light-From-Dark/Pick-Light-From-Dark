@@ -28,6 +28,7 @@ namespace Game.AI
         private Game.Card.CardReadingSystem cardReadingSystem;
         private Game.Data.PlayerState playerState;
         private float targetDuration;
+        private float flashPanicAccumulated;
 
         void Awake()
         {
@@ -39,12 +40,19 @@ namespace Game.AI
         /// </summary>
         public void Initialize(LevelConfigSO config)
         {
+            if (config == null)
+            {
+                Debug.LogError("[TeacherAI] Initialize 失败：config 为 null");
+                return;
+            }
+
             levelConfig = config;
             patrolCount = 0;
+            flashPanicAccumulated = 0f;
 
             // 获取系统引用
             emotionSystem = Game.Emotion.EmotionSystem.Instance;
-            cardReadingSystem = FindObjectOfType<Game.Card.CardReadingSystem>();
+            cardReadingSystem = FindFirstObjectByType<Game.Card.CardReadingSystem>();
             playerState = Game.Data.PlayerState.Instance;
 
             EnterState(TeacherState.Idle);
@@ -119,7 +127,7 @@ namespace Game.AI
 
         void EnterIdle()
         {
-            stateTimer = Random.Range(levelConfig.patrolIntervals.x, levelConfig.patrolIntervals.y);
+            stateTimer = Mathf.Max(0.5f, Random.Range(levelConfig.patrolIntervals.x, levelConfig.patrolIntervals.y));
             targetDuration = stateTimer;
             isVisible = false;
             approachProgress = 0f;
@@ -128,7 +136,7 @@ namespace Game.AI
 
         void EnterApproaching()
         {
-            stateTimer = Random.Range(levelConfig.patrolTime.x, levelConfig.patrolTime.y);
+            stateTimer = Mathf.Max(0.5f, Random.Range(levelConfig.patrolTime.x, levelConfig.patrolTime.y));
             targetDuration = stateTimer;
             isVisible = false;
             approachProgress = 0f;
@@ -141,17 +149,20 @@ namespace Game.AI
 
             // 触发脚步声事件
             EventCenter.Instance.EventTrigger(E_EventType.TeacherFootstepStart, currentInspectType);
+
+            // 占位：教师接近音效
+            Debug.Log("[AUDIO] ▶️ 播放教师接近脚步声 (placeholder)");
         }
 
         void EnterInspecting()
         {
             if (currentInspectType == InspectType.Eye)
             {
-                stateTimer = Random.Range(levelConfig.eyeCheckDuration.x, levelConfig.eyeCheckDuration.y);
+                stateTimer = Mathf.Max(0.5f, Random.Range(levelConfig.eyeCheckDuration.x, levelConfig.eyeCheckDuration.y));
             }
             else
             {
-                stateTimer = Random.Range(levelConfig.flashCheckDuration.x, levelConfig.flashCheckDuration.y);
+                stateTimer = Mathf.Max(0.5f, Random.Range(levelConfig.flashCheckDuration.x, levelConfig.flashCheckDuration.y));
             }
             targetDuration = stateTimer;
             isVisible = true;
@@ -161,6 +172,9 @@ namespace Game.AI
 
             // 触发检查开始事件
             EventCenter.Instance.EventTrigger(E_EventType.TeacherInspectStart, currentInspectType);
+
+            // 占位：检查开始音效
+            Debug.Log("[AUDIO] ▶️ 播放检查开始音效 (placeholder)");
         }
 
         void EnterLeaving()
@@ -191,6 +205,9 @@ namespace Game.AI
             if (isCaught)
             {
                 Debug.Log($"[TeacherAI] 玩家被抓！检查类型: {currentInspectType}");
+
+                // 触发被抓音效（占位）
+                EventCenter.Instance.EventTrigger(E_EventType.PlayCaughtSound);
 
                 // 触发被抓事件
                 EventCenter.Instance.EventTrigger(E_EventType.PlayerCaught);
@@ -287,10 +304,16 @@ namespace Game.AI
                     return true;
                 }
 
-                // 手电筒持续增加慌乱值
+                // 手电筒持续增加慌乱值（累积小数部分避免 RoundToInt 截断）
                 if (emotionSystem != null)
                 {
-                    emotionSystem.ChangePanic(Mathf.RoundToInt(levelConfig.flashPanicPerSec * Time.deltaTime));
+                    flashPanicAccumulated += levelConfig.flashPanicPerSec * Time.deltaTime;
+                    int increase = Mathf.FloorToInt(flashPanicAccumulated);
+                    if (increase > 0)
+                    {
+                        emotionSystem.ChangePanic(increase);
+                        flashPanicAccumulated -= increase;
+                    }
                 }
             }
 

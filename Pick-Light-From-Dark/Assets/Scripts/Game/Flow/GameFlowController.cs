@@ -10,13 +10,11 @@ namespace Game.Flow
     /// </summary>
     public class GameFlowController : SingletonAutoMono<GameFlowController>
     {
-        [Header("当前关卡配置")]
-        [SerializeField] private LevelConfigSO currentLevelConfig;
-
         [Header("游戏状态")]
         [SerializeField] private bool isPaused;
         [SerializeField] private bool isGameOver;
         [SerializeField] private float remainingTime;
+        [SerializeField] private int currentLives;
         [SerializeField] private bool hasStartedFirstFrame; // 是否已经过了第一帧
         [SerializeField] private bool isInitialized = false; // 是否已经初始化
 
@@ -30,6 +28,12 @@ namespace Game.Flow
         /// </summary>
         public void Initialize(LevelConfigSO config)
         {
+            if (config == null)
+            {
+                Debug.LogError("[GameFlow] Initialize 失败：levelConfig 为 null");
+                return;
+            }
+
             Debug.Log($"[GameFlow] InstanceID:{GetInstanceID()} === Initialize 开始 ===");
             Debug.Log($"[GameFlow] InstanceID:{GetInstanceID()} 当前状态: isInitialized={isInitialized}, isGameOver={isGameOver}, isPaused={isPaused}, hasStartedFirstFrame={hasStartedFirstFrame}, remainingTime={remainingTime:F2}");
 
@@ -46,8 +50,20 @@ namespace Game.Flow
             // 初始化任务系统
             taskManager.Initialize(levelConfig);
 
+            // 初始化玩家状态（按 levelConfig.initialInBed 重置卧床/闭眼，避免单例跨关残留）
+            Game.Data.PlayerState.Instance.Initialize(levelConfig);
+
+            // 初始化闭眼系统（让 LevelConfigSO 的 eyeClose 阈值/倍率参数生效，并复位加速状态）
+            Game.EyeClose.EyeCloseSystem.Instance.Initialize(levelConfig);
+
+            // 初始化卡牌管理器（重置 handCards / cardHistory / nextInstanceId，并发放初始卡牌）
+            Game.Card.CardManager.Instance.Initialize(levelConfig);
+
             // 初始化时间
             remainingTime = levelConfig.timeLimit;
+
+            // 初始化生命值
+            currentLives = levelConfig.maxLives;
 
             isPaused = false;
             isGameOver = false;
@@ -72,6 +88,21 @@ namespace Game.Flow
             EventCenter.Instance.EventTrigger(E_EventType.LevelStart, levelConfig.levelId);
         }
 
+        void Start()
+        {
+            EventCenter.Instance.AddEventListener(E_EventType.LevelComplete, OnLevelComplete);
+        }
+
+        void OnDestroy()
+        {
+            EventCenter.Instance.RemoveEventListener(E_EventType.LevelComplete, OnLevelComplete);
+        }
+
+        private void OnLevelComplete()
+        {
+            GameWin();
+        }
+
         void Update()
         {
             // 如果还未初始化，不执行任何逻辑
@@ -86,7 +117,7 @@ namespace Game.Flow
                 if (updateCount > 1)
                 {
                     // 查找所有GameFlowController组件
-                    GameFlowController[] allControllers = FindObjectsOfType<GameFlowController>();
+                    GameFlowController[] allControllers = FindObjectsByType<GameFlowController>(FindObjectsSortMode.None);
                     Debug.LogError($"[GameFlow] InstanceID:{GetInstanceID()} Frame:{Time.frameCount} 检测到Update被多次调用！当前updateCount={updateCount}");
                     Debug.LogError($"[GameFlow] 当前场景中有 {allControllers.Length} 个GameFlowController组件：");
                     for (int i = 0; i < allControllers.Length; i++)
@@ -161,11 +192,11 @@ namespace Game.Flow
             isGameOver = true;
             Time.timeScale = 1f;
 
-            // 取消所有待执行的Invoke（比如ResumeGame）
+            // 取消所有待执行的Invoke和协程（比如ResumeGame的延迟恢复）
             CancelInvoke();
+            StopAllCoroutines();
 
             Debug.Log("[GameFlow] 游戏胜利！");
-            EventCenter.Instance.EventTrigger(E_EventType.LevelComplete);
             EventCenter.Instance.EventTrigger(E_EventType.GameWin);
         }
 
@@ -179,8 +210,9 @@ namespace Game.Flow
             isGameOver = true;
             Time.timeScale = 1f;
 
-            // 取消所有待执行的Invoke（比如ResumeGame）
+            // 取消所有待执行的Invoke和协程（比如ResumeGame的延迟恢复）
             CancelInvoke();
+            StopAllCoroutines();
 
             Debug.Log($"[GameFlow] 游戏失败: {reason}");
             EventCenter.Instance.EventTrigger(E_EventType.GameLose, reason);
@@ -197,16 +229,40 @@ namespace Game.Flow
                 return;
             }
 
-            Debug.Log("[GameFlow] 处理玩家被抓逻辑");
+            // 扣除生命值
+            currentLives--;
+            Debug.Log($"[GameFlow] 玩家被抓，生命值剩余: {currentLives}/{levelConfig.maxLives}");
 
-            // 这里可以处理生命值扣除逻辑
-            // 如果生命值归零则游戏失败
+            // 生命值耗尽 → 游戏失败
+            if (currentLives <= 0)
+            {
+                GameLose("生命值耗尽");
+                return;
+            }
 
-            // 暂停一下让玩家反应
+            // 还有生命值：暂停 + 2秒后恢复（让玩家反应）
             PauseGame();
+            StartCoroutine(ResumeAfterDelayRealtime(2f));
+        }
 
-            // 2秒后恢复游戏（或者游戏结束）
-            Invoke(nameof(ResumeGame), 2f);
+        /// <summary>
+        /// 延迟恢复游戏（使用真实时间，不受 timeScale=0 影响）
+        /// </summary>
+        private System.Collections.IEnumerator ResumeAfterDelayRealtime(float delay)
+        {
+            yield return new WaitForSecondsRealtime(delay);
+            if (!isGameOver)
+            {
+                ResumeGame();
+            }
+        }
+
+        /// <summary>
+        /// 获取剩余生命值
+        /// </summary>
+        public int GetCurrentLives()
+        {
+            return currentLives;
         }
 
         /// <summary>

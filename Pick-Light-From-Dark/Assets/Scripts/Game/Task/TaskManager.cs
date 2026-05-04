@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Game.Config;
 using Game.Data;
 using UnityEngine;
@@ -13,6 +14,7 @@ namespace Game.Task
         private List<TaskGoal> _activeGoals = new List<TaskGoal>();
         private LevelConfigSO _levelConfig;
         [SerializeField] private bool isInitialized = false;
+        private bool _hasTriggeredLevelComplete = false;
 
         private void Start()
         {
@@ -23,12 +25,14 @@ namespace Game.Task
         {
             _levelConfig = config;
             _activeGoals.Clear();
+            _hasTriggeredLevelComplete = false;
             isInitialized = true;
 
             if (config.taskGoals != null)
             {
                 foreach (var goal in config.taskGoals)
                 {
+                    if (goal == null) continue;
                     var taskGoal = new TaskGoal(goal.targetCardId, goal.targetCount)
                     {
                         state = TaskState.InProgress
@@ -51,10 +55,13 @@ namespace Game.Task
                 if (goal.targetCardId == cardId && goal.state == TaskState.InProgress)
                 {
                     goal.currentCount++;
-                    if (goal.CheckCompleted())
+                    var wasCompleted = goal.CheckCompleted();
+                    if (wasCompleted)
                     {
                         goal.state = TaskState.Completed;
+                        EventCenter.Instance.EventTrigger(E_EventType.TaskGoalCompleted, goal.targetCardId);
                     }
+                    EventCenter.Instance.EventTrigger(E_EventType.TaskProgressChanged, cardId);
                     break;
                 }
             }
@@ -74,12 +81,31 @@ namespace Game.Task
 
         public void CheckLevelComplete()
         {
+            if (_hasTriggeredLevelComplete) return;
+
             foreach (var goal in _activeGoals)
             {
                 if (goal.state != TaskState.Completed)
                     return;
             }
+            _hasTriggeredLevelComplete = true;
             EventCenter.Instance.EventTrigger(E_EventType.LevelComplete);
+        }
+
+        public IReadOnlyList<TaskGoal> GetActiveGoals()
+        {
+            return _activeGoals.AsReadOnly();
+        }
+
+        public TaskGoal GetGoalByCardId(int cardId)
+        {
+            return _activeGoals.Find(g => g.targetCardId == cardId && g.state != TaskState.Completed);
+        }
+
+        public (int completed, int total) GetOverallProgress()
+        {
+            int completed = _activeGoals.Count(g => g.state == TaskState.Completed);
+            return (completed, _activeGoals.Count);
         }
     }
 }

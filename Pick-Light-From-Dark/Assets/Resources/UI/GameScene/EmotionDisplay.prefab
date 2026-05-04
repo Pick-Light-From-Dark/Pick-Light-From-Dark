@@ -301,10 +301,10 @@ RectTransform:
   - {fileID: 3427556028692491365}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 150}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 200}
+  m_SizeDelta: {x: 400, y: 150}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &8413934358183915017
 MonoBehaviour:
@@ -319,9 +319,23 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   panicValueText: {fileID: 837121175076182235}
-  panicBackground: {fileID: 0}
   exciteValueText: {fileID: 8835987898016522975}
-  exciteBackground: {fileID: 0}
-  safeColor: {r: 0, g: 1, b: 0, a: 1}
-  warningColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
-  dangerColor: {r: 1, g: 0, b: 0, a: 1}
+  panicEmoticonLow: "(´∀｀)"
+  panicEmoticonMid: "(・_・;)"
+  panicEmoticonHigh: (>_<)
+  exciteEmoticonLow: (-_-)
+  exciteEmoticonMid: (^_^)
+  exciteEmoticonHigh: "(≧∀≦)"
+  lowThreshold: 50
+  highThreshold: 75
+  safeColor: {r: 0.4, g: 1, b: 0.4, a: 1}
+  warningColor: {r: 1, g: 0.85, b: 0.2, a: 1}
+  dangerColor: {r: 1, g: 0.3, b: 0.3, a: 1}
+  safeFontSize: 36
+  warningFontSize: 42
+  dangerFontSize: 50
+  panicLabel: "慌乱"
+  exciteLabel: "兴奋"
+  textFormat: "{0} {1}\n{2}"
+  emphasizeOnCritical: 1
+  criticalFontSize: 56
