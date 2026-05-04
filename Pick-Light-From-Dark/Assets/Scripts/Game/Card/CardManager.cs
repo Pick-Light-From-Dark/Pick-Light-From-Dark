@@ -12,10 +12,10 @@ namespace Game.Card
     public class CardManager : SingletonAutoMono<CardManager>
     {
         [Header("手牌")]
-        [SerializeField] private List<CardInstance> handCards;
+        [SerializeField] private List<CardInstance> handCards = new List<CardInstance>();
 
         [Header("历史记录")]
-        [SerializeField] private List<CardUseRecord> cardHistory;
+        [SerializeField] private List<CardUseRecord> cardHistory = new List<CardUseRecord>();
 
         private LevelConfigSO levelConfig;
         private int nextInstanceId = 1;
