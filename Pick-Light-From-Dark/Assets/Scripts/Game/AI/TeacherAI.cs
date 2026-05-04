@@ -127,7 +127,7 @@ namespace Game.AI
 
         void EnterIdle()
         {
-            stateTimer = Random.Range(levelConfig.patrolIntervals.x, levelConfig.patrolIntervals.y);
+            stateTimer = Mathf.Max(0.5f, Random.Range(levelConfig.patrolIntervals.x, levelConfig.patrolIntervals.y));
             targetDuration = stateTimer;
             isVisible = false;
             approachProgress = 0f;
@@ -136,7 +136,7 @@ namespace Game.AI
 
         void EnterApproaching()
         {
-            stateTimer = Random.Range(levelConfig.patrolTime.x, levelConfig.patrolTime.y);
+            stateTimer = Mathf.Max(0.5f, Random.Range(levelConfig.patrolTime.x, levelConfig.patrolTime.y));
             targetDuration = stateTimer;
             isVisible = false;
             approachProgress = 0f;
@@ -158,11 +158,11 @@ namespace Game.AI
         {
             if (currentInspectType == InspectType.Eye)
             {
-                stateTimer = Random.Range(levelConfig.eyeCheckDuration.x, levelConfig.eyeCheckDuration.y);
+                stateTimer = Mathf.Max(0.5f, Random.Range(levelConfig.eyeCheckDuration.x, levelConfig.eyeCheckDuration.y));
             }
             else
             {
-                stateTimer = Random.Range(levelConfig.flashCheckDuration.x, levelConfig.flashCheckDuration.y);
+                stateTimer = Mathf.Max(0.5f, Random.Range(levelConfig.flashCheckDuration.x, levelConfig.flashCheckDuration.y));
             }
             targetDuration = stateTimer;
             isVisible = true;
