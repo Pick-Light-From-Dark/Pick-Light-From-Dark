@@ -94,4 +94,5 @@
 - [x] CardManager 集合字段未初始化 → handCards / cardHistory 声明时未 new，SingletonAutoMono 创建后 Initialize 前调用 public API 抛 NullRef
 - [x] GameWin 冗余 LevelComplete 事件触发 → TaskManager.CheckLevelComplete 已触发 LevelComplete，GameWin 中再次触发导致双发通知
 - [x] TeacherAI 状态切换间隔零值保护 → LevelConfigSO Vector2 默认值 (0,0) 使 Random.Range 返回 0，stateTimer 立即归零导致状态机疯狂切换
+- [x] DemoController 模拟失败绕过 GameFlowController → 直接 EventTrigger(GameLose) 跳过 isGameOver/CancelInvoke/StopAllCoroutines/timeScale 保护，改为调用 GameFlowController.Instance.GameLose()
 
