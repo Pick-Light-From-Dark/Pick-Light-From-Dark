@@ -294,9 +294,11 @@ namespace Game.Testing
             {
                 yield return new WaitForSeconds(1f);
             }
+
+            // 必须在睁眼前检查：SetEyesClosed(false) 会触发 EyeCloseSystem 禁用加速
+            bool isAccelerated = eyeCloseSystem.IsTimeAccelerated();
             playerState.SetEyesClosed(false);
 
-            bool isAccelerated = eyeCloseSystem.IsTimeAccelerated();
             TestAssertions.AssertTrue(isAccelerated, "闭眼10秒后触发时间加速");
         }
 
