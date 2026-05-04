@@ -110,7 +110,7 @@ namespace Game.Demo
         void SimulateGameLose()
         {
             Debug.Log("[DemoController] 模拟游戏失败（时间耗尽）");
-            EventCenter.Instance.EventTrigger(E_EventType.GameLose, "时间耗尽");
+            GameFlowController.Instance.GameLose("时间耗尽");
         }
     }
 }
