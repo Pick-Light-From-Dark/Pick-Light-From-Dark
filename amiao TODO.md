@@ -96,4 +96,5 @@
 - [x] TeacherAI 状态切换间隔零值保护 → LevelConfigSO Vector2 默认值 (0,0) 使 Random.Range 返回 0，stateTimer 立即归零导致状态机疯狂切换
 - [x] DemoController 模拟失败绕过 GameFlowController → 直接 EventTrigger(GameLose) 跳过 isGameOver/CancelInvoke/StopAllCoroutines/timeScale 保护，改为调用 GameFlowController.Instance.GameLose()
 - [x] AutomatedGameTest 时间加速断言时序 bug → Test_EyeCloseSystem 先 SetEyesClosed(false) 再检查 IsTimeAccelerated，但 EyeCloseSystem.Update 睁眼后立即 DisableTimeAcceleration，断言恒为 false
+- [x] EyeCloseDisplay 硬编码加速倍率 → string.Format(accelerationFormat, 2) 固定显示 2x，但 EyeCloseSystem.accelerationMultiplier 由 LevelConfigSO 配置（v2 为 1.5x），显示与实际倍率不符 → 新增 GetAccelerationMultiplier() 获取实际倍率
 
