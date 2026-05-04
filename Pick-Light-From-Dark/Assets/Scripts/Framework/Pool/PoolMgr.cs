@@ -195,7 +195,13 @@ public class PoolMgr : BaseManager<PoolMgr>
         {
             //��̬��������
             //û�е�ʱ�� ͨ����Դ���� ȥʵ������һ��GameObject
-            obj = GameObject.Instantiate(Resources.Load<GameObject>(name));
+            GameObject prefab = Resources.Load<GameObject>(name);
+            if (prefab == null)
+            {
+                Debug.LogError($"[PoolMgr] 未找到资源 {name}");
+                return null;
+            }
+            obj = GameObject.Instantiate(prefab);
             //����ʵ���������Ķ��� Ĭ�ϻ������ֺ����һ��(Clone)
             //�������������� �����������
             obj.name = name;
