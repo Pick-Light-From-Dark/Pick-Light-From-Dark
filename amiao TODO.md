@@ -91,4 +91,5 @@
 - [x] EmotionSystem.Initialize 初始值未 Clamp → DevModeController 测试案v2 设 initialPanic=15 低于 minPanic=30，初始状态与 ChangePanic 行为不一致
 - [x] PlayerDataStore.LoadOrCreate records null 风险 → JsonUtility.FromJson 后 records 可能为 null，后续 Add 抛 NullRef
 - [x] TaskManager.Initialize taskGoals 元素 null 风险 → Inspector 列表中可能包含 null 元素，访问 targetCardId 抛 NullRef
+- [x] CardManager 集合字段未初始化 → handCards / cardHistory 声明时未 new，SingletonAutoMono 创建后 Initialize 前调用 public API 抛 NullRef
 
