@@ -12,8 +12,9 @@ namespace Game.UI
         [SerializeField] private Image cardImage;
         [SerializeField] private TextMeshProUGUI nameText;
         [SerializeField] private TextMeshProUGUI timeText;
-        [SerializeField] private TextMeshProUGUI emoText;
-        [SerializeField] private TextMeshProUGUI descText;
+        [SerializeField] private TextMeshProUGUI panicText;
+        [SerializeField] private TextMeshProUGUI exciteText;
+        [SerializeField] private TextMeshProUGUI stackText;
 
         [Header("拖拽")]
         [SerializeField] private float dragAlpha = 0.7f;
@@ -29,6 +30,9 @@ namespace Game.UI
         /// <summary>绑定的卡牌数据</summary>
         public CardData CardData { get; private set; }
 
+        /// <summary>当前剩余堆叠层数（可堆叠类卡牌用）</summary>
+        public int StackCount { get; private set; }
+
         public static event System.Action<CardSlot> OnCardClicked;
         public static CardSlot CurrentDragging { get; private set; }
 
@@ -41,35 +45,60 @@ namespace Game.UI
         }
 
         /// <summary>从 ScriptableObject 设置卡牌显示</summary>
-        public void SetCardData(CardData data)
+        public void SetCardData(CardData data, int stackCount = -1)
         {
             CardData = data;
             if (data == null) return;
 
+            // 堆叠层数：-1 表示使用数据中的初始层数
+            StackCount = stackCount >= 0 ? stackCount : data.initialStack;
+
             if (nameText != null) nameText.text = data.cardName;
             if (timeText != null) timeText.text = $"{data.CalculateTotalDuration():F1}s";
-            if (emoText != null)
-                emoText.text = FormatEmo(data.panicDelta, data.exciteDelta);
-            if (descText != null) descText.text = data.description;
+            if (panicText != null) panicText.text = $"{data.panicDelta:+0;-0}";
+            if (exciteText != null) exciteText.text = $"{data.exciteDelta:+0;-0}";
+            RefreshStackDisplay();
         }
 
         /// <summary>纯前端设置（无数据绑定时用）</summary>
-        public void SetDisplay(string cardName, string time, string emo)
+        public void SetDisplay(string cardName, string time, string panic, string excite)
         {
             if (nameText != null) nameText.text = cardName;
             if (timeText != null) timeText.text = time;
-            if (emoText != null) emoText.text = emo;
+            if (panicText != null) panicText.text = panic;
+            if (exciteText != null) exciteText.text = excite;
+            StackCount = 1;
+            RefreshStackDisplay();
+        }
+
+        /// <summary>消耗一层堆叠（读条成功时调用），返回是否耗尽</summary>
+        public bool ConsumeStack()
+        {
+            if (CardData == null || CardData.cardType != CardType.Stackable) return true;
+            StackCount--;
+            RefreshStackDisplay();
+            return StackCount <= 0;
+        }
+
+        /// <summary>恢复一层堆叠（被打断时调用）</summary>
+        public void RestoreStack()
+        {
+            if (CardData == null || CardData.cardType != CardType.Stackable) return;
+            StackCount++;
+            RefreshStackDisplay();
+        }
+
+        private void RefreshStackDisplay()
+        {
+            if (stackText == null) return;
+            bool show = CardData != null
+                     && CardData.cardType == CardType.Stackable
+                     && StackCount > 1;
+            stackText.gameObject.SetActive(show);
+            if (show) stackText.text = $"x{StackCount}";
         }
 
         public void AcceptDrop(Transform newParent) => acceptedParent = newParent;
-
-        private static string FormatEmo(int panic, int excite)
-        {
-            string s = "";
-            if (panic != 0) s += $"慌{panic:+0;-0}";
-            if (excite != 0) s += $" 兴{excite:+0;-0}";
-            return s.Trim();
-        }
 
         // ==================== 点击 ====================
 

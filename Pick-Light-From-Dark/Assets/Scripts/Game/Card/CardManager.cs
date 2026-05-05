@@ -1,24 +1,46 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System.Linq;
 using Game.Data;
 using Game.Config;
 
 namespace Game.Card
 {
     /// <summary>
-    /// 卡牌管理器
-    /// 管理手牌、发牌、弃牌、关联卡牌
+    /// 全局卡牌池中的卡牌状态
+    /// </summary>
+    public class PooledCard
+    {
+        public CardData data;
+        public int remainingStacks;   // 剩余层数（可堆叠类）或 1/0（不可堆叠类）
+        public bool isUnlocked;       // 是否已解锁（用于非持续关联判断）
+        public bool isInitial;        // 是否为初始卡牌
+
+        public bool IsDepleted => remainingStacks <= 0;
+    }
+
+    /// <summary>
+    /// 卡牌管理器 — 管理全局卡牌池、发牌、关联、顶替、堆叠
     /// </summary>
     public class CardManager : SingletonAutoMono<CardManager>
     {
-        [Header("手牌")]
-        [SerializeField] private List<CardInstance> handCards = new List<CardInstance>();
+        [Header("全局卡牌池")]
+        [SerializeField] private List<int> pooledCardIds = new List<int>();
+        private Dictionary<int, PooledCard> globalPool = new Dictionary<int, PooledCard>();
 
         [Header("历史记录")]
         [SerializeField] private List<CardUseRecord> cardHistory = new List<CardUseRecord>();
 
+        /// <summary>已解锁的非持续关联卡牌ID集合（用于判断"是否已被解锁过"）</summary>
+        private HashSet<int> unlockedNonPersistentIds = new HashSet<int>();
+
+        /// <summary>顶替映射：被消耗的卡牌ID → 其关联卡牌ID列表（永久生效）</summary>
+        private Dictionary<int, List<int>> replaceMap = new Dictionary<int, List<int>>();
+
         private LevelConfigSO levelConfig;
-        private int nextInstanceId = 1;
+
+        /// <summary>备选区变化回调（通知 GamePanel 刷新）</summary>
+        public static event System.Action OnSelectionChanged;
 
         public class CardUseRecord
         {
@@ -37,7 +59,7 @@ namespace Game.Card
         }
 
         /// <summary>
-        /// 初始化卡牌管理器
+        /// 初始化全局卡牌池
         /// </summary>
         public void Initialize(LevelConfigSO config)
         {
@@ -48,192 +70,308 @@ namespace Game.Card
             }
 
             levelConfig = config;
-            handCards = new List<CardInstance>();
-            cardHistory = new List<CardUseRecord>();
-            nextInstanceId = 1;
+            globalPool.Clear();
+            unlockedNonPersistentIds.Clear();
+            replaceMap.Clear();
+            cardHistory.Clear();
+            pooledCardIds.Clear();
 
-            // 发放初始卡牌
+            // 发放初始卡牌到全局池
             DealInitialCards();
 
-            Debug.Log($"[CardManager] 初始化完成，发放了 {handCards.Count} 张初始卡牌");
+            Debug.Log($"[CardManager] 初始化完成，全局池 {globalPool.Count} 张卡牌");
         }
 
         /// <summary>
-        /// 发放初始卡牌
+        /// 发放初始卡牌到全局卡牌池
         /// </summary>
-        void DealInitialCards()
+        private void DealInitialCards()
         {
-            if (levelConfig == null || levelConfig.initialCards == null)
-                return;
+            if (levelConfig == null || levelConfig.initialCards == null) return;
 
             foreach (int cardId in levelConfig.initialCards)
             {
-                CardData cardData = GetCardDataById(cardId);
-                if (cardData != null)
+                var data = GetCardDataById(cardId);
+                if (data == null) continue;
+
+                if (globalPool.ContainsKey(cardId))
                 {
-                    CardInstance instance = new CardInstance(cardData, nextInstanceId++);
-                    handCards.Add(instance);
-                    Debug.Log($"[CardManager] 发放卡牌: {cardData.cardName}");
+                    // 持续关联类：重置为初始层数
+                    if (data.relatedType == RelatedType.Persistent)
+                    {
+                        globalPool[cardId].remainingStacks = data.initialStack;
+                        globalPool[cardId].isUnlocked = true;
+                        globalPool[cardId].isInitial = true;
+                    }
+                }
+                else
+                {
+                    var pooled = new PooledCard
+                    {
+                        data = data,
+                        remainingStacks = data.cardType == CardType.Stackable ? data.initialStack : 1,
+                        isUnlocked = true,
+                        isInitial = true
+                    };
+                    globalPool.Add(cardId, pooled);
+                    pooledCardIds.Add(cardId);
                 }
             }
         }
 
         /// <summary>
-        /// 添加卡牌到手牌
+        /// 获取当前备选区应显示的卡牌数据列表（已解锁 + 剩余 > 0），按ID升序
+        /// </summary>
+        public List<CardData> GetAvailableCards()
+        {
+            var result = new List<CardData>();
+            foreach (var kvp in globalPool.OrderBy(k => k.Key))
+            {
+                if (kvp.Value.isUnlocked && !kvp.Value.IsDepleted)
+                    result.Add(kvp.Value.data);
+            }
+            return result;
+        }
+
+        /// <summary>
+        /// 获取指定卡牌在全局池中的剩余层数
+        /// </summary>
+        public int GetRemainingStacks(int cardId)
+        {
+            globalPool.TryGetValue(cardId, out var pooled);
+            return pooled != null ? pooled.remainingStacks : 0;
+        }
+
+        /// <summary>
+        /// 添加卡牌到手牌（关联触发时调用）
         /// </summary>
         public void AddCard(CardData cardData)
         {
             if (cardData == null) return;
 
-            CardInstance instance = new CardInstance(cardData, nextInstanceId++);
-            handCards.Add(instance);
-
-            Debug.Log($"[CardManager] 添加卡牌: {cardData.cardName}");
-        }
-
-        /// <summary>
-        /// 移除卡牌
-        /// </summary>
-        public void RemoveCard(CardInstance instance)
-        {
-            if (handCards.Remove(instance))
+            if (globalPool.ContainsKey(cardData.id))
             {
-                Debug.Log($"[CardManager] 移除卡牌: {instance.data.cardName}");
+                var existing = globalPool[cardData.id];
+                if (cardData.cardType == CardType.Stackable)
+                    existing.remainingStacks += cardData.initialStack;
             }
-        }
-
-        /// <summary>
-        /// 弃牌逻辑：使用指定卡牌后，隐藏其他卡牌
-        /// </summary>
-        public void DiscardOtherCards(int keepCardId)
-        {
-            List<CardInstance> toRemove = new List<CardInstance>();
-
-            foreach (var card in handCards)
+            else
             {
-                if (card.data != null && card.data.id != keepCardId && !card.isUsed)
+                var pooled = new PooledCard
                 {
-                    toRemove.Add(card);
-                }
-            }
-
-            foreach (var card in toRemove)
-            {
-                handCards.Remove(card);
-            }
-
-            if (toRemove.Count > 0)
-            {
-                Debug.Log($"[CardManager] 弃牌: 移除了 {toRemove.Count} 张卡牌，保留卡牌ID {keepCardId}");
+                    data = cardData,
+                    remainingStacks = cardData.cardType == CardType.Stackable ? cardData.initialStack : 1,
+                    isUnlocked = true,
+                    isInitial = false
+                };
+                globalPool.Add(cardData.id, pooled);
+                pooledCardIds.Add(cardData.id);
             }
         }
 
         /// <summary>
-        /// 触发关联卡牌
+        /// 卡牌读条完成 — 消耗卡牌并触发关联
         /// </summary>
-        public void TriggerLinkedCards(CardData usedCard)
+        public void OnCardUsed(CardData usedCard)
         {
             if (usedCard == null) return;
 
-            // 这里需要根据卡牌配置触发关联卡牌
-            // 暂时先空实现，等待卡牌配置完善
-            Debug.Log($"[CardManager] 检查关联卡牌: {usedCard.cardName}");
+            // 1. 消耗卡牌
+            if (usedCard.cardType == CardType.Stackable)
+            {
+                // 可堆叠类：扣除层数
+                if (globalPool.TryGetValue(usedCard.id, out var pooled))
+                {
+                    pooled.remainingStacks--;
+                    if (pooled.IsDepleted)
+                    {
+                        // 非持续关联被消耗时触发顶替
+                        if (usedCard.relatedType == RelatedType.NonPersistent
+                            && usedCard.relatedCardIds != null
+                            && usedCard.relatedCardIds.Count > 0)
+                        {
+                            ApplyReplaceToParents(usedCard);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                // 不可堆叠类：标记为已消耗
+                if (globalPool.TryGetValue(usedCard.id, out var pooled))
+                {
+                    pooled.remainingStacks = 0;
+                    if (usedCard.relatedType == RelatedType.NonPersistent
+                        && usedCard.relatedCardIds != null
+                        && usedCard.relatedCardIds.Count > 0)
+                    {
+                        ApplyReplaceToParents(usedCard);
+                    }
+                }
+            }
+
+            // 2. 触发关联卡牌
+            TriggerLinkedCards(usedCard);
+
+            // 3. 记录历史
+            RecordCardUse(usedCard, true);
+
+            OnSelectionChanged?.Invoke();
+        }
+
+        /// <summary>
+        /// 卡牌被打断 — 退回全局池，不触发关联，不触发顶替
+        /// </summary>
+        public void OnCardInterrupted(CardData card)
+        {
+            if (card == null) return;
+
+            if (card.cardType == CardType.Stackable)
+            {
+                if (globalPool.TryGetValue(card.id, out var pooled))
+                {
+                    pooled.remainingStacks++;
+                }
+            }
+
+            RecordCardUse(card, false);
+            OnSelectionChanged?.Invoke();
+        }
+
+        /// <summary>
+        /// 触发关联卡牌：筛选关联列表中「已解锁且剩余 > 0」的卡牌
+        /// </summary>
+        public void TriggerLinkedCards(CardData usedCard)
+        {
+            if (usedCard == null || usedCard.relatedCardIds == null) return;
+
+            foreach (int linkedId in usedCard.relatedCardIds)
+            {
+                var linkedData = GetCardDataById(linkedId);
+                if (linkedData == null) continue;
+
+                if (globalPool.TryGetValue(linkedId, out var pooled))
+                {
+                    // 已在全局池中
+                    if (usedCard.relatedType == RelatedType.Persistent)
+                    {
+                        // 持续关联：层数=0时重置
+                        if (pooled.IsDepleted)
+                            pooled.remainingStacks = linkedData.initialStack;
+                    }
+                    // 非持续关联：已解锁则不做任何操作
+                }
+                else
+                {
+                    // 不在全局池中 → 首次解锁
+                    int stacks = linkedData.cardType == CardType.Stackable
+                        ? linkedData.initialStack : 1;
+
+                    var newPooled = new PooledCard
+                    {
+                        data = linkedData,
+                        remainingStacks = stacks,
+                        isUnlocked = true,
+                        isInitial = false
+                    };
+                    globalPool.Add(linkedId, newPooled);
+                    pooledCardIds.Add(linkedId);
+
+                    if (linkedData.relatedType == RelatedType.NonPersistent)
+                        unlockedNonPersistentIds.Add(linkedId);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 顶替机制：被消耗的非持续关联卡牌的关联卡牌 永久加入所有父卡牌的关联列表
+        /// </summary>
+        private void ApplyReplaceToParents(CardData consumedCard)
+        {
+            replaceMap[consumedCard.id] = new List<int>(consumedCard.relatedCardIds ?? new List<int>());
+
+            // 找到所有在关联列表中包含此卡牌的父卡牌
+            foreach (var kvp in globalPool)
+            {
+                var parentData = kvp.Value.data;
+                if (parentData == null || parentData.relatedCardIds == null) continue;
+                if (!parentData.relatedCardIds.Contains(consumedCard.id)) continue;
+
+                // 移除被消耗的卡牌
+                parentData.relatedCardIds.Remove(consumedCard.id);
+                // 添加被消耗卡牌的关联卡牌
+                foreach (int replaceId in consumedCard.relatedCardIds ?? new List<int>())
+                {
+                    if (!parentData.relatedCardIds.Contains(replaceId))
+                        parentData.relatedCardIds.Add(replaceId);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 被抓时：清空备选区，重新发放初始卡牌
+        /// </summary>
+        public void OnCaught()
+        {
+            // 清空备选区（仅隐藏，不删除全局池数据）
+            // 重新发放初始卡牌
+            foreach (int cardId in levelConfig.initialCards ?? new List<int>())
+            {
+                if (globalPool.TryGetValue(cardId, out var pooled))
+                {
+                    var data = pooled.data;
+                    if (data.relatedType == RelatedType.Persistent)
+                    {
+                        // 持续关联类：统一重置为初始层数
+                        pooled.remainingStacks = data.initialStack;
+                    }
+                }
+            }
+
+            OnSelectionChanged?.Invoke();
+        }
+
+        /// <summary>
+        /// 完全重置（退出关卡/重进时）
+        /// </summary>
+        public void FullReset()
+        {
+            globalPool.Clear();
+            unlockedNonPersistentIds.Clear();
+            replaceMap.Clear();
+            cardHistory.Clear();
+            pooledCardIds.Clear();
+        }
+
+        /// <summary>
+        /// 根据ID查找卡牌数据（从Resources）
+        /// </summary>
+        public CardData GetCardDataById(int cardId)
+        {
+            var containers = Resources.LoadAll<CardDataContainer>("Card");
+            foreach (var c in containers)
+            {
+                if (c.cardData != null && c.cardData.id == cardId)
+                    return c.cardData;
+            }
+            return null;
         }
 
         /// <summary>
         /// 记录卡牌使用历史
         /// </summary>
-        public void RecordCardUse(CardInstance card, bool success)
+        public void RecordCardUse(CardData card, bool success)
         {
-            if (card == null || card.data == null) return;
-
-            CardUseRecord record = new CardUseRecord(card.data.id, card.data.cardName, success);
+            if (card == null) return;
+            var record = new CardUseRecord(card.id, card.cardName, success);
             cardHistory.Add(record);
-
-            Debug.Log($"[CardManager] 记录卡牌使用: {card.data.cardName} - {(success ? "成功" : "失败")}");
         }
 
-        /// <summary>
-        /// 获取所有手牌
-        /// </summary>
-        public List<CardInstance> GetHandCards()
+        private void RecordCardUse(CardInstance instance, bool success)
         {
-            return new List<CardInstance>(handCards);
-        }
-
-        /// <summary>
-        /// 获取未使用的手牌
-        /// </summary>
-        public List<CardInstance> GetAvailableCards()
-        {
-            List<CardInstance> available = new List<CardInstance>();
-            foreach (var card in handCards)
-            {
-                if (!card.isUsed)
-                {
-                    available.Add(card);
-                }
-            }
-            return available;
-        }
-
-        /// <summary>
-        /// 获取手牌数量
-        /// </summary>
-        public int GetHandCardCount()
-        {
-            return handCards.Count;
-        }
-
-        /// <summary>
-        /// 获取可用手牌数量
-        /// </summary>
-        public int GetAvailableCardCount()
-        {
-            int count = 0;
-            foreach (var card in handCards)
-            {
-                if (!card.isUsed)
-                {
-                    count++;
-                }
-            }
-            return count;
-        }
-
-        /// <summary>
-        /// 根据实例ID获取卡牌
-        /// </summary>
-        public CardInstance GetCardByInstanceId(int instanceId)
-        {
-            foreach (var card in handCards)
-            {
-                if (card.instanceId == instanceId)
-                {
-                    return card;
-                }
-            }
-            return null;
-        }
-
-        /// <summary>
-        /// 获取卡牌数据（从配置中）
-        /// </summary>
-        CardData GetCardDataById(int cardId)
-        {
-            // 从Resources加载所有卡牌数据容器
-            CardDataContainer[] containers = Resources.LoadAll<CardDataContainer>("TestData");
-
-            foreach (var container in containers)
-            {
-                if (container.cardData != null && container.cardData.id == cardId)
-                {
-                    return container.cardData;
-                }
-            }
-
-            Debug.LogWarning($"[CardManager] 未找到ID为 {cardId} 的卡牌数据");
-            return null;
+            if (instance == null || instance.data == null) return;
+            var record = new CardUseRecord(instance.data.id, instance.data.cardName, success);
+            cardHistory.Add(record);
         }
 
         /// <summary>
@@ -242,6 +380,73 @@ namespace Game.Card
         public List<CardUseRecord> GetCardHistory()
         {
             return new List<CardUseRecord>(cardHistory);
+        }
+
+        /// <summary>
+        /// 获取手牌数量（全局池中已解锁且未耗尽的卡牌数）
+        /// </summary>
+        public int GetAvailableCardCount()
+        {
+            int count = 0;
+            foreach (var kvp in globalPool)
+            {
+                if (kvp.Value.isUnlocked && !kvp.Value.IsDepleted)
+                    count++;
+            }
+            return count;
+        }
+
+        // ==================== 向后兼容（测试器用）====================
+
+        /// <summary>
+        /// 获取全局池中卡牌总数（兼容旧API）
+        /// </summary>
+        public int GetHandCardCount()
+        {
+            return globalPool.Count;
+        }
+
+        /// <summary>
+        /// 获取全局池中所有卡牌的 CardInstance 列表（兼容旧API）
+        /// </summary>
+        public List<CardInstance> GetHandCards()
+        {
+            var list = new List<CardInstance>();
+            foreach (var kvp in globalPool)
+            {
+                var inst = new CardInstance(kvp.Value.data, kvp.Key);
+                inst.isUsed = kvp.Value.IsDepleted;
+                list.Add(inst);
+            }
+            return list;
+        }
+
+        /// <summary>
+        /// 移除卡牌（兼容旧API）
+        /// </summary>
+        public void RemoveCard(CardInstance instance)
+        {
+            if (instance == null || instance.data == null) return;
+            if (globalPool.TryGetValue(instance.data.id, out var pooled))
+            {
+                pooled.remainingStacks = 0;
+            }
+        }
+
+        /// <summary>
+        /// 弃牌：保留指定卡牌，移除其他（兼容旧API）
+        /// </summary>
+        public void DiscardOtherCards(int keepCardId)
+        {
+            foreach (var kvp in globalPool)
+            {
+                if (kvp.Key != keepCardId && !kvp.Value.IsDepleted)
+                {
+                    kvp.Value.remainingStacks = 0;
+                }
+            }
+            Debug.Log($"[CardManager] 弃牌: 保留卡牌ID {keepCardId}");
+            OnSelectionChanged?.Invoke();
         }
     }
 }

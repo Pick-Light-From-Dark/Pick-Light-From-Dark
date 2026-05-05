@@ -14,24 +14,24 @@ namespace Game.UI
         private List<CardSlot> slots = new List<CardSlot>();
 
         /// <summary>从 ScriptableObject 数据生成卡牌</summary>
-        public CardSlot AddCard(CardData data, Transform parentSlot)
+        public CardSlot AddCard(CardData data, Transform parentSlot, int stackCount = -1)
         {
             var slot = CreateSlot(parentSlot);
             if (slot != null)
             {
-                slot.SetCardData(data);
+                slot.SetCardData(data, stackCount);
                 slots.Add(slot);
             }
             return slot;
         }
 
         /// <summary>前端测试用（无数据绑定）</summary>
-        public CardSlot AddCard(string cardName, string time, string emo, Transform parentSlot)
+        public CardSlot AddCard(string cardName, string time, string panic, string excite, Transform parentSlot)
         {
             var slot = CreateSlot(parentSlot);
             if (slot != null)
             {
-                slot.SetDisplay(cardName, time, emo);
+                slot.SetDisplay(cardName, time, panic, excite);
                 slots.Add(slot);
             }
             return slot;
@@ -59,10 +59,11 @@ namespace Game.UI
         private void AutoWireCardSlot(CardSlot slot, GameObject root)
         {
             var t = typeof(CardSlot);
-            TrySetField(slot, t, "nameText",  FindTMP(root, "CardNameText"));
-            TrySetField(slot, t, "timeText",  FindTMP(root, "TotalTimeText"));
-            TrySetField(slot, t, "emoText",   FindTMP(root, "EmoCountText"));
-            TrySetField(slot, t, "cardImage", root.transform.Find("CardImg")?.GetComponent<Image>());
+            TrySetField(slot, t, "nameText",   FindTMP(root, "CardNameText"));
+            TrySetField(slot, t, "timeText",   FindTMP(root, "TimeText"));
+            TrySetField(slot, t, "panicText",  FindTMP(root, "ChaosNum"));
+            TrySetField(slot, t, "exciteText", FindTMP(root, "HappyNum"));
+            TrySetField(slot, t, "cardImage",  root.transform.Find("CardImg")?.GetComponent<Image>());
         }
 
         private TextMeshProUGUI FindTMP(GameObject root, string childName)
