@@ -924,6 +924,7 @@ GameObject:
   - component: {fileID: 6267922484752362194}
   - component: {fileID: 3016415285187071516}
   - component: {fileID: 636262120013835636}
+  - component: {fileID: 8783433903637146102}
   m_Layer: 5
   m_Name: BeginPanel
   m_TagString: Untagged
@@ -1006,6 +1007,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 50b0f024f418db543a5c299791dbff4c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  dialogueText: {fileID: 4900000, guid: 3a63298bcd258be46af3016814f9bcd2, type: 3}
+--- !u!114 &8783433903637146102
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5756080326635869785}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95bbf88d715d5f342a549142af5d151f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  bgmName: "\u4E3B\u754C\u9762\u80CC\u666F\u97F3\u4E50"
 --- !u!1 &5789058098932108462
 GameObject:
   m_ObjectHideFlags: 0

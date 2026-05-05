@@ -638,6 +638,8 @@ GameObject:
   - component: {fileID: 7414722107451623399}
   - component: {fileID: 778718471623952498}
   - component: {fileID: 3210504191974192644}
+  - component: {fileID: 4749117229873671148}
+  - component: {fileID: 1824456152629426554}
   m_Layer: 5
   m_Name: BaseCard
   m_TagString: Untagged
@@ -708,3 +710,33 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &4749117229873671148
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9185077467445351091}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f1c8d7704fd032a4189e675ee2c21f6d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cardImage: {fileID: 7869822019339007563}
+  nameText: {fileID: 6225951495634194252}
+  timeText: {fileID: 7607209183797527427}
+  emoText: {fileID: 3788571473882554648}
+  dragAlpha: 0.7
+--- !u!114 &1824456152629426554
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9185077467445351091}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 30bd1baacb25bf04ea9f8d2dd481dd06, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cardSlotPrefab: {fileID: 9185077467445351091}

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -9,11 +9,11 @@ public static class DialogueParser
         var list = new List<DialogueLine>();
         if (txt == null) return list;
 
-        string[] lines = txt.text.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+        string[] rawLines = txt.text.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
 
-        foreach (string line in lines)
+        for (int i = 0; i < rawLines.Length; i++)
         {
-            string s = line.Trim();
+            string s = rawLines[i].Trim();
             if (string.IsNullOrEmpty(s)) continue;
 
             var d = new DialogueLine();
@@ -47,7 +47,6 @@ public static class DialogueParser
                 d.type = "选项";
                 d.speaker = "";
 
-               
                 int start = s.IndexOf("-");
                 int orIndex = s.IndexOf("or");
 
@@ -60,32 +59,48 @@ public static class DialogueParser
                 list.Add(d);
                 continue;
             }
-            else if (s.StartsWith("【选项-吃】"))
+            else if (s.StartsWith("【选项-吃1】"))
             {
-                // 找到最近的“选项”
-                for (int i = list.Count - 1; i >= 0; i--)
+                // 解析选项1的结果文本
+                string result = ReadUntilBreak(rawLines, i + 1);
+                // 找到最近的"选项"
+                for (int j = list.Count - 1; j >= 0; j--)
                 {
-                    if (list[i].type == "选项")
+                    if (list[j].type == "选项")
                     {
-                        // 把后面的所有文本拼接成结果
-                        string result = "";
-
-                        for (int j = Array.IndexOf(lines, line) + 1; j < lines.Length; j++)
-                        {
-                            string next = lines[j].Trim();
-                            if (string.IsNullOrEmpty(next)) continue;
-
-                            // 遇到新的结构就停止
-                            if (next.StartsWith("选项") || next.StartsWith("【卡牌"))
-                                break;
-
-                            result += next + "\n";
-                        }
-
-                        list[i].choice1Result = result.Trim();
+                        list[j].choice1Result = result;
                         break;
                     }
                 }
+                continue;
+            }
+            else if (s.StartsWith("【选项-吃2】"))
+            {
+                // 解析选项2的结果文本
+                string result = ReadUntilBreak(rawLines, i + 1);
+                for (int j = list.Count - 1; j >= 0; j--)
+                {
+                    if (list[j].type == "选项")
+                    {
+                        list[j].choice2Result = result;
+                        break;
+                    }
+                }
+                continue;
+            }
+            else if (s.StartsWith("【选项-吃】"))
+            {
+                // 兼容旧格式，默认当作 choice1Result
+                string result = ReadUntilBreak(rawLines, i + 1);
+                for (int j = list.Count - 1; j >= 0; j--)
+                {
+                    if (list[j].type == "选项")
+                    {
+                        list[j].choice1Result = result;
+                        break;
+                    }
+                }
+                continue;
             }
             else if (s.Contains("："))
             {
@@ -98,8 +113,29 @@ public static class DialogueParser
             {
                 continue;
             }
+
             list.Add(d);
         }
+
         return list;
+    }
+
+    /// <summary>
+    /// 从 startIndex 开始读取文本，直到遇到新的标记行（选项/【卡牌等）
+    /// </summary>
+    private static string ReadUntilBreak(string[] rawLines, int startIndex)
+    {
+        string result = "";
+        for (int k = startIndex; k < rawLines.Length; k++)
+        {
+            string next = rawLines[k].Trim();
+            if (string.IsNullOrEmpty(next)) continue;
+
+            if (next.StartsWith("选项") || next.StartsWith("【卡牌") || next.StartsWith("【选项"))
+                break;
+
+            result += next + "\n";
+        }
+        return result.Trim();
     }
 }

@@ -222,7 +222,7 @@ GameObject:
   - component: {fileID: 4415903361358632024}
   - component: {fileID: 6883515178189974649}
   - component: {fileID: 8374136006306737246}
-  - component: {fileID: 8337587754464989214}
+  - component: {fileID: 6468344829092930926}
   m_Layer: 5
   m_Name: GalDialoguePanel
   m_TagString: Untagged
@@ -243,6 +243,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 7271493866540372922}
+  - {fileID: 8966528154398457205}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -288,7 +289,7 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &8337587754464989214
+--- !u!114 &6468344829092930926
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -297,15 +298,15 @@ MonoBehaviour:
   m_GameObject: {fileID: 1524282093366388756}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e69c8918682ee5341a9ff32d9a6563ff, type: 3}
+  m_Script: {fileID: 11500000, guid: 8a7b0698d054ee14393ada7561765440, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   contentText: {fileID: 9176261161431066976}
   speakerText: {fileID: 2016033849544179081}
-  speakerBg: {fileID: 7711488782013307426}
   roleImage: {fileID: 1685926700757600443}
   backgroundImage: {fileID: 5942061967524804567}
   choiceRoot: {fileID: 1984676471160521200}
+  clickArea: {fileID: 8966528154398457205}
 --- !u!1 &2581863833817880280
 GameObject:
   m_ObjectHideFlags: 0
@@ -392,7 +393,6 @@ GameObject:
   - component: {fileID: 325125776878092560}
   - component: {fileID: 4317353987152208872}
   - component: {fileID: 3020960103823336409}
-  - component: {fileID: 293818232337118441}
   m_Layer: 5
   m_Name: DialogBox
   m_TagString: Untagged
@@ -459,24 +459,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &293818232337118441
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5994788475188424710}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e69c8918682ee5341a9ff32d9a6563ff, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  contentText: {fileID: 9176261161431066976}
-  speakerText: {fileID: 2016033849544179081}
-  speakerBg: {fileID: 7711488782013307426}
-  roleImage: {fileID: 0}
-  backgroundImage: {fileID: 0}
-  choiceRoot: {fileID: 0}
 --- !u!1 &7711488782013307426
 GameObject:
   m_ObjectHideFlags: 0
@@ -553,6 +535,41 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!1 &8076613895282923038
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8966528154398457205}
+  m_Layer: 5
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &8966528154398457205
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8076613895282923038}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4415903361358632024}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &8792773566809034817
 GameObject:
   m_ObjectHideFlags: 0

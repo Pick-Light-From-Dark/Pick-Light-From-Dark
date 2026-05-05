@@ -4,12 +4,13 @@ using UnityEngine;
 
 public class Main : MonoBehaviour
 {
-    // Start is called before the first frame update
-    //void Start()
-    //{
-    //    DialogueSystem.Instance.StartDialogue(Dialogue1,DialogueSystem.DialogueMode.Gal);
-
-    //}
+    
+    void Start()
+    {
+        UIMgr.Instance.ShowPanel<BeginPanel>();
+        Debug.Log("Main Start");
+        
+    }
 
     // Update is called once per frame
     void Update()

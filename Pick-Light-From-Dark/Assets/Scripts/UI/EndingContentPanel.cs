@@ -1,9 +1,10 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+[UIPath("UI/Content")]
 public class EndingContentPanel : BasePanel
 {
+    
     public override void HideMe()
     {
         
