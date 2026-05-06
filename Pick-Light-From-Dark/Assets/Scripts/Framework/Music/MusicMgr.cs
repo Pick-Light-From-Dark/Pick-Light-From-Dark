@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
@@ -21,6 +21,7 @@ public class MusicMgr : BaseManager<MusicMgr>
     //音效是否在播放
     private bool soundIsPlay = true;
 
+    private string currentBKName = "";
 
     private MusicMgr()
     {
@@ -69,7 +70,13 @@ public class MusicMgr : BaseManager<MusicMgr>
     //播放背景音乐 - Resources加载版本
     public void PlayBKMusic(string name)
     {
-        ResMgr.Instance.LoadAsync<AudioClip>("Music/" + name, (clip) =>
+        
+        if (currentBKName == name)
+            return;
+
+        currentBKName = name;
+
+        ResMgr.Instance.LoadAsync<AudioClip>("Sound/BkMusic/" + name, (clip) =>
         {
             PlayBKMusic(clip);
         });
@@ -138,7 +145,7 @@ public class MusicMgr : BaseManager<MusicMgr>
     /// </summary>
     public void PlaySound(string name, bool isLoop = false, UnityAction<AudioSource> callBack = null)
     {
-        ResMgr.Instance.LoadAsync<AudioClip>("Sound/" + name, (clip) =>
+        ResMgr.Instance.LoadAsync<AudioClip>("Sound/sound/" + name, (clip) =>
         {
             PlaySound(clip, isLoop, callBack);
         });

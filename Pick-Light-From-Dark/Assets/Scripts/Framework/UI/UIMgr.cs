@@ -1,3 +1,4 @@
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -73,7 +74,7 @@ public class UIMgr : BaseManager<UIMgr>
     private UIMgr()
     {
         //��̬����Ψһ��Canvas��EventSystem���������
-        GameObject uiCameraRes = ResMgr.Instance.Load<GameObject>("UI/UICamera");
+        GameObject uiCameraRes = ResMgr.Instance.Load<GameObject>("UI/Base/UICamera");
         if (uiCameraRes != null)
         {
             uiCamera = GameObject.Instantiate(uiCameraRes).GetComponent<Camera>();
@@ -82,7 +83,7 @@ public class UIMgr : BaseManager<UIMgr>
         }
 
         //��̬����Canvas
-        GameObject uiCanvasRes = ResMgr.Instance.Load<GameObject>("UI/Canvas");
+        GameObject uiCanvasRes = ResMgr.Instance.Load<GameObject>("UI/Base/Canvas");
         if (uiCanvasRes != null)
         {
             uiCanvas = GameObject.Instantiate(uiCanvasRes).GetComponent<Canvas>();
@@ -102,7 +103,7 @@ public class UIMgr : BaseManager<UIMgr>
         }
 
         //��̬����EventSystem
-        GameObject uiEventSystemRes = ResMgr.Instance.Load<GameObject>("UI/EventSystem");
+        GameObject uiEventSystemRes = ResMgr.Instance.Load<GameObject>("UI/Base/EventSystem");
         if (uiEventSystemRes != null)
         {
             uiEventSystem = GameObject.Instantiate(uiEventSystemRes).GetComponent<EventSystem>();
@@ -142,9 +143,20 @@ public class UIMgr : BaseManager<UIMgr>
     public void ShowPanel<T>(E_UILayer layer = E_UILayer.Middle, UnityAction<T> callBack = null, bool isSync = false) where T:BasePanel
     {
         //��ȡ����� Ԥ������������������һ�� 
-        string panelName = typeof(T).Name;
+        Type type = typeof(T);
+        string panelName = type.Name;
+
+        // 默认路径
+        string path = "UI/MainFlow";
+
+        // 读取特性
+        var attrs = type.GetCustomAttributes(typeof(UIPathAttribute), false);
+        if (attrs.Length > 0)
+        {
+            path = ((UIPathAttribute)attrs[0]).path;
+        }
         //�������
-        if(panelDic.ContainsKey(panelName))
+        if (panelDic.ContainsKey(panelName))
         {
             //ȡ���ֵ����Ѿ�ռ��λ�õ�����
             PanelInfo<T> panelInfo = panelDic[panelName] as PanelInfo<T>;
@@ -176,7 +188,7 @@ public class UIMgr : BaseManager<UIMgr>
         panelDic.Add(panelName, new PanelInfo<T>(callBack));
 
         //��������� �������
-        ResMgr.Instance.LoadAsync<GameObject>("UI/" + panelName, (res) =>
+        ResMgr.Instance.LoadAsync<GameObject>(path + "/" + panelName, (res) =>
         {
             //ȡ���ֵ����Ѿ�ռ��λ�õ�����
             PanelInfo<T> panelInfo = panelDic[panelName] as PanelInfo<T>;
@@ -219,8 +231,11 @@ public class UIMgr : BaseManager<UIMgr>
             //�洢panel
             panelInfo.panel = panel;
 
+
+           
         });
     }
+
 
     /// <summary>
     /// �������

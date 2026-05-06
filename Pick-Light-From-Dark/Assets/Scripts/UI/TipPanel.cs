@@ -1,17 +1,17 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+[UIPath("UI/Content")]
 public class TipPanel : BasePanel
 {
     public override void HideMe()
     {
-        throw new System.NotImplementedException();
+        
     }
 
     public override void ShowMe()
     {
-        throw new System.NotImplementedException();
+        
     }
 
     // Start is called before the first frame update

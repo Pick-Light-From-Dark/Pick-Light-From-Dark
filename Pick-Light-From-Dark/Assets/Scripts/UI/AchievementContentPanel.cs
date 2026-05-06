@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+[UIPath("UI/Content")]
 public class AchievementContentPanel : BasePanel
 {
     public override void HideMe()
