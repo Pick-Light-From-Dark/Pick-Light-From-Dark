@@ -20,6 +20,8 @@ namespace Game.Card
         private LevelConfigSO levelConfig;
         private int nextInstanceId = 1;
 
+        private Dictionary<int, CardData> cardDataCache = new Dictionary<int, CardData>();
+
         public class CardUseRecord
         {
             public int cardId;
@@ -51,6 +53,9 @@ namespace Game.Card
             handCards = new List<CardInstance>();
             cardHistory = new List<CardUseRecord>();
             nextInstanceId = 1;
+
+            // 预加载并缓存所有卡牌数据
+            BuildCardDataCache();
 
             // 发放初始卡牌
             DealInitialCards();
@@ -217,19 +222,29 @@ namespace Game.Card
         }
 
         /// <summary>
-        /// 获取卡牌数据（从配置中）
+        /// 预加载并缓存所有卡牌数据
+        /// </summary>
+        void BuildCardDataCache()
+        {
+            cardDataCache.Clear();
+            CardDataContainer[] containers = Resources.LoadAll<CardDataContainer>("TestData");
+            foreach (var container in containers)
+            {
+                if (container.cardData != null && !cardDataCache.ContainsKey(container.cardData.id))
+                {
+                    cardDataCache.Add(container.cardData.id, container.cardData);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 获取卡牌数据（从缓存中）
         /// </summary>
         CardData GetCardDataById(int cardId)
         {
-            // 从Resources加载所有卡牌数据容器
-            CardDataContainer[] containers = Resources.LoadAll<CardDataContainer>("TestData");
-
-            foreach (var container in containers)
+            if (cardDataCache.TryGetValue(cardId, out CardData data))
             {
-                if (container.cardData != null && container.cardData.id == cardId)
-                {
-                    return container.cardData;
-                }
+                return data;
             }
 
             Debug.LogWarning($"[CardManager] 未找到ID为 {cardId} 的卡牌数据");
