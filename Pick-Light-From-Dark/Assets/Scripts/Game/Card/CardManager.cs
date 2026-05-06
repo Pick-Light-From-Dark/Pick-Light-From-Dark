@@ -12,10 +12,10 @@ namespace Game.Card
     public class CardManager : SingletonAutoMono<CardManager>
     {
         [Header("手牌")]
-        [SerializeField] private List<CardInstance> handCards;
+        [SerializeField] private List<CardInstance> handCards = new List<CardInstance>();
 
         [Header("历史记录")]
-        [SerializeField] private List<CardUseRecord> cardHistory;
+        [SerializeField] private List<CardUseRecord> cardHistory = new List<CardUseRecord>();
 
         private LevelConfigSO levelConfig;
         private int nextInstanceId = 1;
@@ -41,6 +41,12 @@ namespace Game.Card
         /// </summary>
         public void Initialize(LevelConfigSO config)
         {
+            if (config == null)
+            {
+                Debug.LogError("[CardManager] Initialize 失败：config 为 null");
+                return;
+            }
+
             levelConfig = config;
             handCards = new List<CardInstance>();
             cardHistory = new List<CardUseRecord>();
@@ -105,7 +111,7 @@ namespace Game.Card
 
             foreach (var card in handCards)
             {
-                if (card.data.id != keepCardId && !card.isUsed)
+                if (card.data != null && card.data.id != keepCardId && !card.isUsed)
                 {
                     toRemove.Add(card);
                 }
@@ -127,6 +133,8 @@ namespace Game.Card
         /// </summary>
         public void TriggerLinkedCards(CardData usedCard)
         {
+            if (usedCard == null) return;
+
             // 这里需要根据卡牌配置触发关联卡牌
             // 暂时先空实现，等待卡牌配置完善
             Debug.Log($"[CardManager] 检查关联卡牌: {usedCard.cardName}");
@@ -137,6 +145,8 @@ namespace Game.Card
         /// </summary>
         public void RecordCardUse(CardInstance card, bool success)
         {
+            if (card == null || card.data == null) return;
+
             CardUseRecord record = new CardUseRecord(card.data.id, card.data.cardName, success);
             cardHistory.Add(record);
 

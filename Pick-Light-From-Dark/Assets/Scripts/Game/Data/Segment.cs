@@ -11,6 +11,8 @@ namespace Game.Data
         public float duration;
         public bool isInterruptible;
 
+        public Segment() { }
+
         public Segment(float duration, bool isInterruptible)
         {
             this.duration = duration;

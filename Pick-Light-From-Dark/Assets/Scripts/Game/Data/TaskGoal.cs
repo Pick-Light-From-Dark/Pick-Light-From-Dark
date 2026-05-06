@@ -23,6 +23,8 @@ namespace Game.Data
         public int currentCount;
         public TaskState state;
 
+        public TaskGoal() { }
+
         public TaskGoal(int targetCardId, int targetCount)
         {
             this.targetCardId = targetCardId;

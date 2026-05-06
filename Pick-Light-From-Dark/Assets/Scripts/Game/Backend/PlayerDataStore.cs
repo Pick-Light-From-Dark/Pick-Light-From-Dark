@@ -1,0 +1,147 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using UnityEngine;
+
+namespace Game.Backend
+{
+    /// <summary>
+    /// JSON 数据访问层 — 负责读写本地 JSON 文件
+    /// 未来可无缝替换为 Unity Cloud Save 的后端实现
+    /// </summary>
+    public class PlayerDataStore : SingletonAutoMono<PlayerDataStore>
+    {
+        private string _filePath;
+
+        private void Awake()
+        {
+            try
+            {
+                _filePath = Path.Combine(Application.persistentDataPath, "player_data.json");
+                Debug.Log($"[PlayerDataStore] 数据文件路径: {_filePath}");
+
+                // 验证路径是否有效
+                var directory = Path.GetDirectoryName(_filePath);
+                if (!Directory.Exists(directory))
+                {
+                    Directory.CreateDirectory(directory);
+                    Debug.LogWarning($"[PlayerDataStore] 创建目录: {directory}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[PlayerDataStore] 初始化失败: {ex.Message}\n堆栈: {ex.StackTrace}");
+            }
+        }
+
+        /// <summary>
+        /// 保存本关记录（追加到已有记录列表）
+        /// </summary>
+        public void SaveLevelRecord(JsonLevelRecord record)
+        {
+            if (record == null)
+            {
+                Debug.LogWarning("[PlayerDataStore] SaveLevelRecord 传入 record 为 null，忽略保存");
+                return;
+            }
+            var data = LoadOrCreate();
+            data.records.Add(record);
+            WriteFile(data);
+            Debug.Log($"[PlayerDataStore] 已保存关卡 {record.levelId} 记录（总计 {data.records.Count} 条）");
+        }
+
+        /// <summary>
+        /// 获取某关卡的所有记录（可能多次游玩）
+        /// </summary>
+        public List<JsonLevelRecord> GetRecordsByLevel(int levelId)
+        {
+            var data = LoadOrCreate();
+            var result = new List<JsonLevelRecord>();
+            foreach (var r in data.records)
+            {
+                if (r.levelId == levelId) result.Add(r);
+            }
+            return result;
+        }
+
+        /// <summary>
+        /// 获取最近一次通关记录（用于读取历史状态）
+        /// </summary>
+        public JsonLevelRecord GetLastRecord(int levelId)
+        {
+            var all = GetRecordsByLevel(levelId);
+            if (all.Count == 0) return null;
+            return all[all.Count - 1];
+        }
+
+        /// <summary>
+        /// 获取所有记录
+        /// </summary>
+        public List<JsonLevelRecord> GetAllRecords()
+        {
+            return LoadOrCreate().records;
+        }
+
+        /// <summary>
+        /// 清除所有数据
+        /// </summary>
+        public void ClearAllRecords()
+        {
+            WriteFile(new PlayerDataFile());
+            Debug.Log("[PlayerDataStore] 已清除所有玩家数据");
+        }
+
+        private PlayerDataFile LoadOrCreate()
+        {
+            if (!File.Exists(_filePath))
+            {
+                return new PlayerDataFile();
+            }
+
+            try
+            {
+                string json = File.ReadAllText(_filePath);
+                var data = JsonUtility.FromJson<PlayerDataFile>(json);
+                if (data == null) return new PlayerDataFile();
+                if (data.records == null) data.records = new List<JsonLevelRecord>();
+                return data;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"[PlayerDataStore] 读取文件失败，使用空数据: {ex.Message}");
+                return new PlayerDataFile();
+            }
+        }
+
+        private void WriteFile(PlayerDataFile data)
+        {
+            try
+            {
+                string json = JsonUtility.ToJson(data, true);
+                Debug.Log($"[PlayerDataStore] 准备写入文件，长度: {json.Length} 字符");
+
+                // 验证目录可写
+                var directory = Path.GetDirectoryName(_filePath);
+                if (directory != null && !Directory.Exists(directory))
+                {
+                    Directory.CreateDirectory(directory);
+                }
+
+                File.WriteAllText(_filePath, json);
+                Debug.Log($"[PlayerDataStore] 文件写入成功: {_filePath}");
+            }
+            catch (global::System.UnauthorizedAccessException ex)
+            {
+                Debug.LogError($"[PlayerDataStore] 权限不足，无法写入文件: {_filePath}\n错误: {ex.Message}");
+            }
+            catch (global::System.IO.DirectoryNotFoundException ex)
+            {
+                Debug.LogError($"[PlayerDataStore] 目录不存在: {_filePath}\n错误: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[PlayerDataStore] 写入文件失败: {_filePath}\n错误类型: {ex.GetType().Name}\n错误信息: {ex.Message}\n堆栈: {ex.StackTrace}");
+            }
+        }
+    }
+}

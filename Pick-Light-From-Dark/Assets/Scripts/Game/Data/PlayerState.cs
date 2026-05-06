@@ -1,4 +1,5 @@
 using UnityEngine;
+using Game.Config;
 using Game.Data;
 
 namespace Game.Data
@@ -12,6 +13,19 @@ namespace Game.Data
         [Header("玩家状态")]
         [SerializeField] private bool isInBed;
         [SerializeField] private bool isEyesClosed;
+
+        private Game.Flow.GameFlowController gameFlow;
+
+        /// <summary>
+        /// 关卡初始化：根据配置重置玩家状态，避免单例跨关残留
+        /// </summary>
+        public void Initialize(LevelConfigSO config)
+        {
+            // 直接赋值（不走 SetInBed/SetEyesClosed），避免初始化阶段误触发事件
+            isInBed = config != null ? config.initialInBed : true;
+            isEyesClosed = false;
+            Debug.Log($"[PlayerState] 初始化 - 床上:{isInBed} 闭眼:{isEyesClosed}");
+        }
 
         /// <summary>
         /// 玩家是否在床上
@@ -73,8 +87,16 @@ namespace Game.Data
             SetEyesClosed(!isEyesClosed);
         }
 
+        void Awake()
+        {
+            gameFlow = Game.Flow.GameFlowController.Instance;
+        }
+
         void Update()
         {
+            if (gameFlow != null && (gameFlow.IsPaused() || gameFlow.IsGameOver()))
+                return;
+
             // C键切换闭眼
             if (Input.GetKeyDown(KeyCode.C))
             {

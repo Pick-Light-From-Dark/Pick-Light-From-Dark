@@ -106,7 +106,19 @@ public class MusicMgr : BaseManager<MusicMgr>
     public void PlaySound(AudioClip clip, bool isLoop = false, UnityAction<AudioSource> callBack = null)
     {
         //从对象池获取音效源 得到对应组件
-        AudioSource source = PoolMgr.Instance.GetObj("Sound/soundObj").GetComponent<AudioSource>();
+        GameObject soundObj = PoolMgr.Instance.GetObj("Sound/soundObj");
+        if (soundObj == null)
+        {
+            Debug.LogError("[MusicMgr] 无法获取音效源对象 Sound/soundObj");
+            return;
+        }
+        AudioSource source = soundObj.GetComponent<AudioSource>();
+        if (source == null)
+        {
+            Debug.LogError("[MusicMgr] 音效源对象缺少 AudioSource 组件");
+            PoolMgr.Instance.PushObj(soundObj);
+            return;
+        }
         //获取到音效源之前 使用的 停止播放
         source.Stop();
 

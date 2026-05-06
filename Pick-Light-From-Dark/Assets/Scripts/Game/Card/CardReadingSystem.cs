@@ -1,6 +1,7 @@
 using UnityEngine;
 using Game.Data;
 using Game.Config;
+using Game.Emotion;
 
 namespace Game.Card
 {
@@ -16,14 +17,23 @@ namespace Game.Card
         [SerializeField] private float readTime;
         [SerializeField] private int currentSegmentIndex;
 
-        private LevelConfigSO levelConfig;
+        private Game.Flow.GameFlowController gameFlow;
+
+        void Awake()
+        {
+            gameFlow = Game.Flow.GameFlowController.Instance;
+        }
 
         /// <summary>
-        /// 初始化卡牌读条系统
+        /// 初始化卡牌读条系统（占位，供将来扩展）
         /// </summary>
         public void Initialize(LevelConfigSO config)
         {
-            levelConfig = config;
+            if (config == null)
+            {
+                Debug.LogWarning("[CardReadingSystem] Initialize: config 为 null，仅重置读条状态");
+            }
+
             isReading = false;
             Debug.Log("[CardReadingSystem] 初始化完成");
         }
@@ -33,6 +43,18 @@ namespace Game.Card
         /// </summary>
         public void StartReading(CardInstance card)
         {
+            if (card == null || card.data == null)
+            {
+                Debug.LogWarning("[CardReadingSystem] 卡牌为空，无法开始读条");
+                return;
+            }
+
+            if (card.data.segments == null || card.data.segments.Count == 0)
+            {
+                Debug.LogWarning($"[CardReadingSystem] 卡牌 {card.data.cardName} 没有读条片段，无法开始读条");
+                return;
+            }
+
             if (isReading)
             {
                 Debug.LogWarning("[CardReadingSystem] 已有卡牌在读条中");
@@ -40,8 +62,20 @@ namespace Game.Card
             }
 
             currentCard = card;
-            readTime = 0f;
-            currentSegmentIndex = 0;
+
+            // 恢复保存的进度（吃薯片卡特殊效果）
+            if (card.currentReadTime > 0f)
+            {
+                readTime = card.currentReadTime;
+                currentSegmentIndex = card.currentSegmentIndex;
+                Debug.Log($"[CardReadingSystem] 恢复读条进度: {card.data.cardName} 时间={readTime:F2}s 片段={currentSegmentIndex}");
+            }
+            else
+            {
+                readTime = 0f;
+                currentSegmentIndex = 0;
+            }
+
             isReading = true;
 
             Debug.Log($"[CardReadingSystem] 开始读条: {card.data.cardName}");
@@ -52,6 +86,9 @@ namespace Game.Card
 
         void Update()
         {
+            if (gameFlow != null && (gameFlow.IsPaused() || gameFlow.IsGameOver()))
+                return;
+
             if (!isReading || currentCard == null)
                 return;
 
@@ -93,10 +130,18 @@ namespace Game.Card
                 return false;
             }
 
+            // 保存进度（如果卡牌支持）
+            if (currentCard != null && currentCard.data.saveProgressOnInterrupt)
+            {
+                currentCard.currentReadTime = readTime;
+                currentCard.currentSegmentIndex = currentSegmentIndex;
+                Debug.Log($"[CardReadingSystem] 保存读条进度: {currentCard.data.cardName} 时间={readTime:F2}s 片段={currentSegmentIndex}");
+            }
+
             Debug.Log($"[CardReadingSystem] 读条被打断: {currentCard.data.cardName}");
 
             // 增加慌乱值
-            EventCenter.Instance.EventTrigger(E_EventType.PanicChanged, currentCard.data.interruptPanicAdd);
+            EmotionSystem.Instance.ChangePanic(currentCard.data.interruptPanicAdd);
 
             // 触发打断事件
             EventCenter.Instance.EventTrigger(E_EventType.CardReadInterrupt, currentCard);
@@ -112,6 +157,13 @@ namespace Game.Card
         /// </summary>
         void CompleteReading()
         {
+            // 清除卡牌实例上保存的进度
+            if (currentCard != null)
+            {
+                currentCard.currentReadTime = 0f;
+                currentCard.currentSegmentIndex = 0;
+            }
+
             Debug.Log($"[CardReadingSystem] 读条完成: {currentCard.data.cardName}");
 
             // 应用卡牌效果
@@ -136,14 +188,21 @@ namespace Game.Card
             // 修改情绪值
             if (card.data.panicDelta != 0)
             {
-                EventCenter.Instance.EventTrigger(E_EventType.PanicChanged, card.data.panicDelta);
+                EmotionSystem.Instance.ChangePanic(card.data.panicDelta);
             }
             if (card.data.exciteDelta != 0)
             {
-                EventCenter.Instance.EventTrigger(E_EventType.ExciteChanged, card.data.exciteDelta);
+                EmotionSystem.Instance.ChangeExcite(card.data.exciteDelta);
             }
 
-            Debug.Log($"[CardReadingSystem] 应用效果: 慌乱{card.data.panicDelta} 兴奋{card.data.exciteDelta}");
+            // 床上状态变化
+            if (card.data.bedStateChange != BedStateChange.None)
+            {
+                bool inBed = card.data.bedStateChange == BedStateChange.EnterBed;
+                Game.Data.PlayerState.Instance.SetInBed(inBed);
+            }
+
+            Debug.Log($"[CardReadingSystem] 应用效果: 慌乱{card.data.panicDelta} 兴奋{card.data.exciteDelta} 床上状态{card.data.bedStateChange}");
         }
 
         /// <summary>
@@ -162,7 +221,7 @@ namespace Game.Card
         /// </summary>
         public Segment GetCurrentSegment()
         {
-            if (!isReading || currentCard == null)
+            if (!isReading || currentCard == null || currentCard.data == null || currentCard.data.segments == null)
                 return null;
 
             if (currentSegmentIndex < currentCard.data.segments.Count)
@@ -216,7 +275,7 @@ namespace Game.Card
         /// </summary>
         float GetSegmentStartTime(int segmentIndex)
         {
-            if (!isReading || currentCard == null)
+            if (!isReading || currentCard == null || currentCard.data == null || currentCard.data.segments == null)
                 return 0f;
 
             float time = 0f;

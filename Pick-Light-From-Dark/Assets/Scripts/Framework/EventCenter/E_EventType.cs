@@ -68,10 +68,26 @@ public enum E_EventType
     EmotionChanged,
     PanicChanged,
     ExciteChanged,
+    /// <summary>
+    /// 情绪总和首次跨过 criticalValue 触发 无参
+    /// </summary>
+    EmotionCritical,
+    /// <summary>
+    /// 情绪总和首次回落 criticalValue 之下触发 无参
+    /// </summary>
+    EmotionRecovered,
 
     PlayerEyeCloseChanged,
     EyeCloseStart,
     EyeCloseEnd,
+    /// <summary>
+    /// 闭眼超 10 秒 时间开始加速
+    /// </summary>
+    EyeCloseTimeAccelerated,
+    /// <summary>
+    /// 时间恢复常速
+    /// </summary>
+    EyeCloseTimeNormal,
 
     TeacherStateChanged,
     TeacherInspectStart,
@@ -87,4 +103,7 @@ public enum E_EventType
     PlayCardCompleteSound,
     PlayCaughtSound,
     PlayEyeCloseSound,
+
+    TaskProgressChanged,
+    TaskGoalCompleted,
 }

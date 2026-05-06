@@ -35,7 +35,7 @@ namespace Game.UI
             {
                 EventCenter.Instance.AddEventListener(E_EventType.GameStart, OnGameStart);
                 EventCenter.Instance.AddEventListener(E_EventType.GameWin, OnGameWin);
-                EventCenter.Instance.AddEventListener(E_EventType.GameLose, OnGameLose);
+                EventCenter.Instance.AddEventListener<string>(E_EventType.GameLose, OnGameLose);
             }
         }
 
@@ -46,7 +46,7 @@ namespace Game.UI
             {
                 EventCenter.Instance.RemoveEventListener(E_EventType.GameStart, OnGameStart);
                 EventCenter.Instance.RemoveEventListener(E_EventType.GameWin, OnGameWin);
-                EventCenter.Instance.RemoveEventListener(E_EventType.GameLose, OnGameLose);
+                EventCenter.Instance.RemoveEventListener<string>(E_EventType.GameLose, OnGameLose);
             }
         }
 
@@ -68,11 +68,11 @@ namespace Game.UI
         }
 
         /// <summary>
-        /// 游戏失败事件
+        /// 游戏失败事件（GameLose 携带 string reason 参数）
         /// </summary>
-        private void OnGameLose()
+        private void OnGameLose(string reason)
         {
-            Debug.Log("[UIManager] 游戏失败");
+            Debug.Log($"[UIManager] 游戏失败: {reason}");
             // TODO: 显示失败弹窗
         }
 

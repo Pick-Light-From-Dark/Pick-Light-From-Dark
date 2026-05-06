@@ -31,15 +31,26 @@ namespace Game.Emotion
         private int minPanic = 30, maxPanic = 100;
         private int minExcite = 30, maxExcite = 100;
         private int criticalValue;
+        private bool wasCritical;
+        private float accumulatedDecrease; // 累积小数部分避免 RoundToInt 截断
+        private bool _isNotifying; // 防止事件回调中递归修改情绪值
 
         /// <summary>
         /// 初始化情绪值系统
         /// </summary>
         public void Initialize(LevelConfigSO levelConfig)
         {
-            panicValue = levelConfig.initialPanic;
-            exciteValue = levelConfig.initialExcite;
+            if (levelConfig == null)
+            {
+                Debug.LogError("[EmotionSystem] Initialize 失败：levelConfig 为 null");
+                return;
+            }
+
+            panicValue = Mathf.Clamp(levelConfig.initialPanic, minPanic, maxPanic);
+            exciteValue = Mathf.Clamp(levelConfig.initialExcite, minExcite, maxExcite);
             criticalValue = levelConfig.criticalValue;
+            wasCritical = false;
+            accumulatedDecrease = 0f;
 
             Debug.Log($"[EmotionSystem] 初始化 - 慌乱:{panicValue} 兴奋:{exciteValue} 临界:{criticalValue}");
             NotifyEmotionChanged();
@@ -104,29 +115,49 @@ namespace Game.Emotion
 
         private void NotifyEmotionChanged()
         {
+            if (_isNotifying) return;
+
+            _isNotifying = true;
             EmotionInfo info = GetEmotionInfo();
             // 触发事件
             EventCenter.Instance.EventTrigger(E_EventType.EmotionChanged, info);
             EventCenter.Instance.EventTrigger(E_EventType.PanicChanged, panicValue);
             EventCenter.Instance.EventTrigger(E_EventType.ExciteChanged, exciteValue);
+
+            // 临界跨界检测
+            bool isCritical = (panicValue + exciteValue) >= criticalValue;
+            if (isCritical && !wasCritical)
+            {
+                Debug.Log("[EmotionSystem] 进入临界态 触发 EmotionCritical");
+                EventCenter.Instance.EventTrigger(E_EventType.EmotionCritical);
+            }
+            else if (!isCritical && wasCritical)
+            {
+                Debug.Log("[EmotionSystem] 退出临界态 触发 EmotionRecovered");
+                EventCenter.Instance.EventTrigger(E_EventType.EmotionRecovered);
+            }
+            wasCritical = isCritical;
+            _isNotifying = false;
         }
 
         /// <summary>
-        /// 闭眼时持续降低情绪值
+        /// 闭眼时持续降低情绪值（累积小数部分避免 RoundToInt 截断）
         /// </summary>
-        public void DecreaseEmotionWhileEyeClose(float deltaTime)
+        public void DecreaseEmotionWhileEyeClose(float deltaTime, float decreaseRate = 5f)
         {
-            // 闭眼每秒降低一定数值
-            int decreasePerSecond = 5;
-            int decrease = Mathf.RoundToInt(decreasePerSecond * deltaTime);
-
-            if (panicValue > minPanic)
+            accumulatedDecrease += decreaseRate * deltaTime;
+            int decrease = Mathf.FloorToInt(accumulatedDecrease);
+            if (decrease > 0)
             {
-                ChangePanic(-decrease);
-            }
-            if (exciteValue > minExcite)
-            {
-                ChangeExcite(-decrease);
+                accumulatedDecrease -= decrease;
+                if (panicValue > minPanic)
+                {
+                    ChangePanic(-decrease);
+                }
+                if (exciteValue > minExcite)
+                {
+                    ChangeExcite(-decrease);
+                }
             }
         }
     }
