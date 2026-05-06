@@ -6,6 +6,7 @@ using Game.Emotion;
 using Game.Data;
 using Game.Card;
 using Game.AI;
+using Game.Task;
 using Game.EyeClose;
 
 namespace Game.Testing.Runners
