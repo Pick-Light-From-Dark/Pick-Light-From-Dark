@@ -21,7 +21,8 @@ namespace Game.Flow
         private LevelConfigSO levelConfig;
         private EmotionSystem emotionSystem;
         private Task.TaskManager taskManager;
-        private static int updateCount = 0; // 用于检测是否有多个实例在Update
+        private static int lastUpdateFrame = -1; // 用于多实例检测：记录上次统计的帧号
+        private static int updateCount = 0;      // 当前帧内 Update 被调用的次数
 
         /// <summary>
         /// 初始化游戏流程
@@ -113,6 +114,11 @@ namespace Game.Flow
             // 检测是否有多个实例在同时运行（仅在前10帧检测）
             if (Time.frameCount <= 10)
             {
+                if (Time.frameCount != lastUpdateFrame)
+                {
+                    lastUpdateFrame = Time.frameCount;
+                    updateCount = 0;
+                }
                 updateCount++;
                 if (updateCount > 1)
                 {

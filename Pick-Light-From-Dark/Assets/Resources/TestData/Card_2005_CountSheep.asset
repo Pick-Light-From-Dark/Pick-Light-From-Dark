@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bc03fbed09b109242b4b557e79d89449, type: 3}
+  m_Name: Card_2005_CountSheep
+  m_EditorClassIdentifier:
+  cardData:
+    id: 2005
+    cardName: "数羊"
+    description: "一只羊，两只羊……让自己平静下来"
+    iconPath: Icons/card_sheep
+    cardType: 0
+    initialStack: 1
+    segments:
+    - duration: 2
+      isInterruptible: 1
+    - duration: 3
+      isInterruptible: 1
+    panicDelta: -2
+    exciteDelta: -8
+    interruptPanicAdd: 5
+    bindTaskId: 0
+    relatedType: 1
+    bedStateChange: 0
+    saveProgressOnInterrupt: 0
