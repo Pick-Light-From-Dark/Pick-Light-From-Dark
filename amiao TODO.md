@@ -111,4 +111,5 @@
 - [x] PlayerDataStore.SaveLevelRecord record null 保护 → 公共 API 传入 null 时访问 record.levelId 会抛 NullRef
 - [x] P2 巡检 round 44：Invoke 调用 + 事件订阅 + 集合初始化全面复查 → TimerMgr 已有前置 null 检查、所有 EventAdd 均有对应 Remove、CardManager 字段已初始化；未发现新增问题
 - [x] P2 巡检 round 45：Agent 全量扫描发现 15 个问题，修复 3 项小修 → LevelConfigSO.flashPanicPerSec int→float、DevModeController 删除未使用 taskManager、AutomatedGameTest 修复 isTesting 状态
+- [x] P2 巡检 round 46：重构 TeacherAI.CheckPlayerCaught → Eye/Flash 共用三段相同检查逻辑（不可打断片段/未卧床/未闭眼），提取到分支之前消除重复代码
 
