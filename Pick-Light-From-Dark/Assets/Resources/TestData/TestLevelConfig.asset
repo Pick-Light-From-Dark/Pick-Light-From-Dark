@@ -12,16 +12,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 87c5d142175cab84c958ee48d16fac43, type: 3}
   m_Name: TestLevelConfig
   m_EditorClassIdentifier: 
-  levelId: 1
-  levelName: "\u4E00\u952E\u6D4B\u8BD5\u5173\u5361"
-  timeLimit: 60
-  initialPanic: 35
-  initialExcite: 35
-  criticalValue: 100
-  patrolIntervals: {x: 3, y: 5}
-  patrolTime: {x: 2, y: 3}
-  eyeCheckDuration: {x: 1.5, y: 2.5}
-  flashCheckDuration: {x: 2, y: 3}
-  flashPanicPerSec: 10
-  initialCards: 010000000200000003000000
+  levelId: 1001
+  levelName: "\u7B2C\u4E00\u591C"
+  timeLimit: 600
+  initialInBed: 1
+  initialPanic: 15
+  initialExcite: 15
+  criticalValue: 80
+  eyeClosePanicDecreasePerSec: 1
+  eyeCloseAccelerationThreshold: 20
+  eyeCloseAccelerationMultiplier: 1.5
+  patrolIntervals: {x: 15, y: 25}
+  patrolTime: {x: 8, y: 10}
+  eyeCheckDuration: {x: 3, y: 3}
+  flashCheckDuration: {x: 3, y: 3}
+  flashPanicPerSec: 2
+  initialCards: D1070000DA070000
   maxLives: 2

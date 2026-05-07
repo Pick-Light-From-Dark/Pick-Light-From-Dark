@@ -106,4 +106,9 @@ public enum E_EventType
 
     TaskProgressChanged,
     TaskGoalCompleted,
+
+    /// <summary>
+    /// 背景画面跳转（int参数=背景画面ID）
+    /// </summary>
+    BackgroundJump,
 }

@@ -12,19 +12,26 @@ public class MusicMgr : BaseManager<MusicMgr>
     private AudioSource bkMusic = null;
 
     //背景音乐大小
-    private float bkMusicValue = 0.1f;
+    private float bkMusicValue = 0.5f;
+    public float BkMusicValue => bkMusicValue;
 
     //用于存在正在播放的音效
     private List<AudioSource> soundList = new List<AudioSource>();
     //音效大小
-    private float soundValue = 0.1f;
+    private float soundValue = 0.5f;
+    public float SoundValue => soundValue;
     //音效是否在播放
     private bool soundIsPlay = true;
 
     private string currentBKName = "";
 
+    private const string BkMusicPrefsKey = "BkMusicVolume";
+    private const string SoundPrefsKey = "SoundVolume";
+
     private MusicMgr()
     {
+        bkMusicValue = PlayerPrefs.GetFloat(BkMusicPrefsKey, 0.5f);
+        soundValue = PlayerPrefs.GetFloat(SoundPrefsKey, 0.5f);
         MonoMgr.Instance.AddFixedUpdateListener(Update);
     }
 
@@ -102,6 +109,7 @@ public class MusicMgr : BaseManager<MusicMgr>
     public void ChangeBKMusicValue(float v)
     {
         bkMusicValue = v;
+        PlayerPrefs.SetFloat(BkMusicPrefsKey, v);
         if (bkMusic == null)
             return;
         bkMusic.volume = bkMusicValue;
@@ -177,6 +185,7 @@ public class MusicMgr : BaseManager<MusicMgr>
     public void ChangeSoundValue(float v)
     {
         soundValue = v;
+        PlayerPrefs.SetFloat(SoundPrefsKey, v);
         for (int i = 0; i < soundList.Count; i++)
         {
             soundList[i].volume = v;

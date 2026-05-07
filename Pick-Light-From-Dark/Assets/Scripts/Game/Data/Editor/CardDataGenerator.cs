@@ -23,39 +23,41 @@ namespace Game.Data.Editor
                 new[] { new Segment(1f, true), new Segment(1f, false) },
                 3, 5, 0, RelatedType.Persistent, new[] { 2007, 2009, 2010, 2011 }, 0,
                 "all", BedStateChange.LeaveBed, false,
-                "本张卡为老师查寝判定条件之一的回到被子中的值的改变卡，当使用这张卡时，离开被子，这个值就会变成FALSE");
+                "本张卡为老师查寝判定条件之一的回到被子中的值的改变卡，当使用这张卡时，离开被子，这个值就会变成FALSE",
+                1, 5002, "DXH_SOUND/04.移动被子");
 
             CreateCard(folder, 2007, "撕开薯片袋", "打开袋子可以吃薯片",
                 "送明月的专属零食，市面上少见的款式，据说吃了它心情会变好。", CardType.NonStackable, 1,
                 new[] { new Segment(2f, true), new Segment(1f, false) },
                 3, 2, 5, RelatedType.NonPersistent, new[] { 2008, 2009, 2010, 2011 }, 0,
-                "1001", BedStateChange.None, false, "");
+                "1001", BedStateChange.None, false, "", 0, 0, "DXH_SOUND/02.撕开薯片袋");
 
             CreateCard(folder, 2008, "吃薯片", "食用薯片，完成任务",
                 "好吃，咸咸的，很脆", CardType.Stackable, 9,
                 new[] { new Segment(4f, true) },
                 4, 2, 5, RelatedType.NonPersistent, new[] { 2009, 2010, 2011 }, 3001,
                 "1001", BedStateChange.None, true,
-                "当此卡牌被手动打断时，不会因为打断卡牌而重置读条进度");
+                "当此卡牌被手动打断时，不会因为打断卡牌而重置读条进度", 0, 0, "DXH_SOUND/03.吃薯片");
 
             CreateCard(folder, 2009, "喝水", "喝水降低兴奋值和慌乱值",
                 "一口水下去，感觉冷静下来了。", CardType.Stackable, 3,
                 new[] { new Segment(1f, true), new Segment(1f, false), new Segment(1f, true) },
-                3, -3, -5, RelatedType.NonPersistent, new[] { 2007, 2010, 2011 }, 0,
-                "all", BedStateChange.None, false, "");
+                3, -3, -5, RelatedType.NonPersistent, new int[0], 0,
+                "all", BedStateChange.None, false, "", 0, 0, "DXH_SOUND/05.喝水");
 
             CreateCard(folder, 2010, "深呼吸", "降低慌乱值和兴奋值",
                 "深呼吸，没什么好笑的，也没什么好怕的……", CardType.Stackable, 10,
                 new[] { new Segment(3f, true) },
-                0, -2, -3, RelatedType.NonPersistent, new[] { 2007, 2009, 2010, 2011 }, 0,
-                "all", BedStateChange.None, false, "");
+                0, -2, -3, RelatedType.NonPersistent, new int[0], 0,
+                "all", BedStateChange.None, false, "", 0, 0, "DXH_SOUND/06.深呼吸");
 
             CreateCard(folder, 2011, "盖回被子", "盖回被子中，回到装睡状态",
                 "身体融入被子中，还是盖着被子有安全感……", CardType.NonStackable, 1,
                 new[] { new Segment(2f, true) },
                 4, -4, -2, RelatedType.Persistent, new[] { 2001, 2010 }, 0,
                 "all", BedStateChange.EnterBed, false,
-                "本张卡为老师查寝判定条件之一的回到被子中的值的改变卡，当使用这张卡时，回到被子中，这个值就会变成TRUE");
+                "本张卡为老师查寝判定条件之一的回到被子中的值的改变卡，当使用这张卡时，回到被子中，这个值就会变成TRUE",
+                1, 5001, "DXH_SOUND/04.移动被子");
 
             AssetDatabase.Refresh();
             Debug.Log("[CardDataGenerator] 6 张卡牌生成完毕 → Assets/Resources/Card/");
@@ -65,7 +67,8 @@ namespace Game.Data.Editor
             string desc, CardType type, int stack, Segment[] segments,
             int interruptPanic, int panicDelta, int exciteDelta,
             RelatedType relatedType, int[] relatedIds, int taskId,
-            string levelIds, BedStateChange bed, bool saveProgress, string special)
+            string levelIds, BedStateChange bed, bool saveProgress, string special,
+            int cardBgType, int bgJumpId, string sfxName)
         {
             var data = new CardData
             {
@@ -86,7 +89,10 @@ namespace Game.Data.Editor
                     : new List<string> { levelIds },
                 bedStateChange = bed,
                 saveProgressOnInterrupt = saveProgress,
-                specialEffect = special
+                specialEffect = special,
+                cardBackgroundType = cardBgType,
+                backgroundJumpId = bgJumpId,
+                sfxName = sfxName
             };
 
             var container = ScriptableObject.CreateInstance<CardDataContainer>();
