@@ -253,51 +253,33 @@ namespace Game.AI
                 isEmotionCritical = emotionSystem.IsCaughtByCriticalValue();
             }
 
-            // 根据检查类型判定
+            // 公共基础检查（眼神和手电筒都需要）
+            if (isInUninterruptibleSegment)
+            {
+                Debug.Log($"[TeacherAI] {currentInspectType}检查发现：不可打断片段期间，闭眼无效！");
+                return true;
+            }
+
+            if (!playerInBed)
+            {
+                Debug.Log($"[TeacherAI] {currentInspectType}检查发现：玩家未卧床");
+                return true;
+            }
+
+            if (!playerEyesClosed)
+            {
+                Debug.Log($"[TeacherAI] {currentInspectType}检查发现：玩家未闭眼");
+                return true;
+            }
+
+            // 根据检查类型判定额外条件
             if (currentInspectType == InspectType.Eye)
             {
-                // 眼神检查：只检测卧床 + 闭眼
-                // 如果在读条且是不可打断片段，闭眼也没用
-                if (isInUninterruptibleSegment)
-                {
-                    Debug.Log($"[TeacherAI] 眼神检查发现：不可打断片段期间，闭眼无效！");
-                    return true;
-                }
-
-                if (!playerInBed)
-                {
-                    Debug.Log($"[TeacherAI] 眼神检查发现：玩家未卧床");
-                    return true;
-                }
-
-                if (!playerEyesClosed)
-                {
-                    Debug.Log($"[TeacherAI] 眼神检查发现：玩家未闭眼");
-                    return true;
-                }
+                // 眼神检查无额外条件
             }
             else if (currentInspectType == InspectType.Flash)
             {
-                // 手电筒检查：检测卧床 + 闭眼 + 情绪值不超标
-                // 如果在读条且是不可打断片段，闭眼也没用
-                if (isInUninterruptibleSegment)
-                {
-                    Debug.Log($"[TeacherAI] 手电筒检查发现：不可打断片段期间，闭眼无效！");
-                    return true;
-                }
-
-                if (!playerInBed)
-                {
-                    Debug.Log($"[TeacherAI] 手电筒检查发现：玩家未卧床");
-                    return true;
-                }
-
-                if (!playerEyesClosed)
-                {
-                    Debug.Log($"[TeacherAI] 手电筒检查发现：玩家未闭眼");
-                    return true;
-                }
-
+                // 手电筒额外检查情绪值
                 if (isEmotionCritical)
                 {
                     Debug.Log($"[TeacherAI] 手电筒检查发现：情绪值超标 {totalEmotion} >= {levelConfig.criticalValue}");

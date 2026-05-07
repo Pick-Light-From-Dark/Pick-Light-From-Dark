@@ -75,6 +75,7 @@ namespace Game.Testing
             Debug.Log("========================================");
 
             TestAssertions.Reset();
+            isTesting = true;
 
             // 步骤1: 初始化系统
             yield return StartCoroutine(Test_Initialize());

@@ -1,5 +1,9 @@
 {
     "files.exclude": {
-        "**/.meta": true
+        "**/*.meta": true,
+        "**/*.unitypackage": true,
+        "**/Build": true,
+        "**/Temp": true,
+        "**/Library": true
     }
 }
