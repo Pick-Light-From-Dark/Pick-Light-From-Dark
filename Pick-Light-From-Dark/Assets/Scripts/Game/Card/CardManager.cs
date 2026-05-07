@@ -47,6 +47,9 @@ namespace Game.Card
 
         private Dictionary<int, CardData> cardDataCache = new Dictionary<int, CardData>();
 
+        private List<CardInstance> handCards = new List<CardInstance>();
+        private int nextInstanceId = 1;
+
         public class CardUseRecord
         {
             public int cardId;
