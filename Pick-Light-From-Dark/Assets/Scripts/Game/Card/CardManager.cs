@@ -90,7 +90,7 @@ namespace Game.Card
             nextInstanceId = 1;
 
             // 预加载并缓存所有卡牌数据
-            BuildCardDataCache();
+            BuildCardDataCache(config.cardDataPath);
 
             // 发放初始卡牌
             DealInitialCards();
@@ -491,11 +491,11 @@ namespace Game.Card
         /// <summary>
         /// 预加载并缓存所有卡牌数据
         /// </summary>
-        void BuildCardDataCache()
+        void BuildCardDataCache(string path)
         {
             cardDataCache.Clear();
-            LoadCardDataFromPath("Card");
-            LoadCardDataFromPath("TestData");
+            if (!string.IsNullOrEmpty(path))
+                LoadCardDataFromPath(path);
         }
 
         void LoadCardDataFromPath(string path)
