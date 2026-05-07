@@ -396,16 +396,16 @@ namespace Game.Card
         }
 
         /// <summary>
-        /// 根据ID查找卡牌数据（从Resources）
+        /// 获取卡牌数据（从缓存中）
         /// </summary>
         public CardData GetCardDataById(int cardId)
         {
-            var containers = Resources.LoadAll<CardDataContainer>("Card");
-            foreach (var c in containers)
+            if (cardDataCache.TryGetValue(cardId, out CardData data))
             {
-                if (c.cardData != null && c.cardData.id == cardId)
-                    return c.cardData;
+                return data;
             }
+
+            Debug.LogWarning($"[CardManager] 未找到ID为 {cardId} 的卡牌数据");
             return null;
         }
 
@@ -499,20 +499,6 @@ namespace Game.Card
                     cardDataCache.Add(container.cardData.id, container.cardData);
                 }
             }
-        }
-
-        /// <summary>
-        /// 获取卡牌数据（从缓存中）
-        /// </summary>
-        CardData GetCardDataById(int cardId)
-        {
-            if (cardDataCache.TryGetValue(cardId, out CardData data))
-            {
-                return data;
-            }
-
-            Debug.LogWarning($"[CardManager] 未找到ID为 {cardId} 的卡牌数据");
-            return null;
         }
 
         /// <summary>

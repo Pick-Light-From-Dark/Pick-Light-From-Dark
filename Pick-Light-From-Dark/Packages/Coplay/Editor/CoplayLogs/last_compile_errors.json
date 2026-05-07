@@ -1,1 +1,1 @@
-[]
+["Assets\\Scripts\\Game\\Card\\CardManager.cs(507,18): error CS0111: Type 'CardManager' already defines a member called 'GetCardDataById' with the same parameter types"]
