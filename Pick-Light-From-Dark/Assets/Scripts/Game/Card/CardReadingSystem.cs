@@ -202,7 +202,13 @@ namespace Game.Card
                 Game.Data.PlayerState.Instance.SetInBed(inBed);
             }
 
-            Debug.Log($"[CardReadingSystem] 应用效果: 慌乱{card.data.panicDelta} 兴奋{card.data.exciteDelta} 床上状态{card.data.bedStateChange}");
+            // 跳转背景画面
+            if (card.data.backgroundJumpId != 0)
+            {
+                EventCenter.Instance.EventTrigger(E_EventType.BackgroundJump, card.data.backgroundJumpId);
+            }
+
+            Debug.Log($"[CardReadingSystem] 应用效果: 慌乱{card.data.panicDelta} 兴奋{card.data.exciteDelta} 床上状态{card.data.bedStateChange} 跳转背景{card.data.backgroundJumpId}");
         }
 
         /// <summary>

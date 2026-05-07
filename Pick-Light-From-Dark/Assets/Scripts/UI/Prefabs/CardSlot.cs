@@ -6,10 +6,12 @@ using Game.Data;
 
 namespace Game.UI
 {
-    public class CardSlot : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerClickHandler
+    public class CardSlot : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerClickHandler,
+        IPointerEnterHandler, IPointerExitHandler
     {
         [Header("UI组件")]
         [SerializeField] private Image cardImage;
+        [SerializeField] private Image cardBackgroundImage;
         [SerializeField] private TextMeshProUGUI nameText;
         [SerializeField] private TextMeshProUGUI timeText;
         [SerializeField] private TextMeshProUGUI panicText;
@@ -18,14 +20,27 @@ namespace Game.UI
 
         [Header("拖拽")]
         [SerializeField] private float dragAlpha = 0.7f;
+        [SerializeField] private float dragSmoothSpeed = 25f;
+
+        [Header("悬停")]
+        [SerializeField] private float hoverScale = 1.12f;
+        [SerializeField] private float hoverSpeed = 8f;
 
         private CanvasGroup canvasGroup;
         private Transform originalParent;
         private int originalSiblingIndex;
-        private bool wasDragged;
-        private Vector3 beginMousePos;
         private RectTransform rectTransform;
         private Transform acceptedParent;
+
+        // 拖拽平滑
+        private Vector2 dragTargetPos;
+        private bool isDragging;
+        private bool dragTargetSet;
+        private bool dragFirstFrameDone;
+
+        // 悬停缩放
+        private bool isHovered;
+        private float targetScale = 1f;
 
         /// <summary>绑定的卡牌数据</summary>
         public CardData CardData { get; private set; }
@@ -34,6 +49,8 @@ namespace Game.UI
         public int StackCount { get; private set; }
 
         public static event System.Action<CardSlot> OnCardClicked;
+        public static event System.Action<CardSlot> OnCardDragStarted;
+        public static event System.Action<CardSlot> OnCardDragEnded;
         public static CardSlot CurrentDragging { get; private set; }
 
         void Awake()
@@ -42,6 +59,34 @@ namespace Game.UI
             canvasGroup = GetComponent<CanvasGroup>();
             if (canvasGroup == null)
                 canvasGroup = gameObject.AddComponent<CanvasGroup>();
+        }
+
+        void Update()
+        {
+            // 悬停缩放平滑过渡
+            float currentScale = rectTransform.localScale.x;
+            float desired = isDragging ? 1f : targetScale;
+            float newScale = Mathf.Lerp(currentScale, desired, Time.unscaledDeltaTime * hoverSpeed);
+            if (Mathf.Abs(newScale - desired) < 0.001f) newScale = desired;
+            rectTransform.localScale = Vector3.one * newScale;
+
+            // 拖拽位置：首次帧直接定位，后续平滑跟随
+            if (isDragging && dragTargetSet)
+            {
+                if (!dragFirstFrameDone)
+                {
+                    rectTransform.localPosition = dragTargetPos;
+                    dragFirstFrameDone = true;
+                }
+                else
+                {
+                    Vector2 current = rectTransform.localPosition;
+                    float t = Time.unscaledDeltaTime * dragSmoothSpeed;
+                    rectTransform.localPosition = t < 1f
+                        ? Vector2.Lerp(current, dragTargetPos, t)
+                        : dragTargetPos;
+                }
+            }
         }
 
         /// <summary>从 ScriptableObject 设置卡牌显示</summary>
@@ -54,20 +99,28 @@ namespace Game.UI
             StackCount = stackCount >= 0 ? stackCount : data.initialStack;
 
             if (nameText != null) nameText.text = data.cardName;
-            if (timeText != null) timeText.text = $"{data.CalculateTotalDuration():F1}s";
+            if (timeText != null) timeText.text = $"{data.CalculateTotalDuration():F0}";
             if (panicText != null) panicText.text = $"{data.panicDelta:+0;-0}";
             if (exciteText != null) exciteText.text = $"{data.exciteDelta:+0;-0}";
-            RefreshStackDisplay();
-        }
 
-        /// <summary>纯前端设置（无数据绑定时用）</summary>
-        public void SetDisplay(string cardName, string time, string panic, string excite)
-        {
-            if (nameText != null) nameText.text = cardName;
-            if (timeText != null) timeText.text = time;
-            if (panicText != null) panicText.text = panic;
-            if (exciteText != null) exciteText.text = excite;
-            StackCount = 1;
+            // 卡面图：优先用 cardSprite，其次用 iconPath 从 Resources 加载
+            if (cardImage != null)
+            {
+                if (data.cardSprite != null)
+                    cardImage.sprite = data.cardSprite;
+                else if (!string.IsNullOrEmpty(data.iconPath))
+                    cardImage.sprite = Resources.Load<Sprite>(data.iconPath);
+            }
+
+            // 卡牌背景图：根据 cardBackgroundType 从 Resources 加载
+            if (cardBackgroundImage != null)
+            {
+                string bgPath = $"Card/CardImgBk/CardImgBk_{data.cardBackgroundType}";
+                var bgSprite = Resources.Load<Sprite>(bgPath);
+                if (bgSprite != null)
+                    cardBackgroundImage.sprite = bgSprite;
+            }
+
             RefreshStackDisplay();
         }
 
@@ -91,19 +144,33 @@ namespace Game.UI
         private void RefreshStackDisplay()
         {
             if (stackText == null) return;
-            bool show = CardData != null
-                     && CardData.cardType == CardType.Stackable
-                     && StackCount > 1;
+            bool show = CardData != null;
             stackText.gameObject.SetActive(show);
-            if (show) stackText.text = $"x{StackCount}";
+            if (show) stackText.text = $"{StackCount}";
         }
 
         public void AcceptDrop(Transform newParent) => acceptedParent = newParent;
+
+        // ==================== 悬停 ====================
+
+        public void OnPointerEnter(PointerEventData eventData)
+        {
+            isHovered = true;
+            targetScale = hoverScale;
+            MusicMgr.Instance.PlaySound("DXH_SOUND/11.悬停卡片UI");
+        }
+
+        public void OnPointerExit(PointerEventData eventData)
+        {
+            isHovered = false;
+            targetScale = 1f;
+        }
 
         // ==================== 点击 ====================
 
         public void OnPointerClick(PointerEventData eventData)
         {
+            MusicMgr.Instance.PlaySound("DXH_SOUND/12.点击卡片UI");
             OnCardClicked?.Invoke(this);
         }
 
@@ -111,10 +178,9 @@ namespace Game.UI
 
         public void OnBeginDrag(PointerEventData eventData)
         {
-            wasDragged = false;
-            beginMousePos = eventData.position;
             CurrentDragging = this;
             acceptedParent = null;
+            isDragging = true;
 
             originalParent = transform.parent;
             originalSiblingIndex = transform.GetSiblingIndex();
@@ -122,25 +188,31 @@ namespace Game.UI
             transform.SetParent(transform.root, true);
             canvasGroup.alpha = dragAlpha;
             canvasGroup.blocksRaycasts = false;
+
+            // 拖拽时恢复原大小
+            targetScale = 1f;
+            dragTargetPos = rectTransform.localPosition;
+            dragTargetSet = false;
+            dragFirstFrameDone = false;
+
+            OnCardDragStarted?.Invoke(this);
         }
 
         public void OnDrag(PointerEventData eventData)
         {
-            if (Vector3.Distance(eventData.position, beginMousePos) > 5f)
-                wasDragged = true;
-
-            Vector2 localPos;
             RectTransform parentRt = transform.parent as RectTransform;
             if (parentRt != null &&
                 RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                    parentRt, eventData.position, eventData.pressEventCamera, out localPos))
+                    parentRt, eventData.position, eventData.pressEventCamera, out Vector2 localPos))
             {
-                rectTransform.localPosition = localPos;
+                dragTargetPos = localPos;
+                dragTargetSet = true;
             }
         }
 
         public void OnEndDrag(PointerEventData eventData)
         {
+            isDragging = false;
             canvasGroup.alpha = 1f;
             canvasGroup.blocksRaycasts = true;
 
@@ -148,6 +220,7 @@ namespace Game.UI
             {
                 transform.SetParent(acceptedParent, false);
                 rectTransform.localPosition = Vector3.zero;
+                dragTargetPos = Vector2.zero;
             }
             else
             {
@@ -157,10 +230,11 @@ namespace Game.UI
                     transform.SetSiblingIndex(originalSiblingIndex);
                 }
                 rectTransform.localPosition = Vector3.zero;
+                dragTargetPos = Vector2.zero;
             }
 
+            OnCardDragEnded?.Invoke(this);
             CurrentDragging = null;
-            wasDragged = false;
             acceptedParent = null;
         }
     }

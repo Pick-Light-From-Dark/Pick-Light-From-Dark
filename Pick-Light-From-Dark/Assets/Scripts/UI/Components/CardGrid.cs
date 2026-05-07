@@ -25,18 +25,6 @@ namespace Game.UI
             return slot;
         }
 
-        /// <summary>前端测试用（无数据绑定）</summary>
-        public CardSlot AddCard(string cardName, string time, string panic, string excite, Transform parentSlot)
-        {
-            var slot = CreateSlot(parentSlot);
-            if (slot != null)
-            {
-                slot.SetDisplay(cardName, time, panic, excite);
-                slots.Add(slot);
-            }
-            return slot;
-        }
-
         private CardSlot CreateSlot(Transform parentSlot)
         {
             if (cardSlotPrefab == null)
@@ -59,11 +47,14 @@ namespace Game.UI
         private void AutoWireCardSlot(CardSlot slot, GameObject root)
         {
             var t = typeof(CardSlot);
-            TrySetField(slot, t, "nameText",   FindTMP(root, "CardNameText"));
-            TrySetField(slot, t, "timeText",   FindTMP(root, "TimeText"));
-            TrySetField(slot, t, "panicText",  FindTMP(root, "ChaosNum"));
-            TrySetField(slot, t, "exciteText", FindTMP(root, "HappyNum"));
-            TrySetField(slot, t, "cardImage",  root.transform.Find("CardImg")?.GetComponent<Image>());
+            TrySetField(slot, t, "nameText",             FindTMP(root, "CardNameText"));
+            TrySetField(slot, t, "timeText",             FindTMP(root, "TimeText"));
+            TrySetField(slot, t, "panicText",            FindTMP(root, "ChaosNum"));
+            TrySetField(slot, t, "exciteText",           FindTMP(root, "HappyNum"));
+            TrySetField(slot, t, "stackText",            FindTMP(root, "CardCount"));
+            TrySetField(slot, t, "cardImage",            root.transform.Find("CardImg")?.GetComponent<Image>());
+            TrySetField(slot, t, "cardBackgroundImage",  root.transform.Find("CardImgBk")?.GetComponent<Image>()
+                ?? root.GetComponent<Image>());
         }
 
         private TextMeshProUGUI FindTMP(GameObject root, string childName)
@@ -84,6 +75,12 @@ namespace Game.UI
         {
             if (slots.Remove(slot))
                 Destroy(slot.gameObject);
+        }
+
+        /// <summary>将卡牌从列表中移除但不销毁GameObject（用于拖入思考框后解除追踪）</summary>
+        public void DetachCard(CardSlot slot)
+        {
+            slots.Remove(slot);
         }
 
         public void Clear()

@@ -34,6 +34,9 @@ namespace Game.Card
         /// <summary>已解锁的非持续关联卡牌ID集合（用于判断"是否已被解锁过"）</summary>
         private HashSet<int> unlockedNonPersistentIds = new HashSet<int>();
 
+        /// <summary>非持续关联卡牌的持久层数（跨盖回被子循环保留）</summary>
+        private Dictionary<int, int> savedNonPersistentStacks = new Dictionary<int, int>();
+
         /// <summary>顶替映射：被消耗的卡牌ID → 其关联卡牌ID列表（永久生效）</summary>
         private Dictionary<int, List<int>> replaceMap = new Dictionary<int, List<int>>();
 
@@ -72,12 +75,16 @@ namespace Game.Card
             levelConfig = config;
             globalPool.Clear();
             unlockedNonPersistentIds.Clear();
+            savedNonPersistentStacks.Clear();
             replaceMap.Clear();
             cardHistory.Clear();
             pooledCardIds.Clear();
 
             // 发放初始卡牌到全局池
             DealInitialCards();
+
+            // 通知UI刷新备选区
+            OnSelectionChanged?.Invoke();
 
             Debug.Log($"[CardManager] 初始化完成，全局池 {globalPool.Count} 张卡牌");
         }
@@ -151,6 +158,9 @@ namespace Game.Card
 
             if (globalPool.ContainsKey(cardData.id))
             {
+                // 非持续关联：已存在则不可逆，不增加层数
+                if (cardData.relatedType == RelatedType.NonPersistent)
+                    return;
                 var existing = globalPool[cardData.id];
                 if (cardData.cardType == CardType.Stackable)
                     existing.remainingStacks += cardData.initialStack;
@@ -213,7 +223,29 @@ namespace Game.Card
             // 2. 触发关联卡牌
             TriggerLinkedCards(usedCard);
 
-            // 3. 记录历史
+            // 3. 盖回被子(2011)：使用后只保留关联卡牌，其余从池中移除
+            if (usedCard.id == 2011 && usedCard.relatedCardIds != null)
+            {
+                var keepSet = new HashSet<int>(usedCard.relatedCardIds);
+                var toRemove = new List<int>();
+                foreach (var kvp in globalPool)
+                {
+                    if (!keepSet.Contains(kvp.Key))
+                    {
+                        // 非持续关联卡牌：移除前保存当前层数，下次生成时恢复
+                        if (kvp.Value.data.relatedType == RelatedType.NonPersistent)
+                            savedNonPersistentStacks[kvp.Key] = kvp.Value.remainingStacks;
+                        toRemove.Add(kvp.Key);
+                    }
+                }
+                foreach (var id in toRemove)
+                {
+                    globalPool.Remove(id);
+                    pooledCardIds.Remove(id);
+                }
+            }
+
+            // 4. 记录历史
             RecordCardUse(usedCard, true);
 
             OnSelectionChanged?.Invoke();
@@ -263,9 +295,19 @@ namespace Game.Card
                 }
                 else
                 {
-                    // 不在全局池中 → 首次解锁
-                    int stacks = linkedData.cardType == CardType.Stackable
-                        ? linkedData.initialStack : 1;
+                    // 不在全局池中 → 首次解锁（或盖回被子后重新生成）
+                    int stacks;
+                    if (linkedData.relatedType == RelatedType.NonPersistent
+                        && savedNonPersistentStacks.TryGetValue(linkedId, out int saved))
+                    {
+                        stacks = saved;
+                        savedNonPersistentStacks.Remove(linkedId);
+                    }
+                    else
+                    {
+                        stacks = linkedData.cardType == CardType.Stackable
+                            ? linkedData.initialStack : 1;
+                    }
 
                     var newPooled = new PooledCard
                     {
@@ -338,6 +380,7 @@ namespace Game.Card
         {
             globalPool.Clear();
             unlockedNonPersistentIds.Clear();
+            savedNonPersistentStacks.Clear();
             replaceMap.Clear();
             cardHistory.Clear();
             pooledCardIds.Clear();
