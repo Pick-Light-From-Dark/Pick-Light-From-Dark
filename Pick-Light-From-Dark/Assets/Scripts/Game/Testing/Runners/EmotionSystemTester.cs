@@ -2,6 +2,7 @@ using UnityEngine;
 using Game.Emotion;
 using Game.Config;
 using Game.Data;
+using Game.Effects;
 
 namespace Game.Testing.Runners
 {
@@ -51,6 +52,7 @@ namespace Game.Testing.Runners
         private PlayerState playerState;
         private Animator animator;
         private SpriteRenderer spriteRenderer;
+        private SweatDripController sweatDrip;
 
         private enum CharacterState { Blink, LittleExcited, Excited }
         private CharacterState currentState = CharacterState.Blink;
@@ -63,6 +65,8 @@ namespace Game.Testing.Runners
 
             EnsureCharacterComponents();
             UpdateCharacterAnimation(true);
+
+            sweatDrip = GetComponent<SweatDripController>();
 
             Debug.Log("[EmotionSystemTester] 已就绪。F1=Initialize / F2=ChangePanic / F3=ChangeExcite / F4=RunAll");
         }
@@ -93,6 +97,22 @@ namespace Game.Testing.Runners
             if (animator == null)
             {
                 animator = gameObject.AddComponent<Animator>();
+            }
+
+            // 默认添加描边
+            SpriteOutlineController outline = GetComponent<SpriteOutlineController>();
+            if (outline == null)
+            {
+                outline = gameObject.AddComponent<SpriteOutlineController>();
+                outline.outlineColor = new Color(0f, 0f, 0f, 0.6f);
+                outline.outlineSize = 3f;
+            }
+
+            // 自动挂载汗滴控制器（留空让用户在 Inspector 拖入 sweatSprite）
+            SweatDripController sweat = GetComponent<SweatDripController>();
+            if (sweat == null)
+            {
+                sweat = gameObject.AddComponent<SweatDripController>();
             }
 
             bool hasLuYing = luYingControllers != null && luYingControllers.Length >= 3
@@ -139,9 +159,32 @@ namespace Game.Testing.Runners
         {
             if (!showOnGUI) return;
 
+            bool eyesClosed = playerState != null && playerState.IsEyesClosed();
+
+            // ===== 闭眼状态：全屏黑屏，仅显示睁眼按钮 =====
+            if (eyesClosed)
+            {
+                GUI.color = Color.black;
+                GUI.DrawTexture(new Rect(0, 0, Screen.width, Screen.height), Texture2D.whiteTexture);
+                GUI.color = Color.white;
+
+                int btnW = 200, btnH = 50;
+                int bx = (Screen.width - btnW) / 2;
+                int by = (Screen.height - btnH) / 2;
+
+                GUI.color = Color.white;
+                if (GUI.Button(new Rect(bx, by, btnW, btnH), "👁 睁眼"))
+                {
+                    playerState.ToggleEyesClosed();
+                }
+                GUI.color = Color.white;
+                return;
+            }
+
+            // ===== 睁眼状态：正常测试面板 =====
             const int w = 320, h = 24;
             int x = 10, y = 10;
-            GUI.Box(new Rect(x - 5, y - 5, w + 10, 340), "EmotionSystem 测试器");
+            GUI.Box(new Rect(x - 5, y - 5, w + 10, 380), "EmotionSystem 测试器");
             y += 25;
 
             if (emotionSystem != null)
@@ -159,7 +202,8 @@ namespace Game.Testing.Runners
             if (showCharacterSprite && playerState != null)
             {
                 string pose = playerState.IsInBed() ? "床上" : "站立";
-                GUI.Label(new Rect(x, y, w, h), $"姿态: {pose}  动画: {currentState}"); y += h + 4;
+                string eyeState = playerState.IsEyesClosed() ? "闭眼" : "睁眼";
+                GUI.Label(new Rect(x, y, w, h), $"姿态: {pose}  眼睛: {eyeState}  动画: {currentState}"); y += h + 4;
             }
 
             GUI.Label(new Rect(x, y, 100, h), "Panic Δ:");
@@ -185,6 +229,36 @@ namespace Game.Testing.Runners
                 y += h;
             }
 
+            // 闭眼/睁眼按钮
+            if (playerState != null)
+            {
+                string eyeBtn = playerState.IsEyesClosed() ? "睁眼" : "闭眼";
+                if (GUI.Button(new Rect(x, y, w, h), eyeBtn))
+                {
+                    playerState.ToggleEyesClosed();
+                }
+                y += h;
+            }
+
+            // 汗滴测试按钮
+            if (sweatDrip != null)
+            {
+                bool hasSprite = sweatDrip.sweatSprite != null;
+                GUI.enabled = hasSprite;
+                string sweatBtn = sweatDrip.IsPlaying ? "停止汗滴" : "播放汗滴";
+                if (GUI.Button(new Rect(x, y, w, h), sweatBtn))
+                {
+                    if (sweatDrip.IsPlaying) sweatDrip.Stop();
+                    else sweatDrip.Play();
+                }
+                GUI.enabled = true;
+                if (!hasSprite)
+                {
+                    GUI.Label(new Rect(x + 120, y, w - 120, h), "(Inspector 拖入 sweatSprite)");
+                }
+                y += h;
+            }
+
             if (GUI.Button(new Rect(x, y, w, h), "[F4] 一键跑全部用例")) RunAllTests(); y += h;
         }
 
@@ -196,6 +270,7 @@ namespace Game.Testing.Runners
                 Debug.LogError("[EmotionSystemTester] testConfig 未指定");
                 return;
             }
+            playerState?.Initialize(testConfig);
             emotionSystem.Initialize(testConfig);
             Debug.Log($"[EmotionSystemTester] Initialize 完成 → {emotionSystem.GetEmotionInfo()}");
         }

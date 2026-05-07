@@ -157,6 +157,25 @@ namespace Game.Testing.Runners
 
         void DrawGame()
         {
+            // 闭眼状态：全屏黑屏，仅显示睁眼按钮
+            if (playerState?.IsEyesClosed() == true)
+            {
+                GUI.color = Color.black;
+                GUI.DrawTexture(new Rect(0, 0, Screen.width, Screen.height), Texture2D.whiteTexture);
+                GUI.color = Color.white;
+
+                int btnW = 200, btnH = 50;
+                int bx = (Screen.width - btnW) / 2;
+                int by = (Screen.height - btnH) / 2;
+
+                GUI.Label(new Rect(bx, by - 40, btnW, 30), "闭眼中...", GUI.skin.box);
+                if (GUI.Button(new Rect(bx, by, btnW, btnH), "👁 睁眼 (C)"))
+                {
+                    playerState?.ToggleEyesClosed();
+                }
+                return;
+            }
+
             int panelW = 500;
             int panelH = 580;
             int x = (Screen.width - panelW) / 2;
