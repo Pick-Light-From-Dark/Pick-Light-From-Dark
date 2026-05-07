@@ -494,7 +494,13 @@ namespace Game.Card
         void BuildCardDataCache()
         {
             cardDataCache.Clear();
-            CardDataContainer[] containers = Resources.LoadAll<CardDataContainer>("Card");
+            LoadCardDataFromPath("Card");
+            LoadCardDataFromPath("TestData");
+        }
+
+        void LoadCardDataFromPath(string path)
+        {
+            CardDataContainer[] containers = Resources.LoadAll<CardDataContainer>(path);
             foreach (var container in containers)
             {
                 if (container.cardData != null && !cardDataCache.ContainsKey(container.cardData.id))
