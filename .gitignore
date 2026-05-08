@@ -105,3 +105,6 @@ InitTestScene*.unity*
 
 # Auto-generated cache in Assets folder
 /[Aa]ssets/[Ss]ceneDependencyCache*
+
+# Allow DOTween DLLs (global gitignore excludes *.dll)
+!Pick-Light-From-Dark/Assets/ThirdParty/Demigiant/**/*.dll
