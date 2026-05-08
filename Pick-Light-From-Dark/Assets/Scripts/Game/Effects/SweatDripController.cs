@@ -1,11 +1,12 @@
 using UnityEngine;
+using DG.Tweening;
 
 namespace Game.Effects
 {
     /// <summary>
-    /// 汗滴滴落效果控制器（被动触发式）
+    /// 汗滴滴落效果控制器（DOTween 版本）
     /// 由外部系统（动画状态机、情绪系统等）显式调用播放/停止
-    /// 通过 shader + 子 SpriteRenderer 实现，不干扰主角色 SpriteSwap 动画
+    /// 通过 DOTween Sequence 控制位置与 Alpha，不干扰主角色 SpriteSwap 动画
     /// </summary>
     public class SweatDripController : MonoBehaviour
     {
@@ -39,9 +40,7 @@ namespace Game.Effects
 
         private GameObject sweatObject;
         private SpriteRenderer sweatRenderer;
-        private float cycleTimer;
-        private Vector3 startPos;
-        private Vector3 endPos;
+        private Sequence dripSequence;
         private Material runtimeMaterial;
 
         // ========== 生命周期 ==========
@@ -51,25 +50,9 @@ namespace Game.Effects
             EnsureSweatObject();
         }
 
-        void Update()
-        {
-            if (!IsPlaying || sweatObject == null) return;
-
-            cycleTimer += Time.deltaTime;
-            CurrentProgress = Mathf.Clamp01(cycleTimer / Mathf.Max(0.001f, dripCycle));
-
-            if (CurrentProgress >= 1f)
-            {
-                // 单轮完成，自动循环下一轮
-                cycleTimer = 0f;
-                CurrentProgress = 0f;
-            }
-
-            ApplyDripVisual(CurrentProgress);
-        }
-
         void OnDestroy()
         {
+            dripSequence?.Kill();
             if (sweatObject != null)
             {
                 Destroy(sweatObject);
@@ -95,11 +78,48 @@ namespace Game.Effects
             }
 
             EnsureSweatObject();
-            ResetDripState();
+            dripSequence?.Kill();
+
+            // 计算起点终点
+            Vector3 startPos = spawnOffset;
+            Vector3 endPos = startPos + new Vector3(dripOffsetX, -dripDistance, 0f);
+            sweatObject.transform.localPosition = startPos;
+
+            // Alpha 时长分段
+            float fadeInDuration = dripCycle * 0.15f;
+            float fadeOutDuration = dripCycle * 0.2f;
+            float stayDuration = Mathf.Max(0f, dripCycle - fadeInDuration - fadeOutDuration);
+
+            // 构建 DOTween Sequence
+            dripSequence = DOTween.Sequence();
+
+            // 位置：从 startPos 到 endPos，全程 ease-in
+            dripSequence.Append(
+                sweatObject.transform.DOLocalMove(endPos, dripCycle)
+                    .SetEase(Ease.InQuad)
+            );
+
+            // Alpha：淡入 -> 保持 -> 淡出
+            var alphaSeq = DOTween.Sequence();
+            alphaSeq.Append(sweatRenderer.DOFade(1f, fadeInDuration).From(0f));
+            if (stayDuration > 0f)
+                alphaSeq.AppendInterval(stayDuration);
+            alphaSeq.Append(sweatRenderer.DOFade(0f, fadeOutDuration));
+
+            dripSequence.Join(alphaSeq);
+
+            // 无限循环
+            dripSequence.SetLoops(-1, LoopType.Restart);
+            dripSequence.OnStepComplete(() =>
+            {
+                // 每轮开始时重置位置（LoopType.Restart 会自动处理，但显式重置更安全）
+                sweatObject.transform.localPosition = startPos;
+            });
+
             sweatObject.SetActive(true);
             IsPlaying = true;
 
-            Debug.Log("[SweatDripController] 开始播放汗滴");
+            Debug.Log("[SweatDripController] DOTween 汗滴动画已启动");
         }
 
         /// <summary>
@@ -110,6 +130,7 @@ namespace Game.Effects
         {
             if (immediate)
             {
+                dripSequence?.Kill();
                 IsPlaying = false;
                 if (sweatObject != null)
                     sweatObject.SetActive(false);
@@ -117,9 +138,16 @@ namespace Game.Effects
             }
             else
             {
-                // 非即时：等当前轮结束后自动停止
-                if (IsPlaying)
-                    StartCoroutine(WaitForCycleEnd());
+                if (dripSequence != null && dripSequence.IsPlaying())
+                {
+                    dripSequence.SetLoops(1);
+                    dripSequence.OnComplete(() =>
+                    {
+                        IsPlaying = false;
+                        if (sweatObject != null)
+                            sweatObject.SetActive(false);
+                    });
+                }
             }
         }
 
@@ -128,8 +156,44 @@ namespace Game.Effects
         /// </summary>
         public void PlayOnce(System.Action onComplete = null)
         {
-            Play();
-            StartCoroutine(PlayOnceRoutine(onComplete));
+            if (sweatSprite == null)
+            {
+                Debug.LogWarning("[SweatDripController] 未设置 sweatSprite，无法播放");
+                return;
+            }
+
+            EnsureSweatObject();
+            dripSequence?.Kill();
+
+            Vector3 startPos = spawnOffset;
+            Vector3 endPos = startPos + new Vector3(dripOffsetX, -dripDistance, 0f);
+            sweatObject.transform.localPosition = startPos;
+
+            float fadeInDuration = dripCycle * 0.15f;
+            float fadeOutDuration = dripCycle * 0.2f;
+            float stayDuration = Mathf.Max(0f, dripCycle - fadeInDuration - fadeOutDuration);
+
+            dripSequence = DOTween.Sequence();
+            dripSequence.Append(sweatObject.transform.DOLocalMove(endPos, dripCycle).SetEase(Ease.InQuad));
+
+            var alphaSeq = DOTween.Sequence();
+            alphaSeq.Append(sweatRenderer.DOFade(1f, fadeInDuration).From(0f));
+            if (stayDuration > 0f)
+                alphaSeq.AppendInterval(stayDuration);
+            alphaSeq.Append(sweatRenderer.DOFade(0f, fadeOutDuration));
+
+            dripSequence.Join(alphaSeq);
+            dripSequence.SetLoops(1);
+            dripSequence.OnComplete(() =>
+            {
+                IsPlaying = false;
+                if (sweatObject != null)
+                    sweatObject.SetActive(false);
+                onComplete?.Invoke();
+            });
+
+            sweatObject.SetActive(true);
+            IsPlaying = true;
         }
 
         /// <summary>
@@ -138,6 +202,11 @@ namespace Game.Effects
         public void SetSpeedMultiplier(float multiplier)
         {
             dripCycle = Mathf.Max(0.1f, 2f / multiplier);
+            if (IsPlaying)
+            {
+                // 重建动画以应用新速度
+                Play();
+            }
         }
 
         /// <summary>
@@ -146,7 +215,10 @@ namespace Game.Effects
         public void SetSpawnOffset(Vector2 offset)
         {
             spawnOffset = offset;
-            RecalculatePath();
+            if (IsPlaying)
+            {
+                Play();
+            }
         }
 
         // ========== 内部实现 ==========
@@ -181,67 +253,18 @@ namespace Game.Effects
             Shader shader = Shader.Find("Custom/SweatDrip");
             if (shader == null)
             {
-                // Fallback：使用默认 sprite shader，汗滴仍可显示，只是无拉伸淡出效果
                 shader = Shader.Find("Sprites/Default");
                 if (shader == null)
                 {
                     Debug.LogError("[SweatDripController] 找不到任何可用 Shader，汗滴无法显示");
                     return null;
                 }
-                Debug.LogWarning("[SweatDripController] 未找到 Custom/SweatDrip，已回退到默认 Sprite Shader（无拉伸淡出效果）。请在 Unity 中导入 Custom/SweatDrip 材质以获得完整效果。");
+                Debug.LogWarning("[SweatDripController] 未找到 Custom/SweatDrip，已回退到默认 Sprite Shader（无拉伸淡出效果）");
             }
 
             runtimeMaterial = new Material(shader);
             runtimeMaterial.hideFlags = HideFlags.HideAndDontSave;
             return runtimeMaterial;
-        }
-
-        void ResetDripState()
-        {
-            cycleTimer = 0f;
-            CurrentProgress = 0f;
-            RecalculatePath();
-            if (sweatRenderer != null)
-                sweatRenderer.color = new Color(1f, 1f, 1f, 0f);
-        }
-
-        void RecalculatePath()
-        {
-            startPos = spawnOffset;
-            endPos = startPos + new Vector3(dripOffsetX, -dripDistance, 0f);
-        }
-
-        void ApplyDripVisual(float t)
-        {
-            // 缓动插值
-            float smoothT = Mathf.SmoothStep(0, 1, t);
-            sweatObject.transform.localPosition = Vector3.Lerp(startPos, endPos, smoothT);
-
-            // Alpha 曲线：淡入 -> 保持 -> 淡出
-            float alpha;
-            if (t < 0.15f)
-                alpha = t / 0.15f;
-            else if (t > 0.8f)
-                alpha = 1f - (t - 0.8f) / 0.2f;
-            else
-                alpha = 1f;
-
-            if (sweatRenderer != null)
-                sweatRenderer.color = new Color(1f, 1f, 1f, alpha);
-        }
-
-        System.Collections.IEnumerator PlayOnceRoutine(System.Action onComplete)
-        {
-            yield return new WaitForSeconds(dripCycle);
-            Stop(immediate: true);
-            onComplete?.Invoke();
-        }
-
-        System.Collections.IEnumerator WaitForCycleEnd()
-        {
-            float wait = (1f - CurrentProgress) * dripCycle;
-            yield return new WaitForSeconds(wait);
-            Stop(immediate: true);
         }
     }
 }

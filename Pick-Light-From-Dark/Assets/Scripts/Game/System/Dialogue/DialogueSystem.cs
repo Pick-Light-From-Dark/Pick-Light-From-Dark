@@ -106,6 +106,13 @@ public class DialogueSystem : MonoBehaviour
 
         if (Input.GetMouseButtonDown(0))
         {
+            // Gal 模式下若正在打字，先跳过打字机
+            if (panelUI is GalDialoguePanel galPanel && galPanel.IsTyping)
+            {
+                galPanel.SkipTyping();
+                return;
+            }
+
             NextLine();
         }
     }
