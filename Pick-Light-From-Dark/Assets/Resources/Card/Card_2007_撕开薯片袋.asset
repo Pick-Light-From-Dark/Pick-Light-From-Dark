@@ -1,0 +1,41 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bc03fbed09b109242b4b557e79d89449, type: 3}
+  m_Name: "Card_2007_\u6495\u5F00\u85AF\u7247\u888B"
+  m_EditorClassIdentifier: 
+  cardData:
+    id: 2007
+    cardName: "\u6495\u5F00\u85AF\u7247\u888B"
+    description: "\u3010\u4F5C\u7528\u3011\u6253\u5F00\u888B\u5B50\u53EF\u4EE5\u5403\u85AF\u7247\n\u3010\u63CF\u8FF0\u3011\u9001\u660E\u6708\u7684\u4E13\u5C5E\u96F6\u98DF\uFF0C\u5E02\u9762\u4E0A\u5C11\u89C1\u7684\u6B3E\u5F0F\uFF0C\u636E\u8BF4\u5403\u4E86\u5B83\u5FC3\u60C5\u4F1A\u53D8\u597D\u3002"
+    iconPath: 
+    cardSprite: {fileID: 21300000, guid: 195291c9a3840764cab07c2b3e07298c, type: 3}
+    cardType: 0
+    initialStack: 1
+    segments:
+    - duration: 2
+      isInterruptible: 1
+    - duration: 1
+      isInterruptible: 0
+    panicDelta: 2
+    exciteDelta: 5
+    interruptPanicAdd: 3
+    bindTaskId: 0
+    relatedType: 1
+    relatedCardIds: d8070000d9070000da070000db070000
+    allowedLevelIds:
+    - 1001
+    bedStateChange: 0
+    specialEffect: 
+    saveProgressOnInterrupt: 0
+    cardBackgroundType: 0
+    backgroundJumpId: 0
+    sfxName: "DXH_SOUND/02.撕开薯片袋"

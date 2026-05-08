@@ -42,6 +42,7 @@ namespace Game.Data
         public string cardName;
         public string description;
         public string iconPath;
+        public Sprite cardSprite;
 
         [Header("卡牌类型")]
         public CardType cardType = CardType.NonStackable;
@@ -72,6 +73,17 @@ namespace Game.Data
 
         [Header("特殊效果开关")]
         public bool saveProgressOnInterrupt = false; // 打断时保存读条进度
+
+        [Header("卡牌外观")]
+        [Tooltip("0=棕黄色图, 1=暗蓝色图")]
+        public int cardBackgroundType = 0;
+
+        [Header("跳转背景画面")]
+        [Tooltip("0=不改变画面, 其他值=目标背景画面ID")]
+        public int backgroundJumpId = 0;
+
+        [Header("音效")]
+        public string sfxName;
 
         /// <summary>
         /// 计算总读条时长（各片段累加）

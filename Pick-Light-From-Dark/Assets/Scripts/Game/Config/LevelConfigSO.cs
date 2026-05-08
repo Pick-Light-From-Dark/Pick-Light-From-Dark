@@ -59,6 +59,10 @@ namespace Game.Config
         [Header("手电筒")]
         public float flashPanicPerSec;
 
+        [Header("卡牌数据路径")]
+        [Tooltip("Resources下的子路径，如 Card 或 TestData")]
+        public string cardDataPath = "Card";
+
         [Header("初始卡牌")]
         public List<int> initialCards;
 

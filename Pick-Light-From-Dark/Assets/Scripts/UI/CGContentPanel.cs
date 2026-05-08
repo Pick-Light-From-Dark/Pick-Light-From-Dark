@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+[UIPath("UI/Content")]
 public class CGContentPanel : BasePanel
 {
     public override void HideMe()

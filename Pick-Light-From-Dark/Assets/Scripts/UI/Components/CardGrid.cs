@@ -1,123 +1,99 @@
 using System;
-using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine;
+using TMPro;
+using UnityEngine.UI;
 using Game.Data;
-using Game.Card;
 
 namespace Game.UI
 {
-    /// <summary>
-    /// 卡牌网格组件
-    /// 显示和管理手牌
-    /// </summary>
     public class CardGrid : MonoBehaviour
     {
-        [Header("预制体")]
         [SerializeField] private GameObject cardSlotPrefab;
 
-        [Header("配置")]
-        [SerializeField] private int maxDisplayCount = 10;
-        [SerializeField] private int columnCount = 2;
+        private List<CardSlot> slots = new List<CardSlot>();
 
-        private List<CardSlot> cardSlots = new List<CardSlot>();
-        private CardManager cardManager;
-        private Action<CardInstance> onCardSelected;
-
-        void Start()
+        /// <summary>从 ScriptableObject 数据生成卡牌</summary>
+        public CardSlot AddCard(CardData data, Transform parentSlot, int stackCount = -1)
         {
-            // 获取卡牌管理器引用
-            cardManager = CardManager.Instance;
-
-            // 初始加载手牌
-            LoadHandCards();
-        }
-
-        void OnDestroy()
-        {
-            // 暂时不监听事件
-        }
-
-        /// <summary>
-        /// 设置卡牌选中回调
-        /// </summary>
-        public void SetCardSelectedCallback(global::System.Action<CardInstance> callback)
-        {
-            onCardSelected = callback;
-        }
-
-        /// <summary>
-        /// 加载手牌
-        /// </summary>
-        private void LoadHandCards()
-        {
-            if (cardManager == null) return;
-
-            var handCards = cardManager.GetHandCards();
-            RefreshCardGrid(handCards);
-        }
-
-        /// <summary>
-        /// 刷新卡牌网格显示
-        /// </summary>
-        private void RefreshCardGrid(List<CardInstance> cards)
-        {
-            // 清空现有卡牌槽
-            ClearCardSlots();
-
-            // 创建新的卡牌槽
-            for (int i = 0; i < cards.Count && i < maxDisplayCount; i++)
-            {
-                CreateCardSlot(cards[i]);
-            }
-        }
-
-        /// <summary>
-        /// 创建卡牌槽
-        /// </summary>
-        private void CreateCardSlot(CardInstance card)
-        {
-            if (cardSlotPrefab == null) return;
-
-            GameObject slotObj = Instantiate(cardSlotPrefab, transform);
-            CardSlot slot = slotObj.GetComponent<CardSlot>();
-
+            var slot = CreateSlot(parentSlot);
             if (slot != null)
             {
-                slot.SetCard(card, onCardSelected);
-                cardSlots.Add(slot);
+                slot.SetCardData(data, stackCount);
+                slots.Add(slot);
             }
+            return slot;
         }
 
-        /// <summary>
-        /// 清空卡牌槽
-        /// </summary>
-        private void ClearCardSlots()
+        private CardSlot CreateSlot(Transform parentSlot)
         {
-            foreach (var slot in cardSlots)
+            if (cardSlotPrefab == null)
             {
-                if (slot != null && slot.gameObject != null)
-                {
-                    Destroy(slot.gameObject);
-                }
+                Debug.LogError("[CardGrid] cardSlotPrefab 未赋值！");
+                return null;
             }
 
-            cardSlots.Clear();
+            GameObject obj = Instantiate(cardSlotPrefab, parentSlot);
+            obj.transform.localPosition = Vector3.zero;
+
+            CardSlot slot = obj.GetComponent<CardSlot>();
+            if (slot == null)
+                slot = obj.AddComponent<CardSlot>();
+
+            AutoWireCardSlot(slot, obj);
+            return slot;
         }
 
-        /// <summary>
-        /// 设置卡牌槽预制体
-        /// </summary>
-        public void SetCardSlotPrefab(GameObject prefab)
+        private void AutoWireCardSlot(CardSlot slot, GameObject root)
         {
-            cardSlotPrefab = prefab;
+            var t = typeof(CardSlot);
+            TrySetField(slot, t, "nameText",             FindTMP(root, "CardNameText"));
+            TrySetField(slot, t, "timeText",             FindTMP(root, "TimeText"));
+            TrySetField(slot, t, "panicText",            FindTMP(root, "ChaosNum"));
+            TrySetField(slot, t, "exciteText",           FindTMP(root, "HappyNum"));
+            TrySetField(slot, t, "stackText",            FindTMP(root, "CardCount"));
+            TrySetField(slot, t, "cardImage",            root.transform.Find("CardImg")?.GetComponent<Image>());
+            TrySetField(slot, t, "cardBackgroundImage",  root.transform.Find("CardImgBk")?.GetComponent<Image>()
+                ?? root.GetComponent<Image>());
         }
 
-        /// <summary>
-        /// 获取当前显示的卡牌槽数量
-        /// </summary>
-        public int GetCardSlotCount()
+        private TextMeshProUGUI FindTMP(GameObject root, string childName)
         {
-            return cardSlots.Count;
+            var child = root.transform.Find(childName);
+            return child != null ? child.GetComponent<TextMeshProUGUI>() : null;
         }
+
+        private void TrySetField(object target, Type type, string fieldName, object value)
+        {
+            if (value == null) return;
+            var field = type.GetField(fieldName,
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            field?.SetValue(target, value);
+        }
+
+        public void RemoveCard(CardSlot slot)
+        {
+            if (slots.Remove(slot))
+                Destroy(slot.gameObject);
+        }
+
+        /// <summary>将卡牌从列表中移除但不销毁GameObject（用于拖入思考框后解除追踪）</summary>
+        public void DetachCard(CardSlot slot)
+        {
+            slots.Remove(slot);
+        }
+
+        public void Clear()
+        {
+            foreach (var s in slots)
+            {
+                if (s != null) Destroy(s.gameObject);
+            }
+            slots.Clear();
+        }
+
+        public int Count => slots.Count;
+
+        public void SetCardSelectedCallback(Action<Game.Data.CardInstance> callback) { }
     }
 }

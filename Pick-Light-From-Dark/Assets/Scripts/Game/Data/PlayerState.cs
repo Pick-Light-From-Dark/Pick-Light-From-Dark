@@ -80,6 +80,14 @@ namespace Game.Data
         }
 
         /// <summary>
+        /// 检查是否因卡牌读条而阻止闭眼操作
+        /// </summary>
+        private bool IsCardReadingBlocked()
+        {
+            return GamePanel.IsCardReading;
+        }
+
+        /// <summary>
         /// 切换闭眼状态
         /// </summary>
         public void ToggleEyesClosed()
@@ -97,8 +105,8 @@ namespace Game.Data
             if (gameFlow != null && (gameFlow.IsPaused() || gameFlow.IsGameOver()))
                 return;
 
-            // C键切换闭眼
-            if (Input.GetKeyDown(KeyCode.C))
+            // C键切换闭眼（读条期间禁止）
+            if (Input.GetKeyDown(KeyCode.C) && !IsCardReadingBlocked())
             {
                 ToggleEyesClosed();
             }

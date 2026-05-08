@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bc03fbed09b109242b4b557e79d89449, type: 3}
+  m_Name: "Card_2008_\u5403\u85AF\u7247"
+  m_EditorClassIdentifier: 
+  cardData:
+    id: 2008
+    cardName: "\u5403\u85AF\u7247"
+    description: "\u3010\u4F5C\u7528\u3011\u98DF\u7528\u85AF\u7247\uFF0C\u5B8C\u6210\u4EFB\u52A1\n\u3010\u63CF\u8FF0\u3011\u597D\u5403\uFF0C\u54B8\u54B8\u7684\uFF0C\u5F88\u8106"
+    iconPath: 
+    cardSprite: {fileID: 21300000, guid: bb65fe93253e1a74ca38d3d0ee965aae, type: 3}
+    cardType: 1
+    initialStack: 9
+    segments:
+    - duration: 4
+      isInterruptible: 1
+    panicDelta: 2
+    exciteDelta: 5
+    interruptPanicAdd: 4
+    bindTaskId: 3001
+    relatedType: 1
+    relatedCardIds: d9070000da070000db070000
+    allowedLevelIds:
+    - 1001
+    bedStateChange: 0
+    specialEffect: "\u5F53\u6B64\u5361\u724C\u88AB\u624B\u52A8\u6253\u65AD\u65F6\uFF0C\u4E0D\u4F1A\u56E0\u4E3A\u6253\u65AD\u5361\u724C\u800C\u91CD\u7F6E\u8BFB\u6761\u8FDB\u5EA6"
+    saveProgressOnInterrupt: 1
+    cardBackgroundType: 0
+    backgroundJumpId: 0
+    sfxName: "DXH_SOUND/03.吃薯片"
