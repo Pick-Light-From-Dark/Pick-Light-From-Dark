@@ -170,6 +170,7 @@ namespace Game.Emotion
         {
             accumulatedDecrease += decreaseRate * deltaTime;
             int decrease = Mathf.FloorToInt(accumulatedDecrease);
+            Debug.Log($"[EmotionSystem] 闭眼减情绪: dt={deltaTime:F3} rate={decreaseRate} accumulated={accumulatedDecrease:F3} decrease={decrease} panic={panicValue} excite={exciteValue}");
             if (decrease > 0)
             {
                 accumulatedDecrease -= decrease;
