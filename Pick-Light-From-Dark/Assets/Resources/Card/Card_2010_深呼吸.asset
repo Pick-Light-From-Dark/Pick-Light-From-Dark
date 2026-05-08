@@ -32,7 +32,7 @@ MonoBehaviour:
     allowedLevelIds:
     - all
     bedStateChange: 0
-    specialEffect: 
+    specialEffect: "\u672C\u5F20\u5361\u4F7F\u7528\u540E\uFF0C\u5907\u9009\u53D6\u7684\u5176\u4ED6\u5361\u724C\u7684\u663E\u793A\u4FDD\u6301\u4E0D\u53D8\uFF0C\u4E0D\u6309\u7167\u6B64\u5361\u724C\u7684\u5173\u8054\u5217\u8868\u751F\u6210\u5361\u724C\uFF0C\u6B64\u5361\u724C\u6309\u7167\u89C4\u5219\u51CF\u5C11\u4E00\u5C42\u6570\u3002"
     saveProgressOnInterrupt: 0
     cardBackgroundType: 0
     backgroundJumpId: 0
