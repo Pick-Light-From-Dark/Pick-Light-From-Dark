@@ -12,12 +12,12 @@ namespace Game.Effects
         [Tooltip("是否启用描边")]
         public bool enableOutline = true;
 
-        [Tooltip("描边颜色")]
-        public Color outlineColor = new Color(0f, 0f, 0f, 0.6f);
+        [Tooltip("描边颜色（默认棕色影子）")]
+        public Color outlineColor = new Color(0.4f, 0.26f, 0.13f, 1f);
 
-        [Tooltip("描边粗细（像素单位，建议 2~5）")]
+        [Tooltip("描边粗细（世界单位），建议 0.1~2")]
         [Range(0f, 10f)]
-        public float outlineSize = 3f;
+        public float outlineSize = 0.5f;
 
         [Tooltip("像素对齐")]
         public bool pixelSnap = true;
@@ -25,7 +25,7 @@ namespace Game.Effects
         private SpriteRenderer spriteRenderer;
         private Material outlineMaterial;
         private static readonly int OutlineColorId = Shader.PropertyToID("_OutlineColor");
-        private static readonly int OutlineSizeId = Shader.PropertyToID("_OutlineSize");
+        private static readonly int OutlineWidthId = Shader.PropertyToID("_OutlineWidth");
         private static readonly int PixelSnapId = Shader.PropertyToID("PixelSnap");
 
         void Awake()
@@ -89,7 +89,7 @@ namespace Game.Effects
             outlineSize = Mathf.Clamp(size, 0, 10);
             if (outlineMaterial != null)
             {
-                outlineMaterial.SetFloat(OutlineSizeId, outlineSize);
+                outlineMaterial.SetFloat(OutlineWidthId, outlineSize);
             }
         }
 
@@ -122,7 +122,7 @@ namespace Game.Effects
             if (outlineMaterial == null) return;
 
             outlineMaterial.SetColor(OutlineColorId, outlineColor);
-            outlineMaterial.SetFloat(OutlineSizeId, outlineSize);
+            outlineMaterial.SetFloat(OutlineWidthId, outlineSize);
             outlineMaterial.SetFloat(PixelSnapId, pixelSnap ? 1f : 0f);
         }
 

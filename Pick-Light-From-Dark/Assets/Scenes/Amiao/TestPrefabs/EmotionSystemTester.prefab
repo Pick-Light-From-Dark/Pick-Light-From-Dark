@@ -175,8 +175,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   enableOutline: 1
-  outlineColor: {r: 0.46226418, g: 0.33046556, b: 0, a: 0.6}
-  outlineSize: 0
+  outlineColor: {r: 0.4, g: 0.26, b: 0.13, a: 1}
+  outlineSize: 5
   pixelSnap: 1
 --- !u!114 &7700000000000000008
 MonoBehaviour:

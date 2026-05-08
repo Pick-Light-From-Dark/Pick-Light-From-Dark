@@ -23,7 +23,7 @@ namespace Game.Data
     }
 
     /// <summary>
-    /// 床上状态变化
+/// 床上状态变化
     /// </summary>
     public enum BedStateChange
     {
