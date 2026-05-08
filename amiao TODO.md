@@ -99,4 +99,18 @@
 - [x] EyeCloseDisplay 硬编码加速倍率 → string.Format(accelerationFormat, 2) 固定显示 2x，但 EyeCloseSystem.accelerationMultiplier 由 LevelConfigSO 配置（v2 为 1.5x），显示与实际倍率不符 → 新增 GetAccelerationMultiplier() 获取实际倍率
 - [x] PoolMgr.PushObj 缺少 null 与 key 存在性保护 → poolDic[obj.name].Push(obj) 在 obj 为 null 或 name 不在字典时直接抛异常，增加前置检查与兜底销毁
 - [x] TimerMgr 超时回调无 null 保护 → item.overCallBack.Invoke() 未做 null 检查，TimerItem 回收后 overCallBack 为 null 会抛 NullRef → 改为 ?.Invoke()
+- [x] EventCenter 双向类型不匹配警告 → 泛型与非泛型 EventTrigger 均增加 as-cast 检查，签名错配时输出警告日志，替代之前的静默忽略行为
+- [x] PoolMgr.GetObj Resources.Load null 保护 → 资源路径不存在时 Instantiate(null) 抛 NullRef，增加前置检查并输出明确错误日志
+- [x] MusicMgr.PlaySound 对象池返回 null 保护 → PoolMgr.GetObj("Sound/soundObj") 资源不存在时返回 null，直接 .GetComponent 会抛 NullRef，增加前置检查
+- [x] ResMgr 卸载回调 null 保护 → ReallyUnloadUnusedAssets 和 ReallyClearDic 中 callBack() 未做 null 检查，传入 null 时抛 NullRef，改为 ?.Invoke()
+- [x] TextUtil 分割方法索引越界与 null 保护 → SplitStrToIntArrTwice/SplitStrTwice 中 ints/strs2 长度为 1 时访问 [1] 越界，且 callBack 未做 null 检查
+- [x] MathUtil 射线/范围检测回调 null 保护 → RayCast/RayCastAll/OverlapBox/OverlapSphere 系列方法中 callBack.Invoke 未做 null 检查，共 12 处，改为 ?.Invoke()
+- [x] TextUtil SplitStrTwice 遗漏的 callBack null 保护 + InputMgr GetInputInfo 回调 null 保护 → 全量 grep 扫描后补漏
+- [x] DemoController taskGoals null 保护 → demoLevelConfig.taskGoals 可能为 null，直接访问 .Count 会抛 NullRef
+- [x] MusicMgr / UIMgr 资源加载与组件获取 null 保护 → Resources.Load / LoadAsync 返回 null 时 Instantiate 抛异常；GetComponent 返回 null 时直接调用方法抛 NullRef
+- [x] PlayerDataStore.SaveLevelRecord record null 保护 → 公共 API 传入 null 时访问 record.levelId 会抛 NullRef
+- [x] P2 巡检 round 44：Invoke 调用 + 事件订阅 + 集合初始化全面复查 → TimerMgr 已有前置 null 检查、所有 EventAdd 均有对应 Remove、CardManager 字段已初始化；未发现新增问题
+- [x] P2 巡检 round 45：Agent 全量扫描发现 15 个问题，修复 3 项小修 → LevelConfigSO.flashPanicPerSec int→float、DevModeController 删除未使用 taskManager、AutomatedGameTest 修复 isTesting 状态
+- [x] P2 巡检 round 46：重构 TeacherAI.CheckPlayerCaught → Eye/Flash 共用三段相同检查逻辑（不可打断片段/未卧床/未闭眼），提取到分支之前消除重复代码
+- [x] P2 巡检 round 47：CardManager.GetCardDataById 性能优化 → Initialize 时预加载 Resources.LoadAll 到 Dictionary 缓存，避免每次调用都重复加载
 

@@ -28,8 +28,9 @@ namespace Game.Emotion
         [SerializeField] private int panicValue;
         [SerializeField] private int exciteValue;
 
-        private int minPanic = 30, maxPanic = 100;
-        private int minExcite = 30, maxExcite = 100;
+        private int minPanic = 15, maxPanic = 100;
+        private int minExcite = 15, maxExcite = 100;
+        private const int TOTAL_MAX = 100;
         private int criticalValue;
         private bool wasCritical;
         private float accumulatedDecrease; // 累积小数部分避免 RoundToInt 截断
@@ -48,6 +49,7 @@ namespace Game.Emotion
 
             panicValue = Mathf.Clamp(levelConfig.initialPanic, minPanic, maxPanic);
             exciteValue = Mathf.Clamp(levelConfig.initialExcite, minExcite, maxExcite);
+            ClampTotal();
             criticalValue = levelConfig.criticalValue;
             wasCritical = false;
             accumulatedDecrease = 0f;
@@ -58,24 +60,45 @@ namespace Game.Emotion
 
         /// <summary>
         /// 修改慌乱值
+        /// 总和严格不超过 100
         /// </summary>
         public void ChangePanic(int delta)
         {
             int oldValue = panicValue;
             panicValue = Mathf.Clamp(panicValue + delta, minPanic, maxPanic);
+            if (panicValue + exciteValue > TOTAL_MAX)
+                panicValue = Mathf.Max(minPanic, TOTAL_MAX - exciteValue);
             Debug.Log($"[EmotionSystem] 慌乱值变化: {oldValue} -> {panicValue} (delta:{delta})");
             NotifyEmotionChanged();
         }
 
         /// <summary>
         /// 修改兴奋值
+        /// 总和严格不超过 100
         /// </summary>
         public void ChangeExcite(int delta)
         {
             int oldValue = exciteValue;
             exciteValue = Mathf.Clamp(exciteValue + delta, minExcite, maxExcite);
+            if (panicValue + exciteValue > TOTAL_MAX)
+                exciteValue = Mathf.Max(minExcite, TOTAL_MAX - panicValue);
             Debug.Log($"[EmotionSystem] 兴奋值变化: {oldValue} -> {exciteValue} (delta:{delta})");
             NotifyEmotionChanged();
+        }
+
+        /// <summary>
+        /// 钳制情绪值总和不超过 100（初始化用）
+        /// </summary>
+        private void ClampTotal()
+        {
+            if (panicValue + exciteValue <= TOTAL_MAX) return;
+            // 按比例缩放
+            float scale = (float)TOTAL_MAX / (panicValue + exciteValue);
+            panicValue = Mathf.Max(minPanic, Mathf.RoundToInt(panicValue * scale));
+            exciteValue = Mathf.Max(minExcite, Mathf.RoundToInt(exciteValue * scale));
+            // 修正舍入误差
+            if (panicValue + exciteValue > TOTAL_MAX)
+                panicValue = TOTAL_MAX - exciteValue;
         }
 
         /// <summary>

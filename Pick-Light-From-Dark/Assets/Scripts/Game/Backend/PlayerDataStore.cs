@@ -39,6 +39,11 @@ namespace Game.Backend
         /// </summary>
         public void SaveLevelRecord(JsonLevelRecord record)
         {
+            if (record == null)
+            {
+                Debug.LogWarning("[PlayerDataStore] SaveLevelRecord 传入 record 为 null，忽略保存");
+                return;
+            }
             var data = LoadOrCreate();
             data.records.Add(record);
             WriteFile(data);

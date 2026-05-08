@@ -64,7 +64,8 @@ namespace Game.Demo
             Debug.Log($"[DemoController] 关卡: {demoLevelConfig.levelName}");
             Debug.Log($"[DemoController] 时间限制: {demoLevelConfig.timeLimit}秒");
             Debug.Log($"[DemoController] 临界情绪值: {demoLevelConfig.criticalValue}");
-            Debug.Log($"[DemoController] 任务数量: {demoLevelConfig.taskGoals.Count}");
+            int taskCount = demoLevelConfig.taskGoals != null ? demoLevelConfig.taskGoals.Count : 0;
+            Debug.Log($"[DemoController] 任务数量: {taskCount}");
 
             ShowDemoInstructions();
         }

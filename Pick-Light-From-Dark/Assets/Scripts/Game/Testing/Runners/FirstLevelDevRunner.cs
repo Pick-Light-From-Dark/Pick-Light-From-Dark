@@ -169,6 +169,13 @@ namespace Game.Testing.Runners
                 devMode = gameObject.AddComponent<DevModeController>();
                 Debug.Log("[FirstLevelDevRunner] 自动创建 DevModeController");
             }
+
+            var textGame = FindFirstObjectByType<TextGameController>();
+            if (textGame == null)
+            {
+                textGame = gameObject.AddComponent<TextGameController>();
+                Debug.Log("[FirstLevelDevRunner] 自动创建 TextGameController");
+            }
         }
     }
 }

@@ -45,6 +45,11 @@ namespace Game.Card
         /// <summary>备选区变化回调（通知 GamePanel 刷新）</summary>
         public static event System.Action OnSelectionChanged;
 
+        private Dictionary<int, CardData> cardDataCache = new Dictionary<int, CardData>();
+
+        private List<CardInstance> handCards = new List<CardInstance>();
+        private int nextInstanceId = 1;
+
         public class CardUseRecord
         {
             public int cardId;
@@ -80,7 +85,14 @@ namespace Game.Card
             cardHistory.Clear();
             pooledCardIds.Clear();
 
-            // 发放初始卡牌到全局池
+            handCards = new List<CardInstance>();
+            cardHistory = new List<CardUseRecord>();
+            nextInstanceId = 1;
+
+            // 预加载并缓存所有卡牌数据
+            BuildCardDataCache(config.cardDataPath);
+
+            // 发放初始卡牌
             DealInitialCards();
 
             // 通知UI刷新备选区
@@ -387,16 +399,16 @@ namespace Game.Card
         }
 
         /// <summary>
-        /// 根据ID查找卡牌数据（从Resources）
+        /// 获取卡牌数据（从缓存中）
         /// </summary>
         public CardData GetCardDataById(int cardId)
         {
-            var containers = Resources.LoadAll<CardDataContainer>("Card");
-            foreach (var c in containers)
+            if (cardDataCache.TryGetValue(cardId, out CardData data))
             {
-                if (c.cardData != null && c.cardData.id == cardId)
-                    return c.cardData;
+                return data;
             }
+
+            Debug.LogWarning($"[CardManager] 未找到ID为 {cardId} 的卡牌数据");
             return null;
         }
 
@@ -473,6 +485,28 @@ namespace Game.Card
             if (globalPool.TryGetValue(instance.data.id, out var pooled))
             {
                 pooled.remainingStacks = 0;
+            }
+        }
+
+        /// <summary>
+        /// 预加载并缓存所有卡牌数据
+        /// </summary>
+        void BuildCardDataCache(string path)
+        {
+            cardDataCache.Clear();
+            if (!string.IsNullOrEmpty(path))
+                LoadCardDataFromPath(path);
+        }
+
+        void LoadCardDataFromPath(string path)
+        {
+            CardDataContainer[] containers = Resources.LoadAll<CardDataContainer>(path);
+            foreach (var container in containers)
+            {
+                if (container.cardData != null && !cardDataCache.ContainsKey(container.cardData.id))
+                {
+                    cardDataCache.Add(container.cardData.id, container.cardData);
+                }
             }
         }
 

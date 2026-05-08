@@ -56,7 +56,6 @@ namespace Game.Testing.Runners
         private EmotionSystem emotionSystem;
         private PlayerState playerState;
         private CardManager cardManager;
-        private TaskManager taskManager;
         private EyeCloseSystem eyeCloseSystem;
         private TeacherAI teacherAI;
 
@@ -68,7 +67,6 @@ namespace Game.Testing.Runners
             emotionSystem = EmotionSystem.Instance;
             playerState = PlayerState.Instance;
             cardManager = CardManager.Instance;
-            taskManager = TaskManager.Instance;
             eyeCloseSystem = EyeCloseSystem.Instance;
             teacherAI = FindFirstObjectByType<TeacherAI>();
 
@@ -274,7 +272,7 @@ namespace Game.Testing.Runners
             }
             levelConfig.patrolIntervals = patrolIntervals;
             levelConfig.patrolTime = patrolTime;
-            levelConfig.flashPanicPerSec = Mathf.RoundToInt(flashPanicPerSec);
+            levelConfig.flashPanicPerSec = flashPanicPerSec;
             Debug.Log($"[DevMode] AI参数已写入 levelConfig");
         }
 
