@@ -7,6 +7,7 @@ using Game.Data;
 using Game.Config;
 using Game.Card;
 using Game.UI;
+using Game.Emotion;
 
 public class GamePanel : BasePanel
 {
@@ -53,6 +54,10 @@ public class GamePanel : BasePanel
     private CardDropZone cardDropZone;
     private CardManager cardManager;
     private CardInfoPopup activePopup;
+
+    // 情绪值显示
+    private TextMeshProUGUI chaosCountText;
+    private TextMeshProUGUI happlyCountText;
 
     /// <summary>读条前的备选区卡牌快照（打断时恢复用）</summary>
     private List<CardData> preReadSnapshot;
@@ -122,8 +127,39 @@ public class GamePanel : BasePanel
         loadingFillSprite = Sprite.Create(Texture2D.whiteTexture,
             new Rect(0, 0, 4, 4), Vector2.zero);
 
+        // 情绪值显示
+        SetupEmotionDisplay();
+
         // 闭眼按钮 + 遮罩初始化
         SetupEyeClose();
+    }
+
+    private void SetupEmotionDisplay()
+    {
+        var emoBk = transform.Find("ImgBk/PlayerMessage/EmoDesImgBk");
+        if (emoBk != null)
+        {
+            chaosCountText = emoBk.Find("ChaosCount")?.GetComponent<TextMeshProUGUI>();
+            happlyCountText = emoBk.Find("HapplyCount")?.GetComponent<TextMeshProUGUI>();
+        }
+
+        EventCenter.Instance.AddEventListener<int>(E_EventType.PanicChanged, OnEmotionChanged);
+        EventCenter.Instance.AddEventListener<int>(E_EventType.ExciteChanged, OnEmotionChanged);
+        UpdateEmotionDisplay();
+    }
+
+    private void OnEmotionChanged(int _)
+    {
+        UpdateEmotionDisplay();
+    }
+
+    private void UpdateEmotionDisplay()
+    {
+        var emo = EmotionSystem.Instance;
+        if (emo == null) return;
+        var info = emo.GetEmotionInfo();
+        if (chaosCountText != null) chaosCountText.text = info.panicValue.ToString();
+        if (happlyCountText != null) happlyCountText.text = info.exciteValue.ToString();
     }
 
     private void SetupEyeClose()
@@ -262,6 +298,8 @@ public class GamePanel : BasePanel
         CardManager.OnSelectionChanged -= RefreshSelectionArea;
         EventCenter.Instance.RemoveEventListener<bool>(E_EventType.PlayerEyeCloseChanged, OnPlayerEyeCloseChanged);
         EventCenter.Instance.RemoveEventListener<int>(E_EventType.BackgroundJump, OnBackgroundJump);
+        EventCenter.Instance.RemoveEventListener<int>(E_EventType.PanicChanged, OnEmotionChanged);
+        EventCenter.Instance.RemoveEventListener<int>(E_EventType.ExciteChanged, OnEmotionChanged);
     }
 
     public override void ShowMe()
@@ -459,6 +497,19 @@ public class GamePanel : BasePanel
         // 隐藏思考框描述文字
         HideThinkingText();
 
+        // 应用情绪值变化
+        if (readingCardData.panicDelta != 0)
+            EmotionSystem.Instance.ChangePanic(readingCardData.panicDelta);
+        if (readingCardData.exciteDelta != 0)
+            EmotionSystem.Instance.ChangeExcite(readingCardData.exciteDelta);
+
+        // 床上状态变化
+        if (readingCardData.bedStateChange != BedStateChange.None)
+        {
+            bool inBed = readingCardData.bedStateChange == BedStateChange.EnterBed;
+            PlayerState.Instance.SetInBed(inBed);
+        }
+
         // 通知 CardManager
         cardManager.OnCardUsed(readingCardData);
 
@@ -488,6 +539,10 @@ public class GamePanel : BasePanel
         if (ClearBtn != null) ClearBtn.gameObject.SetActive(false);
 
         HideThinkingText();
+
+        // 中断时增加慌乱值
+        if (readingCardData.interruptPanicAdd != 0)
+            EmotionSystem.Instance.ChangePanic(readingCardData.interruptPanicAdd);
 
         cardManager.OnCardInterrupted(readingCardData);
 

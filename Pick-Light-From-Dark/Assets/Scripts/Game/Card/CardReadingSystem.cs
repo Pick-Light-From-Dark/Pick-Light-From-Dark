@@ -140,8 +140,9 @@ namespace Game.Card
 
             Debug.Log($"[CardReadingSystem] 读条被打断: {currentCard.data.cardName}");
 
-            // 增加慌乱值
-            EmotionSystem.Instance.ChangePanic(currentCard.data.interruptPanicAdd);
+            // 打断时慌乱值：原慌乱值为增加时获得对应增加值，为减少时获得0
+            int interruptPanic = currentCard.data.panicDelta > 0 ? currentCard.data.panicDelta : 0;
+            EmotionSystem.Instance.ChangePanic(interruptPanic);
 
             // 触发打断事件
             EventCenter.Instance.EventTrigger(E_EventType.CardReadInterrupt, currentCard);
