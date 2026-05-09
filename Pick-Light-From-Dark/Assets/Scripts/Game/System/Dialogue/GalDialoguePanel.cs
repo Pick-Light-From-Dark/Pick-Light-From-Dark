@@ -38,8 +38,76 @@ public class GalDialoguePanel : BasePanel, IDialoguePanel
     private Coroutine bgSlideRoutine;
     private Sprite pendingBgSprite;
 
+    // ===== 运行时按钮创建标记 =====
+    private bool buttonsCreated = false;
+
     /// <summary>是否正在打字中</summary>
     public bool IsTyping => typewriterRoutine != null;
+
+    protected override void Awake()
+    {
+        EnsureControlButtons();
+        base.Awake();
+    }
+
+    /// <summary>运行时动态创建控制按钮（方案B：无需修改Prefab）</summary>
+    private void EnsureControlButtons()
+    {
+        if (buttonsCreated) return;
+
+        if (fastForwardBtn == null)
+            fastForwardBtn = CreateControlButton("FastForwardBtn", "快进", new Vector2(-80, -40));
+
+        if (rewindBtn == null)
+            rewindBtn = CreateControlButton("RewindBtn", "快退", new Vector2(-210, -40));
+
+        buttonsCreated = true;
+    }
+
+    private Button CreateControlButton(string name, string text, Vector2 anchoredPos)
+    {
+        Transform existing = transform.Find(name);
+        if (existing != null)
+            return existing.GetComponent<Button>();
+
+        GameObject btnGO = new GameObject(name, typeof(RectTransform));
+        btnGO.transform.SetParent(transform, false);
+
+        RectTransform rt = btnGO.GetComponent<RectTransform>();
+        rt.anchorMin = new Vector2(1, 1);
+        rt.anchorMax = new Vector2(1, 1);
+        rt.pivot = new Vector2(1, 1);
+        rt.anchoredPosition = anchoredPos;
+        rt.sizeDelta = new Vector2(120, 50);
+
+        Image img = btnGO.AddComponent<Image>();
+        img.color = new Color(1f, 1f, 1f, 0.85f);
+        img.type = Image.Type.Sliced;
+
+        Button btn = btnGO.AddComponent<Button>();
+        var colors = btn.colors;
+        colors.normalColor = Color.white;
+        colors.highlightedColor = new Color(0.96f, 0.96f, 0.96f, 1f);
+        colors.pressedColor = new Color(0.78f, 0.78f, 0.78f, 1f);
+        colors.disabledColor = new Color(0.78f, 0.78f, 0.78f, 0.5f);
+        btn.colors = colors;
+
+        GameObject textGO = new GameObject("Text", typeof(RectTransform));
+        textGO.transform.SetParent(btnGO.transform, false);
+        RectTransform textRt = textGO.GetComponent<RectTransform>();
+        textRt.anchorMin = Vector2.zero;
+        textRt.anchorMax = Vector2.one;
+        textRt.offsetMin = Vector2.zero;
+        textRt.offsetMax = Vector2.zero;
+
+        TextMeshProUGUI tmp = textGO.AddComponent<TextMeshProUGUI>();
+        tmp.text = text;
+        tmp.fontSize = 24;
+        tmp.alignment = TextAlignmentOptions.Center;
+        tmp.color = new Color(0.196f, 0.196f, 0.196f, 1f);
+
+        return btn;
+    }
 
     /// <summary>设置打字机速度（秒/字）</summary>
     public void SetTypingSpeed(float speed)

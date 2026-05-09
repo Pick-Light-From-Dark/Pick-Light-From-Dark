@@ -45,9 +45,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4496c2ec2e2ec1743a88679d3b3ad690, type: 3}
   m_Name:
   m_EditorClassIdentifier:
-  roleConfig: {fileID: 11400000, guid: ff7ce445eb266bf4a9bb3ca20baf952c, type: 2}
-  backgroundConfig: {fileID: 11400000, guid: 23cc2b0f8f2c3d347a3a5ab1ce424c81, type: 2}
-  btnsPrefab: {fileID: 5591951971932546725, guid: 1e42b1e9b568932479a78705c1443e0e, type: 3}
+  roleConfig: {fileID: 0}
+  backgroundConfig: {fileID: 0}
+  btnsPrefab: {fileID: 0}
 --- !u!114 &1000000000000000003
 MonoBehaviour:
   m_ObjectHideFlags: 0
