@@ -10,7 +10,7 @@ namespace Game.Test
     /// </summary>
     public class DialogueVNTest : MonoBehaviour
     {
-        [Header("对话文本 (留空自动加载 Resources/Dialogue1)")")]
+        [Header("对话文本 (留空自动加载 Resources/Dialogue1)")]
         public TextAsset dialogueText;
 
         [Header("自动运行")]
