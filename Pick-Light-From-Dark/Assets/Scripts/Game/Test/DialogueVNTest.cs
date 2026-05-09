@@ -4,9 +4,9 @@ using UnityEngine.EventSystems;
 namespace Game.Test
 {
     /// <summary>
-    /// 视觉小说对话测试器 —— 一键启动完整 VN 体验
-    /// 挂载到场景任意空物体，Play 后自动创建 Canvas/EventSystem/DialogueSystem
-    /// 并启动 Gal 模式对话，展示打字机、背景划入划出、立绘淡入淡出效果
+    /// 视觉小说对话测试器
+    /// 挂载到已配置好 Canvas / EventSystem / DialogueSystem 的场景中，Play 后自动启动 Gal 模式对话
+    /// 展示打字机、背景划入划出、立绘淡入淡出效果
     /// </summary>
     public class DialogueVNTest : MonoBehaviour
     {
@@ -41,23 +41,29 @@ namespace Game.Test
             }
             Debug.Log($"[DialogueVNTest] 已加载对话: {dialogueText.name}");
 
-            // 确保 EventSystem 存在
-            if (EventSystem.current == null)
-            {
-                var esGo = new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
-                Debug.Log("[DialogueVNTest] 自动创建 EventSystem");
-            }
+            // [已注释] 自动创建工具易与场景中已有系统冲突，改为依赖外部预制配置
+            // 使用本脚本前请确保场景中已存在：
+            //   - Canvas（UIMgr 依赖）
+            //   - EventSystem（输入依赖）
+            //   - DialogueSystem（或 Singleton 自动创建）
 
-            // 确保主 Canvas 存在（UIMgr 通常依赖它）
-            EnsureMainCanvas();
+            //// 确保 EventSystem 存在
+            //if (EventSystem.current == null)
+            //{
+            //    var esGo = new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
+            //    Debug.Log("[DialogueVNTest] 自动创建 EventSystem");
+            //}
 
-            // 确保 DialogueSystem 存在
-            if (DialogueSystem.Instance == null)
-            {
-                var dsGo = new GameObject("[DialogueSystem]");
-                dsGo.AddComponent<DialogueSystem>();
-                Debug.Log("[DialogueVNTest] 自动创建 DialogueSystem");
-            }
+            //// 确保主 Canvas 存在（UIMgr 通常依赖它）
+            //EnsureMainCanvas();
+
+            //// 确保 DialogueSystem 存在
+            //if (DialogueSystem.Instance == null)
+            //{
+            //    var dsGo = new GameObject("[DialogueSystem]");
+            //    dsGo.AddComponent<DialogueSystem>();
+            //    Debug.Log("[DialogueVNTest] 自动创建 DialogueSystem");
+            //}
 
             // 显示 Gal 面板并启动对话
             UIMgr.Instance.ShowPanel<GalDialoguePanel>(
@@ -84,24 +90,25 @@ namespace Game.Test
             );
         }
 
-        void EnsureMainCanvas()
-        {
-            var canvas = FindObjectOfType<Canvas>();
-            if (canvas == null)
-            {
-                var canvasGo = new GameObject("MainCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
-                canvas = canvasGo.GetComponent<Canvas>();
-                canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-                canvas.sortingOrder = 0;
-
-                var scaler = canvasGo.GetComponent<CanvasScaler>();
-                scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-                scaler.referenceResolution = new Vector2(1920, 1080);
-                scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
-                scaler.matchWidthOrHeight = 0.5f;
-
-                Debug.Log("[DialogueVNTest] 自动创建 MainCanvas");
-            }
-        }
+        // [已注释] 自动创建 Canvas 逻辑，避免与 UIMgr 已有 Canvas 冲突
+        //void EnsureMainCanvas()
+        //{
+        //    var canvas = FindObjectOfType<Canvas>();
+        //    if (canvas == null)
+        //    {
+        //        var canvasGo = new GameObject("MainCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+        //        canvas = canvasGo.GetComponent<Canvas>();
+        //        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        //        canvas.sortingOrder = 0;
+        //
+        //        var scaler = canvasGo.GetComponent<CanvasScaler>();
+        //        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        //        scaler.referenceResolution = new Vector2(1920, 1080);
+        //        scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
+        //        scaler.matchWidthOrHeight = 0.5f;
+        //
+        //        Debug.Log("[DialogueVNTest] 自动创建 MainCanvas");
+        //    }
+        //}
     }
 }
