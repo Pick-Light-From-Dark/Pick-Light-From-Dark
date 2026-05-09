@@ -455,6 +455,70 @@ MonoBehaviour:
   hasStartedFirstFrame: 0
   isInitialized: 0
 --- !u!1660057539 &9223372036854775807
+--- !u!1 &2000000000
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2000000001}
+  - component: {fileID: 2000000002}
+  - component: {fileID: 2000000003}
+  m_Layer: 0
+  m_Name: DialogueVNTest
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2000000001
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2000000000}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2000000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2000000000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4496c2ec2e2ec1743a88679d3b3ad690, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  roleConfig: {fileID: 11400000, guid: ff7ce445eb266bf4a9bb3ca20baf952c, type: 2}
+  backgroundConfig: {fileID: 11400000, guid: 23cc2b0f8f2c3d347a3a5ab1ce424c81, type: 2}
+  btnsPrefab: {fileID: 5591951971932546725, guid: 1e42b1e9b568932479a78705c1443e0e, type: 3}
+--- !u!114 &2000000003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2000000000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c2eb931a60d61104f906744c2ed31671, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  dialogueText: {fileID: 4900000, guid: 3a63298bcd258be46af3016814f9bcd2, type: 3}
+  runOnStart: 1
+  mode: 0
+--- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
@@ -462,3 +526,4 @@ SceneRoots:
   - {fileID: 309880366}
   - {fileID: 1587203378}
   - {fileID: 1695496926}
+  - {fileID: 2000000000}
