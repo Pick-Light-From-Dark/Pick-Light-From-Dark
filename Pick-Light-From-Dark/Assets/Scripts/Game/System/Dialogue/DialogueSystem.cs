@@ -39,7 +39,7 @@ public class DialogueSystem : MonoBehaviour
     [Header("测试-快进间隔(秒)")]
     public float fastForwardInterval = 0.15f;
 
-    private DialogueMode currentMode;
+    private DialogueMode currentMode = DialogueMode.Gal;
     private List<DialogueLine> lines;
     private int lineIndex = 0;
     private bool isChoosing = false;
@@ -53,6 +53,12 @@ public class DialogueSystem : MonoBehaviour
     private List<int> lineIndexHistory = new List<int>();
     private bool isRewinding = false;
     private float originalTypingSpeed = 0.03f;
+
+    private bool isFastForwarding = false;
+    private bool isAutoRewinding = false;
+
+    public bool IsFastForwarding => isFastForwarding;
+    public bool IsAutoRewinding => isAutoRewinding;
 
     private void Awake()
     {
@@ -109,34 +115,32 @@ public class DialogueSystem : MonoBehaviour
         NextLine();
     }
 
+    public bool CanRewind => lines != null && lineIndexHistory.Count >= 2;
+    public bool CanFastForward => lines != null && lineIndex < lines.Count;
+
     void Update()
     {
         if (isChoosing) return;
 
-        // 快退：按左箭头回退一句
-        if (Input.GetKeyDown(KeyCode.LeftArrow))
-        {
-            Rewind();
-            return;
-        }
-
-        // 快进：按住右箭头自动推进
-        if (Input.GetKey(KeyCode.RightArrow))
+        // 持续快进
+        if (isFastForwarding)
         {
             ffCooldown -= Time.unscaledDeltaTime;
             if (ffCooldown <= 0f)
             {
                 ffCooldown = fastForwardInterval;
-                FastForwardStep();
+                FastForwardTick();
             }
-            return;
         }
-        else
+        // 持续快退
+        else if (isAutoRewinding)
         {
-            ffCooldown = 0f;
-            // 恢复打字速度
-            if (panelUI is GalDialoguePanel gal)
-                gal.SetTypingSpeed(originalTypingSpeed);
+            ffCooldown -= Time.unscaledDeltaTime;
+            if (ffCooldown <= 0f)
+            {
+                ffCooldown = fastForwardInterval;
+                RewindTick();
+            }
         }
 
         if (Input.GetMouseButtonDown(0))
@@ -152,13 +156,31 @@ public class DialogueSystem : MonoBehaviour
         }
     }
 
-    /// <summary>快进单步：跳过打字并自动推进到下一句</summary>
-    void FastForwardStep()
+    /// <summary>切换快进模式：持续自动推进</summary>
+    public void ToggleFastForward()
     {
-        // 加速打字
+        isFastForwarding = !isFastForwarding;
+        isAutoRewinding = false;
+        ffCooldown = 0f;
+
+        if (isFastForwarding && panelUI is GalDialoguePanel galPanel)
+            galPanel.SetTypingSpeed(originalTypingSpeed * 0.05f);
+        else if (panelUI is GalDialoguePanel galPanel2)
+            galPanel2.SetTypingSpeed(originalTypingSpeed);
+    }
+
+    /// <summary>切换快退模式：持续自动回退</summary>
+    public void ToggleRewind()
+    {
+        isAutoRewinding = !isAutoRewinding;
+        isFastForwarding = false;
+        ffCooldown = 0f;
+    }
+
+    void FastForwardTick()
+    {
         if (panelUI is GalDialoguePanel galPanel)
         {
-            galPanel.SetTypingSpeed(originalTypingSpeed * 0.05f);
             if (galPanel.IsTyping)
             {
                 galPanel.SkipTyping();
@@ -170,23 +192,19 @@ public class DialogueSystem : MonoBehaviour
             NextLine();
     }
 
-    /// <summary>快退：回退到上一句</summary>
-    void Rewind()
+    void RewindTick()
     {
         if (lines == null || lineIndexHistory.Count < 2)
         {
-            Debug.Log("[DialogueSystem] 已到开头，无法继续回退");
+            isAutoRewinding = false;
             return;
         }
 
         isRewinding = true;
-        // 移除当前句记录
         lineIndexHistory.RemoveAt(lineIndexHistory.Count - 1);
-        // 获取上一句索引
         int prevIndex = lineIndexHistory[lineIndexHistory.Count - 1];
         lineIndex = prevIndex;
         NextLine();
-        Debug.Log($"[DialogueSystem] 快退到第 {prevIndex + 1} 句");
     }
 
     // =========================================
@@ -199,6 +217,7 @@ public class DialogueSystem : MonoBehaviour
 
         if (lines == null || lineIndex >= lines.Count)
         {
+            isFastForwarding = false;
             EndDialogue();
             return;
         }
@@ -387,6 +406,8 @@ public class DialogueSystem : MonoBehaviour
     {
         lines = null;
         isChoosing = false;
+        isFastForwarding = false;
+        isAutoRewinding = false;
         CancelInvoke();
 
         if (btnsObj != null)

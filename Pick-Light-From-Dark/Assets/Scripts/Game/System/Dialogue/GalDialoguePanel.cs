@@ -14,6 +14,10 @@ public class GalDialoguePanel : BasePanel, IDialoguePanel
 
     public Transform choiceRoot;
 
+    [Header("快进快退按钮")]
+    public Button fastForwardBtn;
+    public Button rewindBtn;
+
     [Header("打字机效果")]
     [Tooltip("逐字显示间隔（秒）")]
     public float typingSpeed = 0.03f;
@@ -255,6 +259,44 @@ public class GalDialoguePanel : BasePanel, IDialoguePanel
     public void Hide()
     {
         gameObject.SetActive(false);
+    }
+
+    void Update()
+    {
+        if (DialogueSystem.Instance == null) return;
+
+        if (rewindBtn != null)
+        {
+            bool rewinding = DialogueSystem.Instance.IsAutoRewinding;
+            rewindBtn.interactable = DialogueSystem.Instance.CanRewind || rewinding;
+            var colors = rewindBtn.colors;
+            colors.normalColor = rewinding ? new Color(0.6f, 0.8f, 1f) : Color.white;
+            rewindBtn.colors = colors;
+        }
+        if (fastForwardBtn != null)
+        {
+            bool ff = DialogueSystem.Instance.IsFastForwarding;
+            fastForwardBtn.interactable = DialogueSystem.Instance.CanFastForward || ff;
+            var colors = fastForwardBtn.colors;
+            colors.normalColor = ff ? new Color(0.6f, 1f, 0.6f) : Color.white;
+            fastForwardBtn.colors = colors;
+        }
+    }
+
+    protected override void ClickBtn(string btnName)
+    {
+        base.ClickBtn(btnName);
+
+        if (DialogueSystem.Instance == null) return;
+
+        if (btnName == "FastForwardBtn")
+        {
+            DialogueSystem.Instance.ToggleFastForward();
+        }
+        else if (btnName == "RewindBtn")
+        {
+            DialogueSystem.Instance.ToggleRewind();
+        }
     }
 
     public override void ShowMe() { }
