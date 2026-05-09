@@ -32,10 +32,10 @@ namespace Game.Test
             // 加载对话文本
             if (dialogueText == null)
             {
-                dialogueText = Resources.Load<TextAsset>("Dialogue1");
+                dialogueText = Resources.Load<TextAsset>("Dialogue2");
                 if (dialogueText == null)
                 {
-                    Debug.LogError("[DialogueVNTest] 找不到对话文本 Resources/Dialogue1.txt");
+                    Debug.LogError("[DialogueVNTest] 找不到对话文本 Resources/Dialogue2.txt");
                     return;
                 }
             }

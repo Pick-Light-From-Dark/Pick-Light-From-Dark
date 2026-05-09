@@ -18,7 +18,22 @@ public static class DialogueParser
 
             var d = new DialogueLine();
 
-            if (s.StartsWith("[旁白]："))
+            if (s.StartsWith("[bg:"))
+            {
+                d.type = "指令";
+                d.bg = s.Substring(4).TrimEnd(']');
+            }
+            else if (s.StartsWith("[se:"))
+            {
+                d.type = "指令";
+                d.se = s.Substring(4).TrimEnd(']');
+            }
+            else if (s.StartsWith("[bgm:"))
+            {
+                d.type = "指令";
+                d.bgm = s.Substring(5).TrimEnd(']');
+            }
+            else if (s.StartsWith("[旁白]："))
             {
                 d.type = "旁白";
                 d.speaker = "";

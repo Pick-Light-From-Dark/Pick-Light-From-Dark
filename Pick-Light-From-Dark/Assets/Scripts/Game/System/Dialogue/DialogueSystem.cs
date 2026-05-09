@@ -255,8 +255,7 @@ public class DialogueSystem : MonoBehaviour
         }
 
         ShowLine(line);
-        AutoSetRole(line);
-        AutoSetBackground(line);
+        DispatchCommands(line);
     }
 
     // =========================================
@@ -286,21 +285,35 @@ public class DialogueSystem : MonoBehaviour
     }
 
     // =========================================
-    // 背景
+    // 显式指令分发（背景 / 音效 / BGM）
     // =========================================
-    private void AutoSetBackground(DialogueLine line)
+    private void DispatchCommands(DialogueLine line)
     {
-        if (backgroundConfig == null) return;
-
-        if (line.type == "场景")
+        if (!string.IsNullOrEmpty(line.bg))
         {
-            string bgName = line.content;
+            Sprite bg = null;
+            if (backgroundConfig != null)
+                bg = backgroundConfig.GetBg(line.bg);
+            // Fallback: 若配置表未命中，尝试从 Resources/CG/ 直接加载
+            if (bg == null)
+                bg = Resources.Load<Sprite>("CG/" + line.bg);
+            if (bg == null)
+                bg = Resources.Load<Sprite>("UI/Dialogue/Backgrounds/" + line.bg);
 
-            if (bgName.Contains("，"))
-                bgName = bgName.Split('，')[0];
+            if (bg != null)
+                panelUI.SetBackground(bg);
+            else
+                Debug.LogWarning($"[DialogueSystem] 背景 / CG 未找到: {line.bg}。请将其放入 BackgroundConfig、Resources/CG/ 或 Resources/UI/Dialogue/Backgrounds/ 中。");
+        }
 
-            Sprite bg = backgroundConfig.GetBg(bgName);
-            panelUI.SetBackground(bg);
+        if (!string.IsNullOrEmpty(line.se))
+        {
+            MusicMgr.Instance.PlaySound(line.se);
+        }
+
+        if (!string.IsNullOrEmpty(line.bgm))
+        {
+            MusicMgr.Instance.PlayBKMusic(line.bgm);
         }
     }
 

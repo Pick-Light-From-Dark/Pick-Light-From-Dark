@@ -60,6 +60,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c2eb931a60d61104f906744c2ed31671, type: 3}
   m_Name:
   m_EditorClassIdentifier:
-  dialogueText: {fileID: 4900000, guid: 3a63298bcd258be46af3016814f9bcd2, type: 3}
+  dialogueText: {fileID: 0}
   runOnStart: 1
   mode: 0

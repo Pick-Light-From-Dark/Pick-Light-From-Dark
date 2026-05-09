@@ -15,3 +15,17 @@ MonoBehaviour:
   backgrounds:
   - name: "\u5BDD\u5BA4"
     sprite: {fileID: 21300000, guid: f25abdbb2a8dad245858044f015bd57e, type: 3}
+  - name: "phone_connect_1"
+    sprite: {fileID: 21300000, guid: 15a45b0d6ed92914083eebad02e50fe2, type: 3}
+  - name: "phone_connect_2"
+    sprite: {fileID: 21300000, guid: e5982d9f345de1344b1e98288bb8e9c2, type: 3}
+  - name: "phone_connect_3"
+    sprite: {fileID: 21300000, guid: d54048fbcd5c1554f8c7bc5919e9ec59, type: 3}
+  - name: "Song_talk_1"
+    sprite: {fileID: 21300000, guid: 0982a93caa5319d4b9b7bad8e3027786, type: 3}
+  - name: "Song_talk_2"
+    sprite: {fileID: 21300000, guid: 6d59395021a892d4fae0a8a69a38a1b9, type: 3}
+  - name: "Song_talk_3"
+    sprite: {fileID: 21300000, guid: 2d27dbbcd81e75d45b256d2851eb1801, type: 3}
+  - name: "Song_talk_4"
+    sprite: {fileID: 21300000, guid: 0ed270a370501a948ac14f6fb144bf8f, type: 3}
