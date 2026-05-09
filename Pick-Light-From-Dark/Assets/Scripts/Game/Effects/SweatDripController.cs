@@ -91,7 +91,7 @@ namespace Game.Effects
             float stayDuration = Mathf.Max(0f, dripCycle - fadeInDuration - fadeOutDuration);
 
             // 构建 DOTween Sequence
-            dripSequence = DOTween.Sequence();
+            dripSequence = DG.Tweening.DOTween.Sequence();
 
             // 位置：从 startPos 到 endPos，全程 ease-in
             dripSequence.Append(
@@ -100,7 +100,7 @@ namespace Game.Effects
             );
 
             // Alpha：淡入 -> 保持 -> 淡出
-            var alphaSeq = DOTween.Sequence();
+            var alphaSeq = DG.Tweening.DOTween.Sequence();
             alphaSeq.Append(sweatRenderer.DOFade(1f, fadeInDuration).From(0f));
             if (stayDuration > 0f)
                 alphaSeq.AppendInterval(stayDuration);
@@ -173,10 +173,10 @@ namespace Game.Effects
             float fadeOutDuration = dripCycle * 0.2f;
             float stayDuration = Mathf.Max(0f, dripCycle - fadeInDuration - fadeOutDuration);
 
-            dripSequence = DOTween.Sequence();
+            dripSequence = DG.Tweening.DOTween.Sequence();
             dripSequence.Append(sweatObject.transform.DOLocalMove(endPos, dripCycle).SetEase(Ease.InQuad));
 
-            var alphaSeq = DOTween.Sequence();
+            var alphaSeq = DG.Tweening.DOTween.Sequence();
             alphaSeq.Append(sweatRenderer.DOFade(1f, fadeInDuration).From(0f));
             if (stayDuration > 0f)
                 alphaSeq.AppendInterval(stayDuration);
