@@ -36,6 +36,9 @@ public class DialogueSystem : MonoBehaviour
     [Header("Btns容器")]
     [SerializeField] private GameObject btnsPrefab;
 
+    [Header("测试-快进间隔(秒)")]
+    public float fastForwardInterval = 0.15f;
+
     private DialogueMode currentMode;
     private List<DialogueLine> lines;
     private int lineIndex = 0;
@@ -44,6 +47,12 @@ public class DialogueSystem : MonoBehaviour
     private IDialoguePanel panelUI;
     private GameObject btnsObj;
     private BtnsUI btnsUI;
+
+    // ===== 快进快退状态 =====
+    private float ffCooldown = 0f;
+    private List<int> lineIndexHistory = new List<int>();
+    private bool isRewinding = false;
+    private float originalTypingSpeed = 0.03f;
 
     private void Awake()
     {
@@ -104,6 +113,32 @@ public class DialogueSystem : MonoBehaviour
     {
         if (isChoosing) return;
 
+        // 快退：按左箭头回退一句
+        if (Input.GetKeyDown(KeyCode.LeftArrow))
+        {
+            Rewind();
+            return;
+        }
+
+        // 快进：按住右箭头自动推进
+        if (Input.GetKey(KeyCode.RightArrow))
+        {
+            ffCooldown -= Time.unscaledDeltaTime;
+            if (ffCooldown <= 0f)
+            {
+                ffCooldown = fastForwardInterval;
+                FastForwardStep();
+            }
+            return;
+        }
+        else
+        {
+            ffCooldown = 0f;
+            // 恢复打字速度
+            if (panelUI is GalDialoguePanel gal)
+                gal.SetTypingSpeed(originalTypingSpeed);
+        }
+
         if (Input.GetMouseButtonDown(0))
         {
             // Gal 模式下若正在打字，先跳过打字机
@@ -115,6 +150,43 @@ public class DialogueSystem : MonoBehaviour
 
             NextLine();
         }
+    }
+
+    /// <summary>快进单步：跳过打字并自动推进到下一句</summary>
+    void FastForwardStep()
+    {
+        // 加速打字
+        if (panelUI is GalDialoguePanel galPanel)
+        {
+            galPanel.SetTypingSpeed(originalTypingSpeed * 0.05f);
+            if (galPanel.IsTyping)
+            {
+                galPanel.SkipTyping();
+                return;
+            }
+        }
+
+        if (!isChoosing)
+            NextLine();
+    }
+
+    /// <summary>快退：回退到上一句</summary>
+    void Rewind()
+    {
+        if (lines == null || lineIndexHistory.Count < 2)
+        {
+            Debug.Log("[DialogueSystem] 已到开头，无法继续回退");
+            return;
+        }
+
+        isRewinding = true;
+        // 移除当前句记录
+        lineIndexHistory.RemoveAt(lineIndexHistory.Count - 1);
+        // 获取上一句索引
+        int prevIndex = lineIndexHistory[lineIndexHistory.Count - 1];
+        lineIndex = prevIndex;
+        NextLine();
+        Debug.Log($"[DialogueSystem] 快退到第 {prevIndex + 1} 句");
     }
 
     // =========================================
@@ -132,6 +204,19 @@ public class DialogueSystem : MonoBehaviour
         }
 
         DialogueLine line = lines[lineIndex];
+
+        // 记录历史（快退时不重复记录）
+        if (!isRewinding)
+        {
+            // 如果在历史中间，截断后面的记录
+            if (lineIndexHistory.Count > 0 && lineIndexHistory[lineIndexHistory.Count - 1] != lineIndex)
+            {
+                // 正常推进，添加新记录
+            }
+            lineIndexHistory.Add(lineIndex);
+        }
+        isRewinding = false;
+
         lineIndex++;
 
         if (line.type == "选项")

@@ -37,6 +37,12 @@ public class GalDialoguePanel : BasePanel, IDialoguePanel
     /// <summary>是否正在打字中</summary>
     public bool IsTyping => typewriterRoutine != null;
 
+    /// <summary>设置打字机速度（秒/字）</summary>
+    public void SetTypingSpeed(float speed)
+    {
+        typingSpeed = Mathf.Max(0.001f, speed);
+    }
+
     public void SetContent(string speaker, string content)
     {
         if (speakerText != null)
