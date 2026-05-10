@@ -252,7 +252,7 @@ namespace Game.Test.AI
                 .Replace("\\n", "\n")
                 .Replace("\\r", "\r")
                 .Replace("\\t", "\t")
-                .Replace("\\\", "\")")
+                .Replace("\\\"", "\"")
                 .Replace("\\\\", "\\");
         }
     }
