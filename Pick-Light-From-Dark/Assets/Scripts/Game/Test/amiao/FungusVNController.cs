@@ -64,7 +64,6 @@ namespace Game.Test
         private DialogueLine currentChoiceLine;
         private bool isFastForwarding;
         private Canvas vnCanvas;
-        private Font cachedFont;
 
         // UI 按钮
         private Button ffButton;
@@ -97,6 +96,17 @@ namespace Game.Test
         {
             isFastForwarding = !isFastForwarding;
             UpdateFFButtonVisual();
+
+            // 开启快进时，如果当前正在等待输入，立即推进
+            if (isFastForwarding && sayDialog != null)
+            {
+                var writer = sayDialog.GetComponent<Writer>();
+                if (writer != null && writer.IsWaitingForInput)
+                {
+                    writer.OnNextLineEvent();
+                }
+            }
+
             Debug.Log($"[FungusVNController] 快进: {isFastForwarding}");
         }
 
@@ -110,7 +120,7 @@ namespace Game.Test
                 var canvasGo = new GameObject("VNCanvas");
                 vnCanvas = canvasGo.AddComponent<Canvas>();
                 vnCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
-                vnCanvas.sortingOrder = 10;
+                vnCanvas.sortingOrder = -1;
                 var scaler = canvasGo.AddComponent<CanvasScaler>();
                 scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
                 scaler.referenceResolution = new Vector2(1920, 1080);
@@ -174,35 +184,32 @@ namespace Game.Test
                 bgmSource.loop = true;
             }
 
-            // 5. 缓存中文字体
-            CacheChineseFont();
-
-            // 6. 字体设置：自动应用到 SayDialog
+            // 5. 字体设置：自动加载项目中文字体并应用到 SayDialog
             SetupFont();
-        }
-
-        void CacheChineseFont()
-        {
-            if (cachedFont != null) return;
-
-            cachedFont = Resources.Load<Font>("Font/文软雅黑");
-            if (cachedFont == null)
-                cachedFont = Resources.Load<Font>("Fonts/文软雅黑");
-
-            if (cachedFont == null)
-                Debug.LogWarning("[FungusVNController] 未找到中文字体，按钮文字可能无法显示");
         }
 
         void SetupFont()
         {
-            if (sayDialog == null || cachedFont == null) return;
+            if (sayDialog == null) return;
 
-            var texts = sayDialog.GetComponentsInChildren<Text>(true);
-            foreach (var txt in texts)
+            // 尝试加载项目中文字体
+            var chineseFont = Resources.Load<Font>("Font/文软雅黑");
+            if (chineseFont == null)
             {
-                txt.font = cachedFont;
+                // 尝试其他可能路径
+                chineseFont = Resources.Load<Font>("Fonts/文软雅黑");
             }
-            Debug.Log("[FungusVNController] 已设置中文字体");
+
+            if (chineseFont != null)
+            {
+                // 设置 SayDialog 子对象中的 Text 字体
+                var texts = sayDialog.GetComponentsInChildren<Text>(true);
+                foreach (var txt in texts)
+                {
+                    txt.font = chineseFont;
+                }
+                Debug.Log("[FungusVNController] 已设置中文字体");
+            }
         }
 
         /// <summary>创建快进按钮和选项面板</summary>
@@ -260,7 +267,6 @@ namespace Game.Test
             img.color = new Color(0.15f, 0.15f, 0.15f, 0.85f);
 
             var btn = go.AddComponent<Button>();
-            btn.targetGraphic = img; // 关键：设置点击目标图形
             btn.onClick.AddListener(onClick);
 
             // 文字子对象
@@ -273,8 +279,6 @@ namespace Game.Test
             textRect.offsetMax = new Vector2(-10, -5);
             var txt = textGo.AddComponent<Text>();
             txt.text = label;
-            if (cachedFont != null)
-                txt.font = cachedFont; // 使用项目中文字体
             txt.fontSize = 26;
             txt.color = Color.white;
             txt.alignment = TextAnchor.MiddleCenter;
