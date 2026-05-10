@@ -172,6 +172,33 @@ namespace Game.Test
                 bgmSource.playOnAwake = false;
                 bgmSource.loop = true;
             }
+
+            // 5. 字体设置：自动加载项目中文字体并应用到 SayDialog
+            SetupFont();
+        }
+
+        void SetupFont()
+        {
+            if (sayDialog == null) return;
+
+            // 尝试加载项目中文字体
+            var chineseFont = Resources.Load<Font>("Font/文软雅黑");
+            if (chineseFont == null)
+            {
+                // 尝试其他可能路径
+                chineseFont = Resources.Load<Font>("Fonts/文软雅黑");
+            }
+
+            if (chineseFont != null)
+            {
+                // 设置 SayDialog 子对象中的 Text 字体
+                var texts = sayDialog.GetComponentsInChildren<Text>(true);
+                foreach (var txt in texts)
+                {
+                    txt.font = chineseFont;
+                }
+                Debug.Log("[FungusVNController] 已设置中文字体");
+            }
         }
 
         /// <summary>创建快进按钮和选项面板</summary>
@@ -188,24 +215,25 @@ namespace Game.Test
             ffButton.GetComponent<RectTransform>().pivot = new Vector2(1, 1);
             ffButton.GetComponent<RectTransform>().anchoredPosition = new Vector2(-30, -30);
 
-            // === 选项面板 ===
+            // === 选项面板（屏幕中央）===
             choicePanel = new GameObject("ChoicePanel");
             choicePanel.transform.SetParent(vnCanvas.transform, false);
             var panelRect = choicePanel.AddComponent<RectTransform>();
-            panelRect.anchorMin = new Vector2(0.5f, 0.3f);
-            panelRect.anchorMax = new Vector2(0.5f, 0.3f);
+            panelRect.anchorMin = new Vector2(0.5f, 0.5f);
+            panelRect.anchorMax = new Vector2(0.5f, 0.5f);
             panelRect.pivot = new Vector2(0.5f, 0.5f);
-            panelRect.sizeDelta = new Vector2(680, 120);
+            panelRect.anchoredPosition = Vector2.zero;
+            panelRect.sizeDelta = new Vector2(600, 320);
             choicePanel.SetActive(false);
 
-            // 按钮1（左）
+            // 按钮1（上排大按钮）
             choiceBtn1 = CreateButton("ChoiceBtn1", choicePanel.transform,
-                new Vector2(-170, 0), new Vector2(300, 80), "选项1",
+                new Vector2(0, 90), new Vector2(520, 100), "选项1",
                 () => OnChoose(1));
 
-            // 按钮2（右）
+            // 按钮2（下排大按钮）
             choiceBtn2 = CreateButton("ChoiceBtn2", choicePanel.transform,
-                new Vector2(170, 0), new Vector2(300, 80), "选项2",
+                new Vector2(0, -90), new Vector2(520, 100), "选项2",
                 () => OnChoose(2));
 
             choiceText1 = choiceBtn1.GetComponentInChildren<Text>();
@@ -303,6 +331,17 @@ namespace Game.Test
                 {
                     bgmSource.clip = bgm.clip;
                     bgmSource.Play();
+                }
+            }
+
+            // ========== 黑屏检测 ==========
+            if (!string.IsNullOrEmpty(line.content) && line.content.Contains("黑屏"))
+            {
+                var blackSprite = Resources.Load<Sprite>("UI/Background/Bg_Black");
+                if (blackSprite != null && backgroundImage != null)
+                {
+                    backgroundImage.sprite = blackSprite;
+                    backgroundImage.color = Color.white;
                 }
             }
 
