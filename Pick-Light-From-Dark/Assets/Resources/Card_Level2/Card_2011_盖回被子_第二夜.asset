@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bc03fbed09b109242b4b557e79d89449, type: 3}
-  m_Name: "Card_2011_\u76D6\u56DE\u88AB\u5B50"
+  m_Name: "Card_2011_\u76D6\u56DE\u88AB\u5B50_\u7B2C\u4E8C\u591C"
   m_EditorClassIdentifier: 
   cardData:
     id: 2011
@@ -28,7 +28,7 @@ MonoBehaviour:
     interruptPanicAdd: 4
     bindTaskId: 0
     relatedType: 0
-    relatedCardIds: d1070000da070000
+    relatedCardIds: d1070000d2070000da070000d3070000
     allowedLevelIds:
     - all
     bedStateChange: 2
