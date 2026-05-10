@@ -9,7 +9,8 @@ public class DialogueLine
     public string choice2Result;  // 选择2后的文本
 
     // 显式演出指令（与文本解耦）
-    public string bg;             // [bg:xxx]
+    public string bg;             // [bg:xxx] 或 [bg:xxx,fade]
+    public string transition;     // [bg:xxx,transition] 中提取的转场类型
     public string se;             // [se:xxx]
     public string bgm;            // [bgm:xxx]
 }

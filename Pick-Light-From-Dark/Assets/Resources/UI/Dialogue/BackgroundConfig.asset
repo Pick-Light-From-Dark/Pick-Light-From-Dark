@@ -29,3 +29,5 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: 2d27dbbcd81e75d45b256d2851eb1801, type: 3}
   - name: "Song_talk_4"
     sprite: {fileID: 21300000, guid: 0ed270a370501a948ac14f6fb144bf8f, type: 3}
+  - name: "quilt_aside"
+    sprite: {fileID: 21300000, guid: f86443a70e338d0499b74c4bdaa1c3f1, type: 3}

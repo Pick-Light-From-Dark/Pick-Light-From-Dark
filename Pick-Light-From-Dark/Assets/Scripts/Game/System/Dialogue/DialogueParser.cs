@@ -21,7 +21,17 @@ public static class DialogueParser
             if (s.StartsWith("[bg:"))
             {
                 d.type = "指令";
-                d.bg = s.Substring(4).TrimEnd(']');
+                string bgContent = s.Substring(4).TrimEnd(']');
+                if (bgContent.Contains(","))
+                {
+                    string[] parts = bgContent.Split(',');
+                    d.bg = parts[0].Trim();
+                    d.transition = parts[1].Trim();
+                }
+                else
+                {
+                    d.bg = bgContent;
+                }
             }
             else if (s.StartsWith("[se:"))
             {

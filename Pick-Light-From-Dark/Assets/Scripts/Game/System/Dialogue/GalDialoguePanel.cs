@@ -48,6 +48,22 @@ public class GalDialoguePanel : BasePanel, IDialoguePanel
     {
         EnsureControlButtons();
         base.Awake();
+
+        // 文字描边美化
+        if (contentText != null)
+        {
+            Material mat = contentText.fontMaterial;
+            mat.EnableKeyword("OUTLINE_ON");
+            mat.SetColor("_OutlineColor", Color.black);
+            mat.SetFloat("_OutlineWidth", 0.15f);
+        }
+        if (speakerText != null)
+        {
+            Material mat = speakerText.fontMaterial;
+            mat.EnableKeyword("OUTLINE_ON");
+            mat.SetColor("_OutlineColor", Color.black);
+            mat.SetFloat("_OutlineWidth", 0.2f);
+        }
     }
 
     /// <summary>运行时动态创建控制按钮（方案B：无需修改Prefab）</summary>
@@ -105,6 +121,11 @@ public class GalDialoguePanel : BasePanel, IDialoguePanel
         tmp.fontSize = 24;
         tmp.alignment = TextAlignmentOptions.Center;
         tmp.color = new Color(0.196f, 0.196f, 0.196f, 1f);
+
+        if (contentText != null)
+            tmp.font = contentText.font;
+        else if (speakerText != null)
+            tmp.font = speakerText.font;
 
         return btn;
     }
@@ -249,7 +270,7 @@ public class GalDialoguePanel : BasePanel, IDialoguePanel
         roleFadeRoutine = null;
     }
 
-    public void SetBackground(Sprite sprite)
+    public void SetBackground(Sprite sprite, string transition = null)
     {
         if (backgroundImage == null) return;
 
@@ -263,8 +284,18 @@ public class GalDialoguePanel : BasePanel, IDialoguePanel
         if (backgroundImage.sprite == sprite)
             return;
 
-        // 当前有背景图 → 划入划出过渡
-        if (backgroundImage.sprite != null && backgroundImage.gameObject.activeSelf)
+        // 默认或无转场：直接切换
+        if (string.IsNullOrEmpty(transition) || transition == "none")
+        {
+            if (bgSlideRoutine != null) StopCoroutine(bgSlideRoutine);
+            backgroundImage.sprite = sprite;
+            backgroundImage.gameObject.SetActive(true);
+            ResetBgPosition();
+            return;
+        }
+
+        // 划入划出
+        if (transition == "slide")
         {
             pendingBgSprite = sprite;
             if (bgSlideRoutine != null) StopCoroutine(bgSlideRoutine);
@@ -272,7 +303,17 @@ public class GalDialoguePanel : BasePanel, IDialoguePanel
             return;
         }
 
-        // 首次设置背景
+        // 淡入淡出
+        if (transition == "fade")
+        {
+            pendingBgSprite = sprite;
+            if (bgSlideRoutine != null) StopCoroutine(bgSlideRoutine);
+            bgSlideRoutine = StartCoroutine(BackgroundFadeTransition(sprite));
+            return;
+        }
+
+        // 未知转场类型，直切
+        if (bgSlideRoutine != null) StopCoroutine(bgSlideRoutine);
         backgroundImage.sprite = sprite;
         backgroundImage.gameObject.SetActive(true);
         ResetBgPosition();
@@ -309,6 +350,40 @@ public class GalDialoguePanel : BasePanel, IDialoguePanel
         }
 
         rt.anchoredPosition = centerPos;
+        bgSlideRoutine = null;
+    }
+
+    private IEnumerator BackgroundFadeTransition(Sprite newSprite)
+    {
+        float elapsed = 0f;
+        Color c = backgroundImage.color;
+
+        // 淡出旧背景
+        while (elapsed < bgSlideDuration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            c.a = Mathf.Lerp(1f, 0f, elapsed / bgSlideDuration);
+            backgroundImage.color = c;
+            yield return null;
+        }
+
+        // 切换 Sprite
+        backgroundImage.sprite = newSprite;
+        c.a = 0f;
+        backgroundImage.color = c;
+
+        // 淡入新背景
+        elapsed = 0f;
+        while (elapsed < bgSlideDuration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            c.a = Mathf.Lerp(0f, 1f, elapsed / bgSlideDuration);
+            backgroundImage.color = c;
+            yield return null;
+        }
+
+        c.a = 1f;
+        backgroundImage.color = c;
         bgSlideRoutine = null;
     }
 

@@ -292,18 +292,22 @@ public class DialogueSystem : MonoBehaviour
         if (!string.IsNullOrEmpty(line.bg))
         {
             Sprite bg = null;
-            if (backgroundConfig != null)
-                bg = backgroundConfig.GetBg(line.bg);
-            // Fallback: 若配置表未命中，尝试从 Resources/CG/ 直接加载
+
+            // 优先按文件名从 Resources 加载
+            bg = Resources.Load<Sprite>("CG/" + line.bg);
             if (bg == null)
-                bg = Resources.Load<Sprite>("CG/" + line.bg);
+                bg = Resources.Load<Sprite>("Backgrounds/" + line.bg);
             if (bg == null)
                 bg = Resources.Load<Sprite>("UI/Dialogue/Backgrounds/" + line.bg);
 
+            // 回退到 BackgroundConfig
+            if (bg == null && backgroundConfig != null)
+                bg = backgroundConfig.GetBg(line.bg);
+
             if (bg != null)
-                panelUI.SetBackground(bg);
+                panelUI.SetBackground(bg, line.transition);
             else
-                Debug.LogWarning($"[DialogueSystem] 背景 / CG 未找到: {line.bg}。请将其放入 BackgroundConfig、Resources/CG/ 或 Resources/UI/Dialogue/Backgrounds/ 中。");
+                Debug.LogWarning($"[DialogueSystem] 背景未找到: {line.bg}。请将其放入 Resources/CG/、Resources/Backgrounds/ 或 BackgroundConfig 中。");
         }
 
         if (!string.IsNullOrEmpty(line.se))
