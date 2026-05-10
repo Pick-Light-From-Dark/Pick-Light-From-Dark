@@ -20,10 +20,10 @@ amiao TODO.md
 plugins.md
 
 # AI Dialogue Test (local LLM models and binaries)
-/[Aa]ssets/AI_Dialogue_Test/llama/
-/[Aa]ssets/AI_Dialogue_Test/models/
-/[Aa]ssets/AI_Dialogue_Test/*.unity
-/[Aa]ssets/AI_Dialogue_Test/*.unity.meta
+Pick-Light-From-Dark/Assets/AI_Dialogue_Test/llama/
+Pick-Light-From-Dark/Assets/AI_Dialogue_Test/models/
+Pick-Light-From-Dark/Assets/AI_Dialogue_Test/*.unity
+Pick-Light-From-Dark/Assets/AI_Dialogue_Test/*.unity.meta
 
 # By default unity supports Blender asset imports, *.blend1 blender files do not need to be commited to version control.
 *.blend1
