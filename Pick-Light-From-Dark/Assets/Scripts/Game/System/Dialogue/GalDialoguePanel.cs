@@ -11,6 +11,8 @@ public class GalDialoguePanel : BasePanel, IDialoguePanel
 
     public Image roleImage;
     public Image backgroundImage;
+    public Image midgroundImage;
+    public Image foregroundImage;
 
     public Transform choiceRoot;
 
@@ -385,6 +387,46 @@ public class GalDialoguePanel : BasePanel, IDialoguePanel
         c.a = 1f;
         backgroundImage.color = c;
         bgSlideRoutine = null;
+    }
+
+    public void SetLayerBackground(string layer, Sprite sprite, string transition = null)
+    {
+        Image target = layer switch
+        {
+            "bg" => backgroundImage,
+            "mg" => midgroundImage,
+            "fg" => foregroundImage,
+            _ => null
+        };
+
+        if (target == null) return;
+
+        if (sprite == null)
+        {
+            target.sprite = null;
+            target.color = Color.clear;
+            return;
+        }
+
+        // 暂不支持多层转场动画，直接切换
+        if (bgSlideRoutine != null) StopCoroutine(bgSlideRoutine);
+        target.sprite = sprite;
+        target.gameObject.SetActive(true);
+        target.color = Color.white;
+        target.rectTransform.anchoredPosition = Vector2.zero;
+    }
+
+    public void SetSolidBackground(Color color)
+    {
+        if (bgSlideRoutine != null) StopCoroutine(bgSlideRoutine);
+
+        if (backgroundImage != null)
+        {
+            backgroundImage.sprite = null;
+            backgroundImage.color = color;
+        }
+        if (midgroundImage != null) { midgroundImage.sprite = null; midgroundImage.color = Color.clear; }
+        if (foregroundImage != null) { foregroundImage.sprite = null; foregroundImage.color = Color.clear; }
     }
 
     private void ResetBgPosition()
