@@ -263,7 +263,28 @@ public class DialogueSystem : MonoBehaviour
     // =========================================
     void ShowLine(DialogueLine line)
     {
-        panelUI.SetContent(line.speaker, line.content);
+        if (line.type == "指令")
+            return;
+
+        string speaker = line.speaker;
+
+        if (line.type == "旁白" || line.type == "场景")
+            speaker = "陆萤";
+
+        panelUI.SetContent(speaker, line.content);
+
+        // [已注释] Fungus 桥接：同步显示到 Fungus SayDialog
+        // FungusBridge.Instance?.ShowSay(speaker, line.content);
+
+        // 黑屏检测：文本中出现"黑屏"时，切纯黑背景
+        if (!string.IsNullOrEmpty(line.content) && line.content.Contains("黑屏"))
+        {
+            var blackSprite = Resources.Load<Sprite>("UI/Background/Bg_Black");
+            if (blackSprite != null)
+                panelUI.SetBackground(blackSprite, "fade");
+            else
+                Debug.LogWarning("[DialogueSystem] 未找到黑屏背景资源 UI/Background/Bg_Black");
+        }
     }
 
     // =========================================
@@ -305,7 +326,11 @@ public class DialogueSystem : MonoBehaviour
                 bg = backgroundConfig.GetBg(line.bg);
 
             if (bg != null)
+            {
                 panelUI.SetBackground(bg, line.transition);
+                // [已注释] Fungus 桥接：同步切换背景
+                // FungusBridge.Instance?.SetBackground(bg);
+            }
             else
                 Debug.LogWarning($"[DialogueSystem] 背景未找到: {line.bg}。请将其放入 Resources/CG/、Resources/Backgrounds/ 或 BackgroundConfig 中。");
         }
@@ -313,11 +338,15 @@ public class DialogueSystem : MonoBehaviour
         if (!string.IsNullOrEmpty(line.se))
         {
             MusicMgr.Instance.PlaySound(line.se);
+            // [已注释] Fungus 桥接
+            // FungusBridge.Instance?.PlaySound(line.se);
         }
 
         if (!string.IsNullOrEmpty(line.bgm))
         {
             MusicMgr.Instance.PlayBKMusic(line.bgm);
+            // [已注释] Fungus 桥接
+            // FungusBridge.Instance?.PlayBGM(line.bgm);
         }
     }
 
@@ -438,5 +467,8 @@ public class DialogueSystem : MonoBehaviour
         {
             panelUI.Hide();
         }
+
+        // [已注释] Fungus 桥接：隐藏 SayDialog
+        // FungusBridge.Instance?.HideSayDialog();
     }
 }
