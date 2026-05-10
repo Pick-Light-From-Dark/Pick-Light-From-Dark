@@ -17,7 +17,7 @@ MonoBehaviour:
     cardName: "\u52A0\u5165\u6D77\u82D4\u5305"
     description: "\u3010\u4F5C\u7528\u3011\u5236\u4F5C\u62CC\u9762\u7684\u4E00\u6B65\u3002\n\u3010\u63CF\u8FF0\u3011\u52A0\u5165\u6D77\u82D4\u5305\uFF0C\u589E\u52A0\u4E00\u4E9B\u53E3\u611F\u3002"
     iconPath: 
-    cardSprite: {fileID: 21300000, guid: a993a73458775c445b34158d07b72470, type: 3}
+    cardSprite: {fileID: 0}
     cardType: 0
     initialStack: 1
     segments:

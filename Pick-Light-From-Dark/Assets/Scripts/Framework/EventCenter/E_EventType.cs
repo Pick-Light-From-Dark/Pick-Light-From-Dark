@@ -111,4 +111,13 @@ public enum E_EventType
     /// 背景画面跳转（int参数=背景画面ID）
     /// </summary>
     BackgroundJump,
+
+    /// <summary>
+    /// 局内剧情对话开始（string参数=对话资源路径，如"Dialogue2"）
+    /// </summary>
+    GameDialogueStart,
+    /// <summary>
+    /// 局内剧情对话结束（无参）
+    /// </summary>
+    GameDialogueEnd,
 }

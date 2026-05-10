@@ -141,11 +141,19 @@ namespace Game.UI
             RefreshStackDisplay();
         }
 
+        private Image stackBgImage;
+
         private void RefreshStackDisplay()
         {
             if (stackText == null) return;
-            bool show = CardData != null;
+            bool show = CardData != null && CardData.cardType == CardType.Stackable;
+
+            // 找到数量背景图（和 stackText 同节点或父节点上）
+            if (stackBgImage == null)
+                stackBgImage = stackText.GetComponent<Image>() ?? stackText.GetComponentInParent<Image>();
+
             stackText.gameObject.SetActive(show);
+            if (stackBgImage != null) stackBgImage.enabled = show;
             if (show) stackText.text = $"{StackCount}";
         }
 
