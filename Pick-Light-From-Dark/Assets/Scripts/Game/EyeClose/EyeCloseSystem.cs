@@ -106,6 +106,9 @@ namespace Game.EyeClose
             isEyesClosed = playerState != null && playerState.IsEyesClosed();
 
             if (isEyesClosed)
+                Debug.Log($"[EyeCloseSystem] Update: timer={eyeCloseTimer:F2} playerState={playerState != null} emotionSystem={emotionSystem != null} levelConfig={levelConfig != null}");
+
+            if (isEyesClosed)
             {
                 eyeCloseTimer += Time.deltaTime;
 

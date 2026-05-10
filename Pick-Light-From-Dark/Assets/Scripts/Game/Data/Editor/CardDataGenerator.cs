@@ -63,6 +63,130 @@ namespace Game.Data.Editor
             Debug.Log("[CardDataGenerator] 6 张卡牌生成完毕 → Assets/Resources/Card/");
         }
 
+        [MenuItem("Tools/生成第二夜卡牌")]
+        public static void GenerateSecondNightCards()
+        {
+            string folder = "Assets/Resources/Card_Level2/";
+            if (!AssetDatabase.IsValidFolder(folder))
+                AssetDatabase.CreateFolder("Assets/Resources", "Card_Level2");
+
+            // 2001 掀开被子
+            CreateCard(folder, 2001, "掀开被子", "查看被中零食/道具，离开被子",
+                "被子中有什么东西来着？掀开看看……", CardType.NonStackable, 1,
+                new[] { new Segment(1f, true), new Segment(1f, false) },
+                3, 5, 0, RelatedType.Persistent, new[] { 2009, 2010, 2011 }, 0,
+                "all", BedStateChange.LeaveBed, false,
+                "本张卡为老师查寝判定条件之一的回到被子中的值的改变卡，当使用这张卡时，离开被子，这个值就会变成FALSE",
+                1, 5002, "");
+
+            // 2002 看向床下
+            CreateCard(folder, 2002, "看向床下", "查看床下的零食/道具，离开被子",
+                "拌面在床下，可别忘了吃……", CardType.NonStackable, 1,
+                new[] { new Segment(1f, true), new Segment(1f, false) },
+                0, 4, 2, RelatedType.Persistent, new[] { 2010, 2011, 2012 }, 0,
+                "all", BedStateChange.LeaveBed, false,
+                "本张卡为老师查寝判定条件之一的回到被子中的值的改变卡，当使用这张卡时，离开被子，这个值就会变成FALSE。",
+                1, 5003, "");
+
+            // 2003 看向床对面
+            CreateCard(folder, 2003, "看向床对面", "转为床对面视角，可以看到舍友，也有可能和舍友聊天。仍然为在被子中状态。",
+                "想换个姿势睡觉……", CardType.NonStackable, 1,
+                new[] { new Segment(3f, true) },
+                0, 3, 2, RelatedType.Persistent, new[] { 2010, 2011 }, 0,
+                "1002", BedStateChange.None, false, "无",
+                1, 5004, "");
+
+            // 2009 喝水
+            CreateCard(folder, 2009, "喝水", "喝水降低兴奋值和慌乱值",
+                "一口水下去，感觉冷静下来了。", CardType.Stackable, 3,
+                new[] { new Segment(1f, true), new Segment(1f, false), new Segment(1f, true) },
+                0, -2, -5, RelatedType.NonPersistent, new[] { 2010, 2011 }, 0,
+                "all", BedStateChange.None, false, "无",
+                0, 0, "");
+
+            // 2010 深呼吸
+            CreateCard(folder, 2010, "深呼吸", "降低慌乱值和兴奋值",
+                "深呼吸，没什么好笑的，也没什么好怕的……", CardType.Stackable, 10,
+                new[] { new Segment(3f, true) },
+                0, -2, -3, RelatedType.NonPersistent, new int[0], 0,
+                "all", BedStateChange.None, false,
+                "本张卡使用后，备选取的其他卡牌的显示保持不变，不按照此卡牌的关联列表生成卡牌，此卡牌按照规则减少一层数。",
+                0, 0, "");
+
+            // 2011 盖回被子
+            CreateCard(folder, 2011, "盖回被子", "盖回被子中，回到装睡状态",
+                "身体融入被子中，还是盖着被子有安全感……", CardType.NonStackable, 1,
+                new[] { new Segment(2f, true) },
+                4, -4, -2, RelatedType.Persistent, new[] { 2001, 2002, 2010 }, 0,
+                "all", BedStateChange.EnterBed, false,
+                "本张卡为老师查寝判定条件之一的回到被子中的值的改变卡，当使用这张卡时，回到被子中，这个值就会变成TRUE",
+                1, 5001, "");
+
+            // 2012 倒掉泡面水
+            CreateCard(folder, 2012, "倒掉泡面水", "倒掉面中的水在水瓶中",
+                "得先倒掉水才能加入调料……", CardType.NonStackable, 1,
+                new[] { new Segment(10f, true) },
+                0, 6, 1, RelatedType.NonPersistent, new[] { 2010, 2011, 2013, 2014 }, 0,
+                "1002", BedStateChange.None, false, "无",
+                0, 0, "");
+
+            // 2013 加入酱包
+            CreateCard(folder, 2013, "加入酱包", "制作拌面的一步。",
+                "加入火鸡面酱，全部加入！", CardType.NonStackable, 1,
+                new[] { new Segment(4f, true) },
+                0, 2, 3, RelatedType.NonPersistent, new[] { 2010, 2011, 2014 }, 0,
+                "1002", BedStateChange.None, false,
+                "使用完成后检测:如果卡牌ID 2014已经使用过，则在生成关联卡牌的基础上生成卡牌ID为2015的卡牌。",
+                0, 0, "");
+
+            // 2014 加入海苔包
+            CreateCard(folder, 2014, "加入海苔包", "制作拌面的一步。",
+                "加入海苔包，增加一些口感。", CardType.NonStackable, 1,
+                new[] { new Segment(4f, true) },
+                0, 1, 3, RelatedType.NonPersistent, new[] { 2010, 2011, 2013 }, 0,
+                "1002", BedStateChange.None, false,
+                "使用完成后检测:如果卡牌ID 2013已经使用过，则在生成关联卡牌的基础上生成卡牌ID为2015的卡牌。",
+                0, 0, "");
+
+            // 2015 搅拌拌面
+            CreateCard(folder, 2015, "搅拌拌面", "制作拌面的一步，使用后可以获得吃拌面卡。",
+                "搅拌搅拌准备开吃……", CardType.NonStackable, 1,
+                new[] { new Segment(2f, false), new Segment(4f, true) },
+                0, 3, 3, RelatedType.NonPersistent, new[] { 2010, 2011, 2016, 2017 }, 0,
+                "1002", BedStateChange.None, false,
+                "当使用这张卡牌后，将卡牌ID为2017的卡牌设置为卡牌ID为2003的关联卡牌。",
+                0, 0, "");
+
+            // 2016 吃拌面
+            CreateCard(folder, 2016, "吃拌面", "吃完泡面完成吃泡面任务目标",
+                "终于可以开始吃了……", CardType.Stackable, 5,
+                new[] { new Segment(4f, true), new Segment(2f, false) },
+                0, 2, 5, RelatedType.NonPersistent, new[] { 2010, 2011 }, 3002,
+                "1002", BedStateChange.None, false, "无",
+                0, 0, "");
+
+            // 2017 分享拌面
+            CreateCard(folder, 2017, "分享拌面", "向宋明月分享拌面，触发对话。",
+                "也许该给宋明月分享一些，报答她的薯片，她应该还没睡……", CardType.NonStackable, 1,
+                new[] { new Segment(5f, true) },
+                0, 3, 5, RelatedType.NonPersistent, new int[0], 3003,
+                "1002", BedStateChange.None, false,
+                "此卡牌使用后不改变备选区的卡牌（除卡牌ID2016的卡牌），在备选区生成卡牌ID为2018的新卡牌。卡牌ID2016的卡牌减少一层，卡牌ID2016的卡牌暂时暂停生成逻辑。",
+                0, 0, "");
+
+            // 2018 拿回拌面
+            CreateCard(folder, 2018, "拿回拌面", "从宋明月那里拿回拌面",
+                "该拿回来接着吃了，宋明月似乎很开心……", CardType.NonStackable, 1,
+                new[] { new Segment(3f, true), new Segment(3f, false) },
+                0, 5, 2, RelatedType.NonPersistent, new int[0], 0,
+                "1002", BedStateChange.None, false,
+                "此卡牌使用后不改变备选区的卡牌（除卡牌ID2016的卡牌），卡牌ID2016的卡牌恢复生成逻辑，保持卡牌层数与暂停生成前一致。",
+                0, 0, "");
+
+            AssetDatabase.Refresh();
+            Debug.Log("[CardDataGenerator] 13 张第二夜卡牌生成完毕 → Assets/Resources/Card/");
+        }
+
         private static void CreateCard(string folder, int id, string name, string effect,
             string desc, CardType type, int stack, Segment[] segments,
             int interruptPanic, int panicDelta, int exciteDelta,

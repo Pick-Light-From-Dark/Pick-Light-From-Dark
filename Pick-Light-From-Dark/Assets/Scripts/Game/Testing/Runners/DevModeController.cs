@@ -79,6 +79,10 @@ namespace Game.Testing.Runners
             {
                 panelVisible = !panelVisible;
             }
+            if (Input.GetKeyDown(KeyCode.F2))
+            {
+                InitializeSecondLevel();
+            }
         }
 
         void OnGUI()
@@ -152,6 +156,11 @@ namespace Game.Testing.Runners
             // 第一关初始化
             GUI.Label(new Rect(x, y, w, h), "=== 第一关 ==="); y += h + 2;
             if (GUI.Button(new Rect(x, y, w, h), "初始化第一关（测试案v2参数）")) InitializeFirstLevel();
+            y += h;
+
+            // 第二关初始化
+            GUI.Label(new Rect(x, y, w, h), "=== 第二关 ==="); y += h + 2;
+            if (GUI.Button(new Rect(x, y, w, h), "初始化第二夜（测试案v2参数）")) InitializeSecondLevel();
             y += h;
         }
 
@@ -315,6 +324,58 @@ namespace Game.Testing.Runners
             teacherAI?.Initialize(levelConfig);
 
             Debug.Log("[DevMode] 第一关已初始化（测试案v2参数）");
+        }
+
+        // ========== 第二夜初始化 ==========
+
+        [ContextMenu("InitializeSecondLevel")]
+        public void InitializeSecondLevel()
+        {
+            if (levelConfig == null)
+            {
+                Debug.LogError("[DevMode] levelConfig 未指定，无法初始化第二夜");
+                return;
+            }
+
+            // 使用第二夜测试案v2参数
+            levelConfig.levelId = 1002;
+            levelConfig.levelName = "第二夜";
+            levelConfig.timeLimit = 600;
+            levelConfig.maxLives = 2;
+            levelConfig.initialInBed = true;
+            levelConfig.initialPanic = 15;
+            levelConfig.initialExcite = 15;
+            levelConfig.criticalValue = 80;
+            levelConfig.eyeClosePanicDecreasePerSec = 1f;
+            levelConfig.eyeCloseAccelerationThreshold = 20f;
+            levelConfig.eyeCloseAccelerationMultiplier = 1.5f;
+            levelConfig.patrolIntervals = new Vector2(15f, 25f);
+            levelConfig.patrolTime = new Vector2(8f, 10f);
+            levelConfig.eyeCheckDuration = new Vector2(3f, 3f);
+            levelConfig.flashCheckDuration = new Vector2(3f, 3f);
+            levelConfig.flashPanicPerSec = 2;
+            levelConfig.initialCards = new List<int> { 2001, 2002, 2003, 2010 };
+            levelConfig.cardDataPath = "Card_Level2";
+
+            // 任务配置：3002吃泡面(绑定2016) + 3003请宋明月吃泡面(绑定2017，隐藏)
+            levelConfig.taskGoals = new List<TaskGoal>
+            {
+                new TaskGoal(2016, 1) { state = TaskState.InProgress },
+                new TaskGoal(2017, 1) { state = TaskState.InProgress },
+            };
+
+            // 初始化各系统
+            gameFlow?.Initialize(levelConfig);
+            teacherAI?.Initialize(levelConfig);
+
+            // 显示 GamePanel 用于卡牌测试
+            if (UIMgr.Instance != null)
+            {
+                UIMgr.Instance.ShowPanel<GamePanel>();
+                UIMgr.Instance.HidePanel<BeginPanel>();
+            }
+
+            Debug.Log("[DevMode] 第二夜已初始化（测试案v2参数）");
         }
 
         // ========== 颜文字情绪显示 ==========

@@ -28,8 +28,8 @@ namespace Game.Emotion
         [SerializeField] private int panicValue;
         [SerializeField] private int exciteValue;
 
-        private int minPanic = 15, maxPanic = 100;
-        private int minExcite = 15, maxExcite = 100;
+        private int minPanic = 0, maxPanic = 100;
+        private int minExcite = 0, maxExcite = 100;
         private const int TOTAL_MAX = 100;
         private int criticalValue;
         private bool wasCritical;
@@ -170,6 +170,7 @@ namespace Game.Emotion
         {
             accumulatedDecrease += decreaseRate * deltaTime;
             int decrease = Mathf.FloorToInt(accumulatedDecrease);
+            Debug.Log($"[EmotionSystem] 闭眼减情绪: dt={deltaTime:F3} rate={decreaseRate} accumulated={accumulatedDecrease:F3} decrease={decrease} panic={panicValue} excite={exciteValue}");
             if (decrease > 0)
             {
                 accumulatedDecrease -= decrease;

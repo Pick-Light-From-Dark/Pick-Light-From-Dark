@@ -42,6 +42,15 @@ namespace Game.Card
 
         private LevelConfigSO levelConfig;
 
+        /// <summary>本局已成功使用的卡牌ID集合（用于条件生成判定）</summary>
+        private HashSet<int> usedCardIds = new HashSet<int>();
+
+        /// <summary>卡牌2016生成是否被暂停（分享拌面使用后）</summary>
+        private bool isCard2016GenerationPaused = false;
+
+        /// <summary>暂停前2016的堆叠层数</summary>
+        private int savedCard2016Stacks = 0;
+
         /// <summary>备选区变化回调（通知 GamePanel 刷新）</summary>
         public static event System.Action OnSelectionChanged;
 
@@ -88,6 +97,9 @@ namespace Game.Card
             handCards = new List<CardInstance>();
             cardHistory = new List<CardUseRecord>();
             nextInstanceId = 1;
+            usedCardIds.Clear();
+            isCard2016GenerationPaused = false;
+            savedCard2016Stacks = 0;
 
             // 预加载并缓存所有卡牌数据
             BuildCardDataCache(config.cardDataPath);
@@ -232,10 +244,19 @@ namespace Game.Card
                 }
             }
 
-            // 2. 触发关联卡牌
-            TriggerLinkedCards(usedCard);
+            // 2. 记录已使用的卡牌ID（用于条件生成判定）
+            usedCardIds.Add(usedCard.id);
 
-            // 3. 盖回被子(2011)：使用后只保留关联卡牌，其余从池中移除
+            // 3. 触发关联卡牌（卡牌2017分享拌面跳过普通关联，走特殊效果）
+            if (usedCard.id != 2017)
+            {
+                TriggerLinkedCards(usedCard);
+            }
+
+            // 4. 处理卡牌特殊效果（条件生成、动态关联、特殊消耗等）
+            HandleSpecialEffects(usedCard);
+
+            // 5. 盖回被子(2011)：使用后只保留关联卡牌，其余从池中移除
             if (usedCard.id == 2011 && usedCard.relatedCardIds != null)
             {
                 var keepSet = new HashSet<int>(usedCard.relatedCardIds);
@@ -257,7 +278,7 @@ namespace Game.Card
                 }
             }
 
-            // 4. 记录历史
+            // 6. 记录历史
             RecordCardUse(usedCard, true);
 
             OnSelectionChanged?.Invoke();
@@ -360,6 +381,94 @@ namespace Game.Card
                         parentData.relatedCardIds.Add(replaceId);
                 }
             }
+        }
+
+        /// <summary>
+        /// 处理卡牌特殊效果（测试案v2定义的条件生成、动态关联、特殊消耗等）
+        /// </summary>
+        private void HandleSpecialEffects(CardData usedCard)
+        {
+            switch (usedCard.id)
+            {
+                case 2013: // 加入酱包：如果海苔包(2014)已用过，则额外生成搅拌(2015)
+                    if (usedCardIds.Contains(2014))
+                    {
+                        UnlockCardById(2015);
+                        Debug.Log("[CardManager] 特殊效果: 酱包(2013)+海苔包(2014)均已使用，生成搅拌拌面(2015)");
+                    }
+                    break;
+
+                case 2014: // 加入海苔包：如果酱包(2013)已用过，则额外生成搅拌(2015)
+                    if (usedCardIds.Contains(2013))
+                    {
+                        UnlockCardById(2015);
+                        Debug.Log("[CardManager] 特殊效果: 海苔包(2014)+酱包(2013)均已使用，生成搅拌拌面(2015)");
+                    }
+                    break;
+
+                case 2015: // 搅拌拌面：把分享拌面(2017)加到看向床对面(2003)的关联列表
+                {
+                    var card2003 = GetCardDataById(2003);
+                    if (card2003 != null && card2003.relatedCardIds != null && !card2003.relatedCardIds.Contains(2017))
+                    {
+                        card2003.relatedCardIds.Add(2017);
+                        Debug.Log("[CardManager] 特殊效果: 搅拌完成，2003(看向床对面)关联列表新增 2017(分享拌面)");
+                    }
+                    break;
+                }
+
+                case 2017: // 分享拌面：不触发普通关联；减少2016层数；解锁2018；暂停2016生成
+                {
+                    // 减少2016(吃拌面)堆叠层数1
+                    if (globalPool.TryGetValue(2016, out var pooled2016))
+                    {
+                        pooled2016.remainingStacks = Mathf.Max(0, pooled2016.remainingStacks - 1);
+                    }
+                    // 保存并暂停2016生成
+                    if (!isCard2016GenerationPaused)
+                    {
+                        if (globalPool.TryGetValue(2016, out var p2016))
+                            savedCard2016Stacks = p2016.remainingStacks;
+                        isCard2016GenerationPaused = true;
+                    }
+                    // 解锁2018(拿回拌面)
+                    UnlockCardById(2018);
+                    Debug.Log("[CardManager] 特殊效果: 分享拌面 → 2016层数-1, 解锁2018, 暂停2016生成");
+                    break;
+                }
+
+                case 2018: // 拿回拌面：恢复2016生成
+                {
+                    isCard2016GenerationPaused = false;
+                    if (globalPool.TryGetValue(2016, out var p2016))
+                    {
+                        p2016.remainingStacks = savedCard2016Stacks;
+                    }
+                    Debug.Log("[CardManager] 特殊效果: 拿回拌面 → 恢复2016生成, 层数=" + savedCard2016Stacks);
+                    break;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 按ID解锁卡牌到全局池
+        /// </summary>
+        private void UnlockCardById(int cardId)
+        {
+            if (globalPool.ContainsKey(cardId)) return;
+
+            var data = GetCardDataById(cardId);
+            if (data == null) return;
+
+            var pooled = new PooledCard
+            {
+                data = data,
+                remainingStacks = data.cardType == CardType.Stackable ? data.initialStack : 1,
+                isUnlocked = true,
+                isInitial = false
+            };
+            globalPool.Add(cardId, pooled);
+            pooledCardIds.Add(cardId);
         }
 
         /// <summary>
