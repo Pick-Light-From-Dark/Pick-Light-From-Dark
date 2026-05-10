@@ -1,44 +1,64 @@
 # 🚀 施工计划
 
 数据配置、简单系统、让AI生成代码
+
 - Day 1：简单数据类
+
 - Day 2-3：独立系统
+
 - Day 4+：复杂交互
 
-
 - [x] 确认需求 figma、文字+后端、Lua
+
 - [x] CardData.cs、LevelConfigSO.cs
+
 - [x] 任务系统实现（阿喵）
+  
   - [x] TaskGoal 任务目标类
   - [x] TaskManager 任务管理器
   - [x] LevelConfigSO 添加任务清单字段
   - [x] 卡牌完成事件集成
+
 - [x] 动画系统基础（阿喵）
+  
   - [x] Animation 文件夹结构
   - [x] 眨眼动画控制器和片段
   - [x] 角色 LuYing 眨眼精灵图
   - [x] amiao.unity 场景示例
+
 - [x] 单例优化（tianpo）
+  
   - [x] 使用 isInitialized 标志替代检查 remainingTime
   - [x] 在 Update 中检查 remainingTime 防止过早执行
   - [x] 添加多实例日志记录
   - [x] 使用 Resources.FindObjectsOfTypeAll 完全清理
+
 - [x] 情绪值系统
+  
   - [x] panic/excite 数值管理
   - [x] 情绪值影响逻辑
   - [x] 测试功能（EmotionTest + EmotionDisplay Prefab）
+
 - [x] 闭眼系统
+  
   - [x] 眨眼机制（EyeCloseSystem + EyeCloseDisplay Prefab）
   - [x] 测试功能
+
 - [x] 教师ai
+
 - [x] 第一关完整测试场景
+  
   - [x] DevModeController 开发者模式（OnGUI 调参 + 颜文字 + ContextMenu）
   - [x] FirstLevelDevRunner 场景运行器（自动聚合系统 + 一键初始化）
   - [x] FirstLevelDevRunner.prefab（双组件预设）
   - [x] TeacherAI 音频占位钩子（接近/检查/被抓）
   - [x] FirstLevelTest.md 测试文档（10 TC + 组合场景）
+
 - [ ] 存档系统（评估后跳过，当前仅 PlayerDataStore 做关卡记录持久化）
+
 - [ ] dotween 动画集成（需 Unity 编辑器导入 DG.Tweening 包，当前仅有 DOTweenAnimationMgr.cs 占位实现）
+
+- [ ] shader 阴影
 
 ---
 
@@ -113,4 +133,3 @@
 - [x] P2 巡检 round 45：Agent 全量扫描发现 15 个问题，修复 3 项小修 → LevelConfigSO.flashPanicPerSec int→float、DevModeController 删除未使用 taskManager、AutomatedGameTest 修复 isTesting 状态
 - [x] P2 巡检 round 46：重构 TeacherAI.CheckPlayerCaught → Eye/Flash 共用三段相同检查逻辑（不可打断片段/未卧床/未闭眼），提取到分支之前消除重复代码
 - [x] P2 巡检 round 47：CardManager.GetCardDataById 性能优化 → Initialize 时预加载 Resources.LoadAll 到 Dictionary 缓存，避免每次调用都重复加载
-

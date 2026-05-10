@@ -122,107 +122,68 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1001 &1739345305
-PrefabInstance:
+--- !u!1 &440337123
+GameObject:
   m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 440337125}
+  - component: {fileID: 440337124}
+  - component: {fileID: 440337126}
+  m_Layer: 0
+  m_Name: dialogueTest
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!114 &440337124
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 440337123}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 802fa835c0541dc46a423ce8a865aeb8, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  runOnStart: 1
+  dialogueText: {fileID: 4900000, guid: 4b7d96a7b5ac13c4a9dca38b2888a9c2, type: 3}
+--- !u!114 &440337126
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 440337123}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f7a31576582a46bbb1437931854591e7, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  sayDialog: {fileID: 0}
+  stage: {fileID: 0}
+  stageBackgroundImage: {fileID: 0}
+--- !u!4 &440337125
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 440337123}
   serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 7700000000000000001, guid: a1b2c3d4e5f60001a1b2c3d4e5f6b001, type: 3}
-      propertyPath: m_Name
-      value: EmotionSystemTester
-      objectReference: {fileID: 0}
-    - target: {fileID: 7700000000000000002, guid: a1b2c3d4e5f60001a1b2c3d4e5f6b001, type: 3}
-      propertyPath: m_LocalScale.x
-      value: 0.4015
-      objectReference: {fileID: 0}
-    - target: {fileID: 7700000000000000002, guid: a1b2c3d4e5f60001a1b2c3d4e5f6b001, type: 3}
-      propertyPath: m_LocalScale.y
-      value: 0.4015
-      objectReference: {fileID: 0}
-    - target: {fileID: 7700000000000000002, guid: a1b2c3d4e5f60001a1b2c3d4e5f6b001, type: 3}
-      propertyPath: m_LocalScale.z
-      value: 0.4015
-      objectReference: {fileID: 0}
-    - target: {fileID: 7700000000000000002, guid: a1b2c3d4e5f60001a1b2c3d4e5f6b001, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 4.07
-      objectReference: {fileID: 0}
-    - target: {fileID: 7700000000000000002, guid: a1b2c3d4e5f60001a1b2c3d4e5f6b001, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0.47
-      objectReference: {fileID: 0}
-    - target: {fileID: 7700000000000000002, guid: a1b2c3d4e5f60001a1b2c3d4e5f6b001, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7700000000000000002, guid: a1b2c3d4e5f60001a1b2c3d4e5f6b001, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 7700000000000000002, guid: a1b2c3d4e5f60001a1b2c3d4e5f6b001, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7700000000000000002, guid: a1b2c3d4e5f60001a1b2c3d4e5f6b001, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7700000000000000002, guid: a1b2c3d4e5f60001a1b2c3d4e5f6b001, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7700000000000000002, guid: a1b2c3d4e5f60001a1b2c3d4e5f6b001, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7700000000000000002, guid: a1b2c3d4e5f60001a1b2c3d4e5f6b001, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7700000000000000002, guid: a1b2c3d4e5f60001a1b2c3d4e5f6b001, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7700000000000000007, guid: a1b2c3d4e5f60001a1b2c3d4e5f6b001, type: 3}
-      propertyPath: outlineSize
-      value: 10
-      objectReference: {fileID: 0}
-    - target: {fileID: 7700000000000000007, guid: a1b2c3d4e5f60001a1b2c3d4e5f6b001, type: 3}
-      propertyPath: outlineColor.b
-      value: 0.02055892
-      objectReference: {fileID: 0}
-    - target: {fileID: 7700000000000000007, guid: a1b2c3d4e5f60001a1b2c3d4e5f6b001, type: 3}
-      propertyPath: outlineColor.g
-      value: 0.28661734
-      objectReference: {fileID: 0}
-    - target: {fileID: 7700000000000000007, guid: a1b2c3d4e5f60001a1b2c3d4e5f6b001, type: 3}
-      propertyPath: outlineColor.r
-      value: 0.3962264
-      objectReference: {fileID: 0}
-    - target: {fileID: 7700000000000000008, guid: a1b2c3d4e5f60001a1b2c3d4e5f6b001, type: 3}
-      propertyPath: m_Enabled
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 7700000000000000008, guid: a1b2c3d4e5f60001a1b2c3d4e5f6b001, type: 3}
-      propertyPath: sweatScale
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 7700000000000000008, guid: a1b2c3d4e5f60001a1b2c3d4e5f6b001, type: 3}
-      propertyPath: dripOffsetX
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7700000000000000008, guid: a1b2c3d4e5f60001a1b2c3d4e5f6b001, type: 3}
-      propertyPath: dripDistance
-      value: 2
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: a1b2c3d4e5f60001a1b2c3d4e5f6b001, type: 3}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 2.493741, y: 0.29336032, z: -0.01921194}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1830768928
 GameObject:
   m_ObjectHideFlags: 0
@@ -319,5 +280,74 @@ Transform:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
-  - {fileID: 1739345305}
   - {fileID: 1830768931}
+  - {fileID: 440337125}
+  - {fileID: 2000000000000000001}
+--- !u!1 &2000000000000000000
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2000000000000000001}
+  - component: {fileID: 2000000000000000002}
+  m_Layer: 0
+  m_Name: FungusVN
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2000000000000000001
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2000000000000000000}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2000000000000000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2000000000000000000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3ccf659d409546deafce9a033b3bded4, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  dialogueText: {fileID: 4900000, guid: 4b7d96a7b5ac13c4a9dca38b2888a9c2, type: 3}
+  sayDialog: {fileID: 0}
+  stage: {fileID: 0}
+  backgroundImage: {fileID: 0}
+  roleImage: {fileID: 0}
+  sfxSource: {fileID: 0}
+  bgmSource: {fileID: 0}
+  characters: []
+  backgrounds:
+  - name: the spread quilt
+    sprite: {fileID: 21300000, guid: f25abdbb2a8dad245858044f015bd57e, type: 3}
+  - name: quilt aside
+    sprite: {fileID: 21300000, guid: f86443a70e338d0499b74c4bdaa1c3f1, type: 3}
+  - name: Song_talk_1
+    sprite: {fileID: 21300000, guid: 0982a93caa5319d4b9b7bad8e3027786, type: 3}
+  - name: Song_talk_2
+    sprite: {fileID: 21300000, guid: 6d59395021a892d4fae0a8a69a38a1b9, type: 3}
+  - name: Song_talk_3
+    sprite: {fileID: 21300000, guid: 2d27dbbcd81e75d45b256d2851eb1801, type: 3}
+  - name: Song_talk_4
+    sprite: {fileID: 21300000, guid: 0ed270a370501a948ac14f6fb144bf8f, type: 3}
+  roles: []
+  soundEffects: []
+  bgmTracks: []

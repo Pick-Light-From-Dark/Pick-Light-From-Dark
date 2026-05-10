@@ -24,7 +24,7 @@ public class GameDialoguePanel : BasePanel, IDialoguePanel
         // Game模式不显示角色
     }
 
-    public void SetBackground(Sprite sprite)
+    public void SetBackground(Sprite sprite, string transition = null)
     {
         if (backgroundImage != null && sprite != null)
         {
