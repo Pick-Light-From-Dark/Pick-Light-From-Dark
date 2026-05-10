@@ -3,8 +3,8 @@ Shader "Custom/SpriteOutline"
     Properties
     {
         [PerRendererData] _MainTex ("Sprite Texture", 2D) = "white" {}
-        _OutlineColor ("Outline Color", Color) = (0,0,0,1)
-        _OutlineSize ("Outline Size", Float) = 2
+        _OutlineColor ("Outline Color", Color) = (0.4,0.26,0.13,1)
+        _OutlineWidth ("Outline Width", Float) = 0.5
         [MaterialToggle] PixelSnap ("Pixel snap", Float) = 0
         [HideInInspector] _RendererColor ("RendererColor", Color) = (1,1,1,1)
     }
@@ -25,9 +25,9 @@ Shader "Custom/SpriteOutline"
         ZWrite Off
         Blend One OneMinusSrcAlpha
 
-        // ========== Pass 1: 描边 ==========
-        // 对透明像素检测周围是否有不透明像素，有则输出描边颜色
-        // 由于 Pass 2 会覆盖 sprite 本体，描边只会在 sprite 外部可见
+        // ========== Pass 1: 顶点外扩描边（棕色影子）==========
+        // 利用 UV 坐标推导四个顶点的外扩方向，将矩形整体向外撑开
+        // 膨胀区域全部涂成棕色，为 Pass 2 的 sprite 本体提供底层影子
         Pass
         {
             Name "OUTLINE"
@@ -48,62 +48,43 @@ Shader "Custom/SpriteOutline"
             {
                 float4 vertex   : SV_POSITION;
                 fixed4 color    : COLOR;
-                float2 texcoord : TEXCOORD0;
             };
 
-            sampler2D _MainTex;
-            float4 _MainTex_ST;
-            float4 _MainTex_TexelSize;
             fixed4 _OutlineColor;
-            float _OutlineSize;
+            float _OutlineWidth;
 
             v2f vert(appdata_t IN)
             {
                 v2f OUT;
-                OUT.vertex = UnityObjectToClipPos(IN.vertex);
-                OUT.texcoord = IN.texcoord;
-                OUT.color = IN.color;
+                float4 pos = IN.vertex;
+
+                // 基于 UV 推导外扩方向：将 [0,1] UV 映射到 [-1,1]
+                // 四个顶点分别得到 (-1,-1)、(1,-1)、(-1,1)、(1,1)
+                // sign 后即为矩形四个角的外法线方向
+                float2 uvDir = (IN.texcoord - 0.5) * 2.0;
+                float2 extrude = sign(uvDir) * _OutlineWidth;
+                pos.xy += extrude;
+
+                OUT.vertex = UnityObjectToClipPos(pos);
+                OUT.color = IN.color * _OutlineColor;
+
                 #ifdef PIXELSNAP_ON
                 OUT.vertex = UnityPixelSnap(OUT.vertex);
                 #endif
+
                 return OUT;
             }
 
             fixed4 frag(v2f i) : SV_Target
             {
-                float2 texel = _MainTex_TexelSize.xy * _OutlineSize;
-                float centerAlpha = tex2D(_MainTex, i.texcoord).a;
-
-                // 当前像素已不透明 → 交给 Pass 2 渲染本体，这里输出透明
-                if (centerAlpha >= 0.5)
-                    return fixed4(0,0,0,0);
-
-                // 采样 8 邻域 alpha
-                float a = 0;
-                a += tex2D(_MainTex, i.texcoord + float2(texel.x, 0)).a;
-                a += tex2D(_MainTex, i.texcoord + float2(-texel.x, 0)).a;
-                a += tex2D(_MainTex, i.texcoord + float2(0, texel.y)).a;
-                a += tex2D(_MainTex, i.texcoord + float2(0, -texel.y)).a;
-                a += tex2D(_MainTex, i.texcoord + float2(texel.x, texel.y)).a;
-                a += tex2D(_MainTex, i.texcoord + float2(-texel.x, texel.y)).a;
-                a += tex2D(_MainTex, i.texcoord + float2(texel.x, -texel.y)).a;
-                a += tex2D(_MainTex, i.texcoord + float2(-texel.x, -texel.y)).a;
-
-                // 周围有不透明像素 → 这是边缘，输出描边
-                if (a > 0)
-                {
-                    fixed4 c = _OutlineColor * i.color;
-                    c.a = saturate(a) * c.a;
-                    c.rgb *= c.a;
-                    return c;
-                }
-
-                return fixed4(0,0,0,0);
+                fixed4 c = i.color;
+                c.rgb *= c.a;
+                return c;
             }
             ENDCG
         }
 
-        // ========== Pass 2: 正常渲染 Sprite ==========
+        // ========== Pass 2: 正常渲染 Sprite（覆盖本体，保留影子外框）==========
         Pass
         {
             Name "SPRITE"
@@ -137,9 +118,11 @@ Shader "Custom/SpriteOutline"
                 OUT.vertex = UnityObjectToClipPos(IN.vertex);
                 OUT.texcoord = IN.texcoord;
                 OUT.color = IN.color * _RendererColor;
+
                 #ifdef PIXELSNAP_ON
                 OUT.vertex = UnityPixelSnap(OUT.vertex);
                 #endif
+
                 return OUT;
             }
 

@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   roles:
   - name: "\u9646\u8424"
-    sprite: {fileID: 21300000, guid: 7a97a0e1608446d4291a6dab677257ec, type: 3}
+    sprite: {fileID: 21300000, guid: 65a19f5cddaa4db390f19ae59b5013be, type: 3}
   - name: "\u5B8B\u660E\u6708"
     sprite: {fileID: 21300000, guid: 1d120234690e2c84eb01994fffec4122, type: 3}

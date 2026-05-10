@@ -98,6 +98,11 @@ public class GamePanel : BasePanel
 
         cardManager = CardManager.Instance;
 
+        // 初始化所有游戏子系统（EmotionSystem、EyeCloseSystem 等）
+        var config = Resources.Load<Game.Config.LevelConfigSO>("TestData/TestLevelConfig");
+        if (config != null)
+            Game.Flow.GameFlowController.Instance.Initialize(config);
+
         // 提前触发 PlayerState 单例初始化，确保其 Update() 开始运行以监听 C 键
         var ps = PlayerState.Instance;
 
@@ -577,9 +582,10 @@ public class GamePanel : BasePanel
 
         HideThinkingText();
 
-        // 中断时增加慌乱值
-        if (readingCardData.interruptPanicAdd != 0)
-            EmotionSystem.Instance.ChangePanic(readingCardData.interruptPanicAdd);
+        // 打断时慌乱值：原慌乱值为增加时获得对应增加值，为减少时获得0
+        int interruptPanic = readingCardData.panicDelta > 0 ? readingCardData.panicDelta : 0;
+        if (interruptPanic != 0)
+            EmotionSystem.Instance.ChangePanic(interruptPanic);
 
         cardManager.OnCardInterrupted(readingCardData);
 
@@ -774,13 +780,14 @@ public class GamePanel : BasePanel
         if (CardSlot.CurrentDragging != null) return;
 
         // 兜底：如果全局池为空，自动加载关卡配置并初始化
+        // 通过 GameFlowController 统一初始化所有子系统（EmotionSystem、EyeCloseSystem 等）
         // Initialize 内部会触发 OnSelectionChanged → 递归调用本方法完成刷新，此处直接返回避免重复创建
         if (cardManager != null && cardManager.GetAvailableCardCount() == 0)
         {
             var config = Resources.Load<LevelConfigSO>("TestData/TestLevelConfig");
             if (config != null)
             {
-                cardManager.Initialize(config);
+                Game.Flow.GameFlowController.Instance.Initialize(config);
                 return; // Initialize 已触发了 RefreshSelectionArea
             }
         }

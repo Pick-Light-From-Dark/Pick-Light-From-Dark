@@ -36,7 +36,10 @@ public class DialogueSystem : MonoBehaviour
     [Header("Btns容器")]
     [SerializeField] private GameObject btnsPrefab;
 
-    private DialogueMode currentMode;
+    [Header("测试-快进间隔(秒)")]
+    public float fastForwardInterval = 0.15f;
+
+    private DialogueMode currentMode = DialogueMode.Gal;
     private List<DialogueLine> lines;
     private int lineIndex = 0;
     private bool isChoosing = false;
@@ -44,6 +47,18 @@ public class DialogueSystem : MonoBehaviour
     private IDialoguePanel panelUI;
     private GameObject btnsObj;
     private BtnsUI btnsUI;
+
+    // ===== 快进快退状态 =====
+    private float ffCooldown = 0f;
+    private List<int> lineIndexHistory = new List<int>();
+    private bool isRewinding = false;
+    private float originalTypingSpeed = 0.03f;
+
+    private bool isFastForwarding = false;
+    private bool isAutoRewinding = false;
+
+    public bool IsFastForwarding => isFastForwarding;
+    public bool IsAutoRewinding => isAutoRewinding;
 
     private void Awake()
     {
@@ -100,14 +115,96 @@ public class DialogueSystem : MonoBehaviour
         NextLine();
     }
 
+    public bool CanRewind => lines != null && lineIndexHistory.Count >= 2;
+    public bool CanFastForward => lines != null && lineIndex < lines.Count;
+
     void Update()
     {
         if (isChoosing) return;
 
+        // 持续快进
+        if (isFastForwarding)
+        {
+            ffCooldown -= Time.unscaledDeltaTime;
+            if (ffCooldown <= 0f)
+            {
+                ffCooldown = fastForwardInterval;
+                FastForwardTick();
+            }
+        }
+        // 持续快退
+        else if (isAutoRewinding)
+        {
+            ffCooldown -= Time.unscaledDeltaTime;
+            if (ffCooldown <= 0f)
+            {
+                ffCooldown = fastForwardInterval;
+                RewindTick();
+            }
+        }
+
         if (Input.GetMouseButtonDown(0))
         {
+            // Gal 模式下若正在打字，先跳过打字机
+            if (panelUI is GalDialoguePanel galPanel && galPanel.IsTyping)
+            {
+                galPanel.SkipTyping();
+                return;
+            }
+
             NextLine();
         }
+    }
+
+    /// <summary>切换快进模式：持续自动推进</summary>
+    public void ToggleFastForward()
+    {
+        isFastForwarding = !isFastForwarding;
+        isAutoRewinding = false;
+        ffCooldown = 0f;
+
+        if (isFastForwarding && panelUI is GalDialoguePanel galPanel)
+            galPanel.SetTypingSpeed(originalTypingSpeed * 0.05f);
+        else if (panelUI is GalDialoguePanel galPanel2)
+            galPanel2.SetTypingSpeed(originalTypingSpeed);
+    }
+
+    /// <summary>切换快退模式：持续自动回退</summary>
+    public void ToggleRewind()
+    {
+        isAutoRewinding = !isAutoRewinding;
+        isFastForwarding = false;
+        ffCooldown = 0f;
+    }
+
+    void FastForwardTick()
+    {
+        if (panelUI is GalDialoguePanel galPanel)
+        {
+            if (galPanel.IsTyping)
+            {
+                galPanel.SkipTyping();
+                return;
+            }
+        }
+
+        if (!isChoosing)
+            NextLine();
+    }
+
+    void RewindTick()
+    {
+        if (lines == null || lineIndexHistory.Count < 2)
+        {
+            isAutoRewinding = false;
+            return;
+        }
+
+        isRewinding = true;
+        lineIndexHistory.RemoveAt(lineIndexHistory.Count - 1);
+        int prevIndex = lineIndexHistory[lineIndexHistory.Count - 1];
+        lineIndex = prevIndex;
+        NextLine();
     }
 
     // =========================================
@@ -120,11 +217,25 @@ public class DialogueSystem : MonoBehaviour
 
         if (lines == null || lineIndex >= lines.Count)
         {
+            isFastForwarding = false;
             EndDialogue();
             return;
         }
 
         DialogueLine line = lines[lineIndex];
+
+        // 记录历史（快退时不重复记录）
+        if (!isRewinding)
+        {
+            // 如果在历史中间，截断后面的记录
+            if (lineIndexHistory.Count > 0 && lineIndexHistory[lineIndexHistory.Count - 1] != lineIndex)
+            {
+                // 正常推进，添加新记录
+            }
+            lineIndexHistory.Add(lineIndex);
+        }
+        isRewinding = false;
+
         lineIndex++;
 
         if (line.type == "选项")
@@ -144,8 +255,7 @@ public class DialogueSystem : MonoBehaviour
         }
 
         ShowLine(line);
-        AutoSetRole(line);
-        AutoSetBackground(line);
+        DispatchCommands(line);
     }
 
     // =========================================
@@ -153,7 +263,28 @@ public class DialogueSystem : MonoBehaviour
     // =========================================
     void ShowLine(DialogueLine line)
     {
-        panelUI.SetContent(line.speaker, line.content);
+        if (line.type == "指令")
+            return;
+
+        string speaker = line.speaker;
+
+        if (line.type == "旁白" || line.type == "场景")
+            speaker = "陆萤";
+
+        panelUI.SetContent(speaker, line.content);
+
+        // [已注释] Fungus 桥接：同步显示到 Fungus SayDialog
+        // FungusBridge.Instance?.ShowSay(speaker, line.content);
+
+        // 黑屏检测：文本中出现"黑屏"时，切纯黑背景
+        if (!string.IsNullOrEmpty(line.content) && line.content.Contains("黑屏"))
+        {
+            var blackSprite = Resources.Load<Sprite>("UI/Background/Bg_Black");
+            if (blackSprite != null)
+                panelUI.SetBackground(blackSprite, "fade");
+            else
+                Debug.LogWarning("[DialogueSystem] 未找到黑屏背景资源 UI/Background/Bg_Black");
+        }
     }
 
     // =========================================
@@ -175,21 +306,47 @@ public class DialogueSystem : MonoBehaviour
     }
 
     // =========================================
-    // 背景
+    // 显式指令分发（背景 / 音效 / BGM）
     // =========================================
-    private void AutoSetBackground(DialogueLine line)
+    private void DispatchCommands(DialogueLine line)
     {
-        if (backgroundConfig == null) return;
-
-        if (line.type == "场景")
+        if (!string.IsNullOrEmpty(line.bg))
         {
-            string bgName = line.content;
+            Sprite bg = null;
 
-            if (bgName.Contains("，"))
-                bgName = bgName.Split('，')[0];
+            // 优先按文件名从 Resources 加载
+            bg = Resources.Load<Sprite>("CG/" + line.bg);
+            if (bg == null)
+                bg = Resources.Load<Sprite>("Backgrounds/" + line.bg);
+            if (bg == null)
+                bg = Resources.Load<Sprite>("UI/Dialogue/Backgrounds/" + line.bg);
 
-            Sprite bg = backgroundConfig.GetBg(bgName);
-            panelUI.SetBackground(bg);
+            // 回退到 BackgroundConfig
+            if (bg == null && backgroundConfig != null)
+                bg = backgroundConfig.GetBg(line.bg);
+
+            if (bg != null)
+            {
+                panelUI.SetBackground(bg, line.transition);
+                // [已注释] Fungus 桥接：同步切换背景
+                // FungusBridge.Instance?.SetBackground(bg);
+            }
+            else
+                Debug.LogWarning($"[DialogueSystem] 背景未找到: {line.bg}。请将其放入 Resources/CG/、Resources/Backgrounds/ 或 BackgroundConfig 中。");
+        }
+
+        if (!string.IsNullOrEmpty(line.se))
+        {
+            MusicMgr.Instance.PlaySound(line.se);
+            // [已注释] Fungus 桥接
+            // FungusBridge.Instance?.PlaySound(line.se);
+        }
+
+        if (!string.IsNullOrEmpty(line.bgm))
+        {
+            MusicMgr.Instance.PlayBKMusic(line.bgm);
+            // [已注释] Fungus 桥接
+            // FungusBridge.Instance?.PlayBGM(line.bgm);
         }
     }
 
@@ -295,6 +452,8 @@ public class DialogueSystem : MonoBehaviour
     {
         lines = null;
         isChoosing = false;
+        isFastForwarding = false;
+        isAutoRewinding = false;
         CancelInvoke();
 
         if (btnsObj != null)
@@ -308,5 +467,8 @@ public class DialogueSystem : MonoBehaviour
         {
             panelUI.Hide();
         }
+
+        // [已注释] Fungus 桥接：隐藏 SayDialog
+        // FungusBridge.Instance?.HideSayDialog();
     }
 }

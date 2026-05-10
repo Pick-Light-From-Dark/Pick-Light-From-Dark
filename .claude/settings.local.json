@@ -6,7 +6,8 @@
       "Bash(git commit -m ' *)",
       "Bash(:)",
       "Read(//c/Users/l'w't/.claude/**)",
-      "mcp__ide__executeCode"
+      "mcp__ide__executeCode",
+      "mcp__ide__getDiagnostics"
     ]
   }
 }
