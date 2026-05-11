@@ -9,6 +9,8 @@ public class GameDialoguePanel : BasePanel, IDialoguePanel
     public TextMeshProUGUI speakerText;
 
     public Image backgroundImage;
+    public Image midgroundImage;
+    public Image foregroundImage;
 
     public void SetContent(string speaker, string content)
     {
@@ -30,6 +32,42 @@ public class GameDialoguePanel : BasePanel, IDialoguePanel
         {
             backgroundImage.sprite = sprite;
         }
+    }
+
+    public void SetLayerBackground(string layer, Sprite sprite, string transition = null)
+    {
+        Image target = layer switch
+        {
+            "bg" => backgroundImage,
+            "mg" => midgroundImage,
+            "fg" => foregroundImage,
+            _ => null
+        };
+
+        if (target != null)
+        {
+            if (sprite == null)
+            {
+                target.sprite = null;
+                target.color = Color.clear;
+            }
+            else
+            {
+                target.sprite = sprite;
+                target.color = Color.white;
+            }
+        }
+    }
+
+    public void SetSolidBackground(Color color)
+    {
+        if (backgroundImage != null)
+        {
+            backgroundImage.sprite = null;
+            backgroundImage.color = color;
+        }
+        if (midgroundImage != null) { midgroundImage.sprite = null; midgroundImage.color = Color.clear; }
+        if (foregroundImage != null) { foregroundImage.sprite = null; foregroundImage.color = Color.clear; }
     }
 
     public void Show()

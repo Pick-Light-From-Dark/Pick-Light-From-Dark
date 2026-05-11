@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 87c5d142175cab84c958ee48d16fac43, type: 3}
-  m_Name: LevelConfig_2
+  m_Name: LevelConfig_1
   m_EditorClassIdentifier: 
-  levelId: 1002
-  levelName: "\u7B2C\u4E8C\u591C"
+  levelId: 1001
+  levelName: "\u7B2C\u4E00\u591C"
   timeLimit: 600
   initialInBed: 1
   initialPanic: 15
@@ -27,19 +27,15 @@ MonoBehaviour:
   eyeCheckDuration: {x: 3, y: 3}
   flashCheckDuration: {x: 3, y: 3}
   flashPanicPerSec: 2
-  cardDataPath: Card_Level2
-  initialCards: d1070000d2070000d3070000da070000
+  cardDataPath: Card
+  initialCards: d1070000da070000
   maxLives: 2
   taskGoals:
-  - targetCardId: 2016
+  - targetCardId: 2008
     targetCount: 1
     currentCount: 0
     state: 1
-  - targetCardId: 2017
-    targetCount: 1
-    currentCount: 0
-    state: 1
-  preDialogueFile: Dialogue2_pre
-  postDialogueFile: Dialogue2_post
-  isChoiceLevel: 0
-  choice2EndingDialogueFile: 
+  preDialogueFile: Dialogue1-1_pre
+  postDialogueFile: Dialogue1-1_post_eat
+  isChoiceLevel: 1
+  choice2EndingDialogueFile: Dialogue1-1_post_noeat

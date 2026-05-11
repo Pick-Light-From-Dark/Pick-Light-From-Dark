@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class DialogueSystem : MonoBehaviour
 {
@@ -60,6 +59,12 @@ public class DialogueSystem : MonoBehaviour
     public bool IsFastForwarding => isFastForwarding;
     public bool IsAutoRewinding => isAutoRewinding;
 
+    /// <summary>最近一次选择结果：0=无选择, 1=选项1, 2=选项2</summary>
+    public int LastChoiceIndex { get; private set; } = 0;
+
+    /// <summary>对话结束回调（一次性，触发后自动清空）</summary>
+    private System.Action onDialogueComplete;
+
     private void Awake()
     {
         if (_instance != null && _instance != this)
@@ -90,6 +95,11 @@ public class DialogueSystem : MonoBehaviour
         panelUI = panel;
     }
 
+    public void SetOnComplete(System.Action callback)
+    {
+        onDialogueComplete = callback;
+    }
+
     // =========================================
     // 启动对话
     // =========================================
@@ -110,6 +120,7 @@ public class DialogueSystem : MonoBehaviour
         currentMode = mode;
         lines = DialogueParser.Parse(txt);
         lineIndex = 0;
+        LastChoiceIndex = 0;
 
         panelUI.Show();
         NextLine();
@@ -276,12 +287,16 @@ public class DialogueSystem : MonoBehaviour
         // [已注释] Fungus 桥接：同步显示到 Fungus SayDialog
         // FungusBridge.Instance?.ShowSay(speaker, line.content);
 
-        // 黑屏检测：文本中出现"黑屏"时，切纯黑背景
+        // 黑屏检测：文本中出现"黑屏"时，所有层切纯黑背景
         if (!string.IsNullOrEmpty(line.content) && line.content.Contains("黑屏"))
         {
             var blackSprite = Resources.Load<Sprite>("UI/Background/Bg_Black");
             if (blackSprite != null)
-                panelUI.SetBackground(blackSprite, "fade");
+            {
+                panelUI.SetLayerBackground("bg", blackSprite, "fade");
+                panelUI.SetLayerBackground("mg", blackSprite, "fade");
+                panelUI.SetLayerBackground("fg", blackSprite, "fade");
+            }
             else
                 Debug.LogWarning("[DialogueSystem] 未找到黑屏背景资源 UI/Background/Bg_Black");
         }
@@ -310,29 +325,26 @@ public class DialogueSystem : MonoBehaviour
     // =========================================
     private void DispatchCommands(DialogueLine line)
     {
-        if (!string.IsNullOrEmpty(line.bg))
+        // 分层背景处理
+        if (line.isLayerCommand)
         {
-            Sprite bg = null;
+            // [layer:...] 全换：显式指定的层才更新（null=未指定，保持原样；有值包括空字符串=更新）
+            if (line.bg != null) DispatchLayerBg("bg", line.bg, line.transition);
+            if (line.mg != null) DispatchLayerBg("mg", line.mg, line.transition);
+            if (line.fg != null) DispatchLayerBg("fg", line.fg, line.transition);
+        }
+        else
+        {
+            // 单换指令：有值才更新
+            if (!string.IsNullOrEmpty(line.bg)) DispatchLayerBg("bg", line.bg, line.transition);
+            if (!string.IsNullOrEmpty(line.mg)) DispatchLayerBg("mg", line.mg, line.transition);
+            if (!string.IsNullOrEmpty(line.fg)) DispatchLayerBg("fg", line.fg, line.transition);
+        }
 
-            // 优先按文件名从 Resources 加载
-            bg = Resources.Load<Sprite>("CG/" + line.bg);
-            if (bg == null)
-                bg = Resources.Load<Sprite>("Backgrounds/" + line.bg);
-            if (bg == null)
-                bg = Resources.Load<Sprite>("UI/Dialogue/Backgrounds/" + line.bg);
-
-            // 回退到 BackgroundConfig
-            if (bg == null && backgroundConfig != null)
-                bg = backgroundConfig.GetBg(line.bg);
-
-            if (bg != null)
-            {
-                panelUI.SetBackground(bg, line.transition);
-                // [已注释] Fungus 桥接：同步切换背景
-                // FungusBridge.Instance?.SetBackground(bg);
-            }
-            else
-                Debug.LogWarning($"[DialogueSystem] 背景未找到: {line.bg}。请将其放入 Resources/CG/、Resources/Backgrounds/ 或 BackgroundConfig 中。");
+        if (!string.IsNullOrEmpty(line.solid))
+        {
+            Color c = ParseSolidColor(line.solid);
+            panelUI.SetSolidBackground(c);
         }
 
         if (!string.IsNullOrEmpty(line.se))
@@ -347,6 +359,66 @@ public class DialogueSystem : MonoBehaviour
             MusicMgr.Instance.PlayBKMusic(line.bgm);
             // [已注释] Fungus 桥接
             // FungusBridge.Instance?.PlayBGM(line.bgm);
+        }
+    }
+
+    private Sprite LoadBgSprite(string name)
+    {
+        if (string.IsNullOrEmpty(name)) return null;
+
+        Sprite s = Resources.Load<Sprite>("CG/" + name);
+        if (s == null) s = Resources.Load<Sprite>("Backgrounds/" + name);
+        if (s == null) s = Resources.Load<Sprite>("UI/Dialogue/Backgrounds/" + name);
+        if (s == null && backgroundConfig != null) s = backgroundConfig.GetBg(name);
+
+        return s;
+    }
+
+    private Color ParseSolidColor(string colorStr)
+    {
+        if (string.IsNullOrEmpty(colorStr)) return Color.clear;
+
+        if (colorStr.StartsWith("#") && colorStr.Length == 7)
+        {
+            if (ColorUtility.TryParseHtmlString(colorStr, out Color c))
+                return c;
+        }
+
+        switch (colorStr.ToLower())
+        {
+            case "black": return Color.black;
+            case "white": return Color.white;
+            case "red": return Color.red;
+            case "green": return Color.green;
+            case "blue": return Color.blue;
+            case "yellow": return Color.yellow;
+            case "cyan": return Color.cyan;
+            case "magenta": return Color.magenta;
+            case "gray": return Color.gray;
+            case "grey": return Color.grey;
+            case "clear":
+            case "transparent": return Color.clear;
+            default:
+                Debug.LogWarning($"[DialogueSystem] 未知颜色名称: {colorStr}");
+                return Color.clear;
+        }
+    }
+
+    private void DispatchLayerBg(string layer, string spriteName, string transition)
+    {
+        Sprite s = LoadBgSprite(spriteName);
+        if (s != null)
+        {
+            panelUI.SetLayerBackground(layer, s, transition);
+        }
+        else if (!string.IsNullOrEmpty(spriteName))
+        {
+            Debug.LogWarning($"[DialogueSystem] 背景未找到: {spriteName}（层: {layer}）。请将其放入 Resources/CG/、Resources/Backgrounds/ 或 BackgroundConfig 中。");
+        }
+        else
+        {
+            // spriteName 为空字符串 → 清空该层
+            panelUI.SetLayerBackground(layer, null, transition);
         }
     }
 
@@ -421,6 +493,7 @@ public class DialogueSystem : MonoBehaviour
     void OnChoose1(DialogueLine line)
     {
         isChoosing = false;
+        LastChoiceIndex = 1;
         if (btnsObj != null) btnsObj.SetActive(false);
 
         panelUI.SetContent("", line.choice1Result);
@@ -430,9 +503,9 @@ public class DialogueSystem : MonoBehaviour
     void OnChoose2(DialogueLine line)
     {
         isChoosing = false;
+        LastChoiceIndex = 2;
         if (btnsObj != null) btnsObj.SetActive(false);
 
-        // 如果有 choice2Result，显示结果后继续
         if (!string.IsNullOrEmpty(line.choice2Result))
         {
             panelUI.SetContent("", line.choice2Result);
@@ -441,7 +514,6 @@ public class DialogueSystem : MonoBehaviour
         else
         {
             EndDialogue();
-            SceneManager.LoadScene("GameScene");
         }
     }
 
@@ -470,5 +542,8 @@ public class DialogueSystem : MonoBehaviour
 
         // [已注释] Fungus 桥接：隐藏 SayDialog
         // FungusBridge.Instance?.HideSayDialog();
+
+        onDialogueComplete?.Invoke();
+        onDialogueComplete = null;
     }
 }

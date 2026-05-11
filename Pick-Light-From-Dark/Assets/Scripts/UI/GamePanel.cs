@@ -87,6 +87,16 @@ public class GamePanel : BasePanel
 
     private Vector2 closeEyesBtnOriginalPos;
 
+    [Header("关卡配置（留空则使用 TestLevelConfig）")]
+    [SerializeField] private Game.Config.LevelConfigSO overrideLevelConfig;
+
+    public void InitializeWithConfig(Game.Config.LevelConfigSO config)
+    {
+        overrideLevelConfig = config;
+        if (config != null)
+            Game.Flow.GameFlowController.Instance.Initialize(config);
+    }
+
     protected override void Awake()
     {
         base.Awake();
@@ -98,12 +108,9 @@ public class GamePanel : BasePanel
 
         cardManager = CardManager.Instance;
 
-        // 初始化所有游戏子系统（EmotionSystem、EyeCloseSystem 等）
-        // 只有当 GameFlowController 尚未初始化时，才使用 TestLevelConfig
-        // 否则说明测试启动器（如 ThirdNightCardTester）已经初始化了正确的关卡配置
         if (!Game.Flow.GameFlowController.Instance.IsInitialized)
         {
-            var config = Resources.Load<Game.Config.LevelConfigSO>("TestData/TestLevelConfig");
+            var config = overrideLevelConfig ?? Resources.Load<Game.Config.LevelConfigSO>("TestData/TestLevelConfig");
             if (config != null)
                 Game.Flow.GameFlowController.Instance.Initialize(config);
         }
@@ -368,20 +375,8 @@ public class GamePanel : BasePanel
         readingCardSlot = card;
         readingCardData = card.CardData;
         totalReadTime = card.CardData.CalculateTotalDuration();
-
-        // 恢复打断时保存的读条进度
-        if (readingCardData.saveProgressOnInterrupt
-            && cardManager.PopSavedReadProgress(readingCardData.id, out float savedTime, out int savedSeg))
-        {
-            readTime = savedTime;
-            currentSegmentIndex = savedSeg;
-            Debug.Log($"[GamePanel] 恢复读条进度: {readingCardData.cardName} 时间={readTime:F2}s 片段={currentSegmentIndex}");
-        }
-        else
-        {
-            readTime = 0f;
-            currentSegmentIndex = 0;
-        }
+        readTime = 0f;
+        currentSegmentIndex = 0;
         isReading = true;
         IsCardReading = true;
 
@@ -572,9 +567,6 @@ public class GamePanel : BasePanel
         // 通知 CardManager
         cardManager.OnCardUsed(readingCardData);
 
-        // 清除打断时保存的进度（卡牌已成功使用）
-        cardManager.ClearSavedReadProgress(readingCardData.id);
-
         // 跳转背景画面
         if (readingCardData.backgroundJumpId != 0)
             SetSceneBackground(readingCardData.backgroundJumpId);
@@ -588,13 +580,6 @@ public class GamePanel : BasePanel
     public void InterruptReading()
     {
         if (!isReading) return;
-
-        // 如果卡牌支持打断保存进度，保存当前读条进度
-        if (readingCardData != null && readingCardData.saveProgressOnInterrupt)
-        {
-            cardManager.SaveReadProgress(readingCardData.id, readTime, currentSegmentIndex);
-            Debug.Log($"[GamePanel] 保存读条进度: {readingCardData.cardName} 时间={readTime:F2}s 片段={currentSegmentIndex}");
-        }
 
         isReading = false;
         IsCardReading = false;
@@ -809,10 +794,9 @@ public class GamePanel : BasePanel
         // 兜底：如果全局池为空，自动加载关卡配置并初始化
         // 通过 GameFlowController 统一初始化所有子系统（EmotionSystem、EyeCloseSystem 等）
         // Initialize 内部会触发 OnSelectionChanged → 递归调用本方法完成刷新，此处直接返回避免重复创建
-        if (cardManager != null && cardManager.GetAvailableCardCount() == 0
-            && !Game.Flow.GameFlowController.Instance.IsInitialized)
+        if (cardManager != null && cardManager.GetAvailableCardCount() == 0)
         {
-            var config = Resources.Load<LevelConfigSO>("TestData/TestLevelConfig");
+            var config = overrideLevelConfig ?? Resources.Load<LevelConfigSO>("TestData/TestLevelConfig");
             if (config != null)
             {
                 Game.Flow.GameFlowController.Instance.Initialize(config);

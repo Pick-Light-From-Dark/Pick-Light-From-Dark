@@ -42,11 +42,16 @@ namespace Game.Test
         public SayDialog sayDialog;
 
         [Header("背景设置（为空则运行时自动创建）")]
-        public Image backgroundImage;
+        public Image backgroundImage;   // 后景（向后兼容）
+        public Image midgroundImage;    // 中景
+        public Image foregroundImage;   // 前景
 
         [Header("音频源（为空则运行时自动添加）")]
         public AudioSource sfxSource;
         public AudioSource bgmSource;
+
+        [Header("对话框遮罩（全屏渐变底图）")]
+        public Sprite dialogMask;
 
         [Header("素材映射（Inspector 静态配置）")]
         public List<CharacterMapping> characters = new List<CharacterMapping>();
@@ -72,6 +77,10 @@ namespace Game.Test
         private Button choiceBtn2;
         private Text choiceText1;
         private Text choiceText2;
+
+        // 素材缺失占位符
+        private Text placeholderText;
+        private HashSet<string> missingAssetLogs = new HashSet<string>();
 
         void Awake()
         {
@@ -148,28 +157,10 @@ namespace Game.Test
                 }
             }
 
-            // 3. BackgroundImage：查找或创建全屏背景
-            if (backgroundImage == null)
-            {
-                var bgGo = GameObject.Find("VNBackground");
-                if (bgGo != null)
-                {
-                    backgroundImage = bgGo.GetComponent<Image>();
-                }
-                else
-                {
-                    bgGo = new GameObject("VNBackground");
-                    bgGo.transform.SetParent(vnCanvas.transform, false);
-                    var rect = bgGo.AddComponent<RectTransform>();
-                    rect.anchorMin = Vector2.zero;
-                    rect.anchorMax = Vector2.one;
-                    rect.offsetMin = Vector2.zero;
-                    rect.offsetMax = Vector2.zero;
-                    backgroundImage = bgGo.AddComponent<Image>();
-                    backgroundImage.color = Color.clear; // 默认透明，避免白色方块
-                    backgroundImage.raycastTarget = false;
-                }
-            }
+            // 3. 分层背景：查找或创建后/中/前 三层 Image
+            EnsureLayerImage(ref backgroundImage, "VNBackground", -2);
+            EnsureLayerImage(ref midgroundImage, "VNMidground", -1);
+            EnsureLayerImage(ref foregroundImage, "VNForeground", 0);
 
             // 4. AudioSource
             if (sfxSource == null)
@@ -186,6 +177,12 @@ namespace Game.Test
 
             // 5. 字体设置：自动加载项目中文字体并应用到 SayDialog
             SetupFont();
+
+            // 6. 对话框遮罩：将 dialog_dark.png 作为全屏渐变层
+            SetupDialogMask();
+
+            // 7. 人名居中
+            SetupNameTextAlignment();
         }
 
         void SetupFont()
@@ -210,6 +207,244 @@ namespace Game.Test
                 }
                 Debug.Log("[FungusVNController] 已设置中文字体");
             }
+        }
+
+        void SetupDialogMask()
+        {
+            if (sayDialog == null || dialogMask == null) return;
+
+            var canvas = sayDialog.GetComponent<Canvas>();
+            if (canvas == null) return;
+
+            // 查找是否已存在遮罩层
+            var existing = canvas.transform.Find("DialogMask");
+            if (existing != null) return;
+
+            var maskGo = new GameObject("DialogMask");
+            maskGo.transform.SetParent(canvas.transform, false);
+            maskGo.transform.SetAsFirstSibling();
+
+            var maskRect = maskGo.AddComponent<RectTransform>();
+            maskRect.anchorMin = Vector2.zero;
+            maskRect.anchorMax = Vector2.one;
+            maskRect.offsetMin = Vector2.zero;
+            maskRect.offsetMax = Vector2.zero;
+
+            var maskImg = maskGo.AddComponent<Image>();
+            maskImg.sprite = dialogMask;
+            maskImg.color = Color.white;
+            maskImg.raycastTarget = false;
+
+            // 将 Panel 原有背景设为透明，避免遮挡遮罩层
+            var panel = canvas.transform.Find("Panel");
+            if (panel != null)
+            {
+                var panelImg = panel.GetComponent<Image>();
+                if (panelImg != null)
+                {
+                    panelImg.sprite = null;
+                    panelImg.color = new Color(1, 1, 1, 0);
+                }
+            }
+        }
+
+        void SetupNameTextAlignment()
+        {
+            if (sayDialog == null) return;
+
+            var nameTextObj = sayDialog.gameObject.transform.Find("Panel/NameText");
+            if (nameTextObj == null)
+            {
+                // 尝试直接查找
+                var allTexts = sayDialog.GetComponentsInChildren<Text>(true);
+                foreach (var t in allTexts)
+                {
+                    if (t.gameObject.name == "NameText")
+                    {
+                        t.alignment = TextAnchor.MiddleCenter;
+                        return;
+                    }
+                }
+                return;
+            }
+
+            var nameText = nameTextObj.GetComponent<Text>();
+            if (nameText != null)
+                nameText.alignment = TextAnchor.MiddleCenter;
+
+            // 调整 NameText 在 Panel 中顶部居中
+            var nameRect = nameTextObj.GetComponent<RectTransform>();
+            if (nameRect != null)
+            {
+                nameRect.anchorMin = new Vector2(0.5f, 1f);
+                nameRect.anchorMax = new Vector2(0.5f, 1f);
+                nameRect.pivot = new Vector2(0.5f, 1f);
+                nameRect.anchoredPosition = new Vector2(0f, -20f);
+            }
+        }
+
+        /// <summary>查找或创建某一层背景 Image</summary>
+        void EnsureLayerImage(ref Image layerImage, string goName, int sortingOrder)
+        {
+            if (layerImage != null) return;
+
+            var go = GameObject.Find(goName);
+            if (go != null)
+            {
+                layerImage = go.GetComponent<Image>();
+            }
+            else
+            {
+                go = new GameObject(goName);
+                go.transform.SetParent(vnCanvas.transform, false);
+                var rect = go.AddComponent<RectTransform>();
+                rect.anchorMin = Vector2.zero;
+                rect.anchorMax = Vector2.one;
+                rect.offsetMin = Vector2.zero;
+                rect.offsetMax = Vector2.zero;
+                layerImage = go.AddComponent<Image>();
+                layerImage.color = Color.clear;
+                layerImage.raycastTarget = false;
+
+                var canvas = go.GetComponent<Canvas>();
+                if (canvas == null) canvas = go.AddComponent<Canvas>();
+                canvas.overrideSorting = true;
+                canvas.sortingOrder = sortingOrder;
+            }
+        }
+
+        /// <summary>设置某一层背景图（空值=清空）</summary>
+        void SetLayerBackground(Image layerImage, string spriteName)
+        {
+            if (layerImage == null) return;
+
+            if (string.IsNullOrEmpty(spriteName))
+            {
+                layerImage.sprite = null;
+                layerImage.color = Color.clear;
+                return;
+            }
+
+            var mapping = backgrounds.Find(b => b.name == spriteName);
+            if (mapping != null && mapping.sprite != null)
+            {
+                layerImage.sprite = mapping.sprite;
+                layerImage.color = Color.white;
+                return;
+            }
+
+            // Fallback：尝试从 Resources 加载
+            Sprite fallback = LoadBgSprite(spriteName);
+            if (fallback != null)
+            {
+                layerImage.sprite = fallback;
+                layerImage.color = Color.white;
+                return;
+            }
+
+            ShowPlaceholder("Image", spriteName);
+        }
+
+        Sprite LoadBgSprite(string name)
+        {
+            if (string.IsNullOrEmpty(name)) return null;
+
+            Sprite s = Resources.Load<Sprite>("CG/" + name);
+            if (s == null) s = Resources.Load<Sprite>("Backgrounds/" + name);
+            if (s == null) s = Resources.Load<Sprite>("UI/Dialogue/Backgrounds/" + name);
+
+            return s;
+        }
+
+        /// <summary>解析颜色字符串（#RRGGBB 或命名颜色）</summary>
+        Color ParseSolidColor(string colorStr)
+        {
+            if (string.IsNullOrEmpty(colorStr)) return Color.clear;
+
+            if (colorStr.StartsWith("#") && colorStr.Length == 7)
+            {
+                if (ColorUtility.TryParseHtmlString(colorStr, out Color c))
+                    return c;
+            }
+
+            switch (colorStr.ToLower())
+            {
+                case "black": return Color.black;
+                case "white": return Color.white;
+                case "red": return Color.red;
+                case "green": return Color.green;
+                case "blue": return Color.blue;
+                case "yellow": return Color.yellow;
+                case "cyan": return Color.cyan;
+                case "magenta": return Color.magenta;
+                case "gray": return Color.gray;
+                case "grey": return Color.grey;
+                case "clear":
+                case "transparent": return Color.clear;
+                default:
+                    Debug.LogWarning($"[FungusVNController] 未知颜色名称: {colorStr}");
+                    return Color.clear;
+            }
+        }
+
+        /// <summary>应用纯色背景：清空所有图片层，后景设为指定颜色</summary>
+        void ApplySolidBackground(string colorStr, string transition)
+        {
+            Color c = ParseSolidColor(colorStr);
+
+            // 清空所有层的图片
+            if (backgroundImage != null)  { backgroundImage.sprite = null; }
+            if (midgroundImage != null)   { midgroundImage.sprite = null; }
+            if (foregroundImage != null)  { foregroundImage.sprite = null; }
+
+            if (backgroundImage != null)
+            {
+                if (transition == "fade")
+                {
+                    StartCoroutine(FadeToSolidBackground(c));
+                }
+                else
+                {
+                    backgroundImage.color = c;
+                    if (midgroundImage != null) midgroundImage.color = Color.clear;
+                    if (foregroundImage != null) foregroundImage.color = Color.clear;
+                }
+            }
+        }
+
+        IEnumerator FadeToSolidBackground(Color targetColor)
+        {
+            float duration = 0.5f;
+            float elapsed = 0f;
+
+            Color startBg = backgroundImage != null ? backgroundImage.color : Color.clear;
+            Color startMid = midgroundImage != null ? midgroundImage.color : Color.clear;
+            Color startFg = foregroundImage != null ? foregroundImage.color : Color.clear;
+
+            while (elapsed < duration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float t = Mathf.Clamp01(elapsed / duration);
+
+                if (backgroundImage != null)
+                {
+                    backgroundImage.color = Color.Lerp(startBg, targetColor, t);
+                }
+                if (midgroundImage != null)
+                {
+                    midgroundImage.color = Color.Lerp(startMid, Color.clear, t);
+                }
+                if (foregroundImage != null)
+                {
+                    foregroundImage.color = Color.Lerp(startFg, Color.clear, t);
+                }
+
+                yield return null;
+            }
+
+            if (backgroundImage != null) backgroundImage.color = targetColor;
+            if (midgroundImage != null) midgroundImage.color = Color.clear;
+            if (foregroundImage != null) foregroundImage.color = Color.clear;
         }
 
         /// <summary>创建快进按钮和选项面板</summary>
@@ -249,6 +484,31 @@ namespace Game.Test
 
             choiceText1 = choiceBtn1.GetComponentInChildren<Text>();
             choiceText2 = choiceBtn2.GetComponentInChildren<Text>();
+
+            // === 素材缺失占位符（左上角）===
+            var phGo = new GameObject("PlaceholderText");
+            phGo.transform.SetParent(vnCanvas.transform, false);
+            var phRect = phGo.AddComponent<RectTransform>();
+            phRect.anchorMin = new Vector2(0, 1);
+            phRect.anchorMax = new Vector2(0, 1);
+            phRect.pivot = new Vector2(0, 1);
+            phRect.anchoredPosition = new Vector2(10, -10);
+            phRect.sizeDelta = new Vector2(600, 200);
+            placeholderText = phGo.AddComponent<Text>();
+            placeholderText.fontSize = 18;
+            placeholderText.color = Color.yellow;
+            placeholderText.alignment = TextAnchor.UpperLeft;
+            placeholderText.raycastTarget = false;
+
+            // 描边：黑色描边，避免与背景撞色
+            var outline = phGo.AddComponent<Outline>();
+            outline.effectColor = Color.black;
+            outline.effectDistance = new Vector2(1.5f, -1.5f);
+
+            var phCanvas = phGo.AddComponent<Canvas>();
+            phCanvas.overrideSorting = true;
+            phCanvas.sortingOrder = 999;
+            phGo.SetActive(false);
         }
 
         Button CreateButton(string name, Transform parent, Vector2 anchoredPos, Vector2 size, string label, UnityEngine.Events.UnityAction onClick)
@@ -303,6 +563,32 @@ namespace Game.Test
             }
         }
 
+        /// <summary>显示素材缺失占位符（左上角）</summary>
+        void ShowPlaceholder(string assetType, string assetName)
+        {
+            string key = $"{assetType}:{assetName}";
+            if (missingAssetLogs.Contains(key)) return;
+            missingAssetLogs.Add(key);
+
+            if (placeholderText != null)
+            {
+                placeholderText.gameObject.SetActive(true);
+                placeholderText.text += $"{assetType} not found: {assetName}\n";
+            }
+            Debug.LogWarning($"[FungusVNController] {assetType} not found: {assetName}");
+        }
+
+        /// <summary>清除素材缺失占位符</summary>
+        public void ClearPlaceholder()
+        {
+            missingAssetLogs.Clear();
+            if (placeholderText != null)
+            {
+                placeholderText.text = "";
+                placeholderText.gameObject.SetActive(false);
+            }
+        }
+
         /// <summary>推进到下一行对话</summary>
         void ShowNextLine()
         {
@@ -317,15 +603,26 @@ namespace Game.Test
 
             var line = lines[lineIndex++];
 
-            // ========== 指令处理（背景 / 音效 / BGM）==========
-            if (!string.IsNullOrEmpty(line.bg))
+            // ========== 分层背景处理 ==========
+            if (line.isLayerCommand)
             {
-                var bg = backgrounds.Find(b => b.name == line.bg);
-                if (bg != null && bg.sprite != null && backgroundImage != null)
-                {
-                    backgroundImage.sprite = bg.sprite;
-                    backgroundImage.color = Color.white; // 有图时显示
-                }
+                // [layer:...] 全换指令：显式指定的层才更新（null=未指定，保持原样；空字符串=清空）
+                if (line.bg != null) SetLayerBackground(backgroundImage, line.bg);
+                if (line.mg != null) SetLayerBackground(midgroundImage, line.mg);
+                if (line.fg != null) SetLayerBackground(foregroundImage, line.fg);
+            }
+            else
+            {
+                // 单换指令：有值才更新
+                if (!string.IsNullOrEmpty(line.bg)) SetLayerBackground(backgroundImage, line.bg);
+                if (!string.IsNullOrEmpty(line.mg)) SetLayerBackground(midgroundImage, line.mg);
+                if (!string.IsNullOrEmpty(line.fg)) SetLayerBackground(foregroundImage, line.fg);
+            }
+
+            // ========== 纯色背景处理 ==========
+            if (!string.IsNullOrEmpty(line.solid))
+            {
+                ApplySolidBackground(line.solid, line.transition);
             }
 
             if (!string.IsNullOrEmpty(line.se))
@@ -333,6 +630,8 @@ namespace Game.Test
                 var se = soundEffects.Find(s => s.name == line.se);
                 if (se != null && se.clip != null && sfxSource != null)
                     sfxSource.PlayOneShot(se.clip);
+                else
+                    ShowPlaceholder("SFX", line.se);
             }
 
             if (!string.IsNullOrEmpty(line.bgm))
@@ -343,16 +642,21 @@ namespace Game.Test
                     bgmSource.clip = bgm.clip;
                     bgmSource.Play();
                 }
+                else
+                {
+                    ShowPlaceholder("BGM", line.bgm);
+                }
             }
 
             // ========== 黑屏检测 ==========
             if (!string.IsNullOrEmpty(line.content) && line.content.Contains("黑屏"))
             {
                 var blackSprite = Resources.Load<Sprite>("UI/Background/Bg_Black");
-                if (blackSprite != null && backgroundImage != null)
+                if (blackSprite != null)
                 {
-                    backgroundImage.sprite = blackSprite;
-                    backgroundImage.color = Color.white;
+                    if (backgroundImage != null)  { backgroundImage.sprite = blackSprite;  backgroundImage.color = Color.white; }
+                    if (midgroundImage != null)   { midgroundImage.sprite = blackSprite;   midgroundImage.color = Color.white; }
+                    if (foregroundImage != null)  { foregroundImage.sprite = blackSprite;  foregroundImage.color = Color.white; }
                 }
             }
 
@@ -374,7 +678,11 @@ namespace Game.Test
                 if (charMapping != null && charMapping.fungusCharacter != null)
                     sayDialog.SetCharacter(charMapping.fungusCharacter);
                 else
+                {
                     sayDialog.SetCharacterName(speaker, Color.white);
+                    if (line.type == "对话")
+                        ShowPlaceholder("Character", speaker);
+                }
 
                 sayDialog.gameObject.SetActive(true);
 

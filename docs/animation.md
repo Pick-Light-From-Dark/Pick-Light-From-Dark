@@ -31,7 +31,7 @@ Assets/
 │   ├── Characters/
 │   │   └── LuYing/                          # 角色原始素材
 │   │       ├── Blink_01.png ~ Blink_05.png  # 眨眼序列帧
-│   │       ├── little_excited1.png ~ 5.png  # 微兴奋序列帧
+│   测试脚本都写在哪个文件夹里？│       ├── little_excited1.png ~ 5.png  # 微兴奋序列帧
 │   │       ├── excited1.png ~ excited5.png  # 兴奋序列帧
 │   │       ├── chew_01.png ~ chew_04.png    # 咀嚼序列帧
 │   │       ├── excited_special.png          # 兴奋特殊表情（静态）

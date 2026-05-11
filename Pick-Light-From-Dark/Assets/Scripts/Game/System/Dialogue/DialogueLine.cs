@@ -9,8 +9,12 @@ public class DialogueLine
     public string choice2Result;  // 选择2后的文本
 
     // 显式演出指令（与文本解耦）
-    public string bg;             // [bg:xxx] 或 [bg:xxx,fade]
-    public string transition;     // [bg:xxx,transition] 中提取的转场类型
+    public string bg;             // [bg:xxx] 或 [bg:xxx,fade] — 后景（向后兼容）
+    public string mg;             // [mg:xxx] — 中景
+    public string fg;             // [fg:xxx] — 前景
+    public string transition;     // 转场类型（fade / slide 等）
+    public bool isLayerCommand;   // true = [layer:...] 全换指令，仅显式指定的层更新
+    public string solid;          // [solid:#000000] 或 [solid:black,fade] — 纯色背景
     public string se;             // [se:xxx]
     public string bgm;            // [bgm:xxx]
 }

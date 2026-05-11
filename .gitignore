@@ -16,8 +16,12 @@
 *.log
 .claude/
 TODO2.md
-amiao TODO.md
+amiaoTODO.md
 plugins.md
+
+# 忽略整个 AI_Dialogue_Test 文件夹
+**/Assets/AI_Dialogue_Test/
+**/Assets/AI_Dialogue_Test.meta
 
 # By default unity supports Blender asset imports, *.blend1 blender files do not need to be commited to version control.
 *.blend1

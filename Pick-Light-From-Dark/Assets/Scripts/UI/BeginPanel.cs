@@ -1,10 +1,8 @@
 using UnityEngine;
+using Game.Flow;
 
 public class BeginPanel : BasePanel
 {
-    [Header("对话文本")]
-    public TextAsset dialogueText;
-
     public override void HideMe() { }
 
     public override void ShowMe() { }
@@ -14,28 +12,9 @@ public class BeginPanel : BasePanel
         switch (btnName)
         {
             case "StartBtn":
-                if (dialogueText == null)
-                {
-                    Debug.LogError("BeginPanel: dialogueText 未赋值！请在 Inspector 中将对话文本文件拖到 BeginPanel 的 dialogueText 字段");
-                    return;
-                }
-
                 MusicMgr.Instance.PlaySound("按钮点击音效");
-                // UIMgr.Instance.ShowPanel<GalDialoguePanel>(
-                //     E_UILayer.Middle,
-                //     (panel) =>
-                //     {
-                //         if (panel == null)
-                //         {
-                //             Debug.LogError("GalDialoguePanel 加载失败！");
-                //             return;
-                //         }
-                //         DialogueSystem.Instance.BindPanel(panel);
-                //         DialogueSystem.Instance.StartDialogue(dialogueText, DialogueSystem.DialogueMode.Gal);
-                //     }
-                // );
-                UIMgr.Instance.ShowPanel<GamePanel>();
                 UIMgr.Instance.HidePanel<BeginPanel>();
+                LevelFlowManager.Instance.StartGame();
                 break;
 
             case "SaveBtn":
