@@ -14,12 +14,6 @@ public class BeginPanel : BasePanel
         switch (btnName)
         {
             case "StartBtn":
-                if (dialogueText == null)
-                {
-                    Debug.LogError("BeginPanel: dialogueText 未赋值！请在 Inspector 中将对话文本文件拖到 BeginPanel 的 dialogueText 字段");
-                    return;
-                }
-
                 MusicMgr.Instance.PlaySound("按钮点击音效");
                 // UIMgr.Instance.ShowPanel<GalDialoguePanel>(
                 //     E_UILayer.Middle,
