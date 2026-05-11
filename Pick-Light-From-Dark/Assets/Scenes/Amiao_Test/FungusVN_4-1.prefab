@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 1000000000000000001}
   - component: {fileID: 1000000000000000002}
   m_Layer: 0
-  m_Name: FungusVN
+  m_Name: FungusVN_4-1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -44,7 +44,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3ccf659d409546deafce9a033b3bded4, type: 3}
   m_Name:
   m_EditorClassIdentifier:
-  dialogueText: {fileID: 4900000, guid: 2b8b997cf43e9e34396f378b4fdc2849, type: 3}
+  dialogueText: {fileID: 4900000, guid: c12be82cff577594f96d53628e517de9, type: 3}
   sayDialog: {fileID: 0}
   stage: {fileID: 0}
   backgroundImage: {fileID: 0}
@@ -54,18 +54,8 @@ MonoBehaviour:
   dialogMask: {fileID: 21300000, guid: 86ab75dabd5999448b1e383361a298ef, type: 3}
   characters: []
   backgrounds:
-  - name: the spread quilt
-    sprite: {fileID: 21300000, guid: f25abdbb2a8dad245858044f015bd57e, type: 3}
-  - name: quilt aside
-    sprite: {fileID: 21300000, guid: f86443a70e338d0499b74c4bdaa1c3f1, type: 3}
-  - name: Song_talk_1
-    sprite: {fileID: 21300000, guid: 0982a93caa5319d4b9b7bad8e3027786, type: 3}
-  - name: Song_talk_2
-    sprite: {fileID: 21300000, guid: 6d59395021a892d4fae0a8a69a38a1b9, type: 3}
-  - name: Song_talk_3
-    sprite: {fileID: 21300000, guid: 2d27dbbcd81e75d45b256d2851eb1801, type: 3}
-  - name: Song_talk_4
-    sprite: {fileID: 21300000, guid: 0ed270a370501a948ac14f6fb144bf8f, type: 3}
+  - name: light_room
+    sprite: {fileID: 21300000, guid: 4a23c23cc5b62ee43bf8f9e67591e415, type: 3}
   roles: []
   soundEffects: []
   bgmTracks: []

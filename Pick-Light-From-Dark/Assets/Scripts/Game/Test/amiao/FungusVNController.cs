@@ -50,6 +50,9 @@ namespace Game.Test
         public AudioSource sfxSource;
         public AudioSource bgmSource;
 
+        [Header("对话框遮罩（全屏渐变底图）")]
+        public Sprite dialogMask;
+
         [Header("素材映射（Inspector 静态配置）")]
         public List<CharacterMapping> characters = new List<CharacterMapping>();
         public List<SpriteMapping> backgrounds = new List<SpriteMapping>();
@@ -174,6 +177,12 @@ namespace Game.Test
 
             // 5. 字体设置：自动加载项目中文字体并应用到 SayDialog
             SetupFont();
+
+            // 6. 对话框遮罩：将 dialog_dark.png 作为全屏渐变层
+            SetupDialogMask();
+
+            // 7. 人名居中
+            SetupNameTextAlignment();
         }
 
         void SetupFont()
@@ -198,6 +207,58 @@ namespace Game.Test
                 }
                 Debug.Log("[FungusVNController] 已设置中文字体");
             }
+        }
+
+        void SetupDialogMask()
+        {
+            if (sayDialog == null || dialogMask == null) return;
+
+            var canvas = sayDialog.GetComponent<Canvas>();
+            if (canvas == null) return;
+
+            // 查找是否已存在遮罩层
+            var existing = canvas.transform.Find("DialogMask");
+            if (existing != null) return;
+
+            var maskGo = new GameObject("DialogMask");
+            maskGo.transform.SetParent(canvas.transform, false);
+            maskGo.transform.SetAsFirstSibling();
+
+            var maskRect = maskGo.AddComponent<RectTransform>();
+            maskRect.anchorMin = Vector2.zero;
+            maskRect.anchorMax = Vector2.one;
+            maskRect.offsetMin = Vector2.zero;
+            maskRect.offsetMax = Vector2.zero;
+
+            var maskImg = maskGo.AddComponent<Image>();
+            maskImg.sprite = dialogMask;
+            maskImg.color = Color.white;
+            maskImg.raycastTarget = false;
+        }
+
+        void SetupNameTextAlignment()
+        {
+            if (sayDialog == null) return;
+
+            var nameTextObj = sayDialog.gameObject.transform.Find("Panel/NameText");
+            if (nameTextObj == null)
+            {
+                // 尝试直接查找
+                var allTexts = sayDialog.GetComponentsInChildren<Text>(true);
+                foreach (var t in allTexts)
+                {
+                    if (t.gameObject.name == "NameText")
+                    {
+                        t.alignment = TextAnchor.MiddleCenter;
+                        return;
+                    }
+                }
+                return;
+            }
+
+            var nameText = nameTextObj.GetComponent<Text>();
+            if (nameText != null)
+                nameText.alignment = TextAnchor.MiddleCenter;
         }
 
         /// <summary>查找或创建某一层背景 Image</summary>
@@ -247,11 +308,30 @@ namespace Game.Test
             {
                 layerImage.sprite = mapping.sprite;
                 layerImage.color = Color.white;
+                return;
             }
-            else
+
+            // Fallback：尝试从 Resources 加载
+            Sprite fallback = LoadBgSprite(spriteName);
+            if (fallback != null)
             {
-                ShowPlaceholder("图片素材", spriteName);
+                layerImage.sprite = fallback;
+                layerImage.color = Color.white;
+                return;
             }
+
+            ShowPlaceholder("Image", spriteName);
+        }
+
+        Sprite LoadBgSprite(string name)
+        {
+            if (string.IsNullOrEmpty(name)) return null;
+
+            Sprite s = Resources.Load<Sprite>("CG/" + name);
+            if (s == null) s = Resources.Load<Sprite>("Backgrounds/" + name);
+            if (s == null) s = Resources.Load<Sprite>("UI/Dialogue/Backgrounds/" + name);
+
+            return s;
         }
 
         /// <summary>解析颜色字符串（#RRGGBB 或命名颜色）</summary>
@@ -394,9 +474,18 @@ namespace Game.Test
             phRect.sizeDelta = new Vector2(600, 200);
             placeholderText = phGo.AddComponent<Text>();
             placeholderText.fontSize = 18;
-            placeholderText.color = Color.red;
+            placeholderText.color = Color.yellow;
             placeholderText.alignment = TextAnchor.UpperLeft;
             placeholderText.raycastTarget = false;
+
+            // 描边：黑色描边，避免与背景撞色
+            var outline = phGo.AddComponent<Outline>();
+            outline.effectColor = Color.black;
+            outline.effectDistance = new Vector2(1.5f, -1.5f);
+
+            var phCanvas = phGo.AddComponent<Canvas>();
+            phCanvas.overrideSorting = true;
+            phCanvas.sortingOrder = 999;
             phGo.SetActive(false);
         }
 
@@ -462,9 +551,9 @@ namespace Game.Test
             if (placeholderText != null)
             {
                 placeholderText.gameObject.SetActive(true);
-                placeholderText.text += $"{assetType}未找到：{assetName}\n";
+                placeholderText.text += $"{assetType} not found: {assetName}\n";
             }
-            Debug.LogWarning($"[FungusVNController] {assetType}未找到：{assetName}");
+            Debug.LogWarning($"[FungusVNController] {assetType} not found: {assetName}");
         }
 
         /// <summary>清除素材缺失占位符</summary>
@@ -520,7 +609,7 @@ namespace Game.Test
                 if (se != null && se.clip != null && sfxSource != null)
                     sfxSource.PlayOneShot(se.clip);
                 else
-                    ShowPlaceholder("音效素材", line.se);
+                    ShowPlaceholder("SFX", line.se);
             }
 
             if (!string.IsNullOrEmpty(line.bgm))
@@ -533,7 +622,7 @@ namespace Game.Test
                 }
                 else
                 {
-                    ShowPlaceholder("BGM素材", line.bgm);
+                    ShowPlaceholder("BGM", line.bgm);
                 }
             }
 
@@ -570,7 +659,7 @@ namespace Game.Test
                 {
                     sayDialog.SetCharacterName(speaker, Color.white);
                     if (line.type == "对话")
-                        ShowPlaceholder("角色素材", speaker);
+                        ShowPlaceholder("Character", speaker);
                 }
 
                 sayDialog.gameObject.SetActive(true);

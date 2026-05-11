@@ -15,6 +15,7 @@ public static class DialogueParser
         {
             string s = rawLines[i].Trim();
             if (string.IsNullOrEmpty(s)) continue;
+            if (s.StartsWith("#")) continue;
 
             var d = new DialogueLine();
 
