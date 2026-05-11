@@ -31,18 +31,18 @@ public static class DialogueParser
                 }
                 else
                 {
-                    d.bg = bgContent;
+                    d.bg = bgContent.Trim();
                 }
             }
             else if (s.StartsWith("[se:"))
             {
                 d.type = "指令";
-                d.se = s.Substring(4).TrimEnd(']');
+                d.se = s.Substring(4).TrimEnd(']').Trim();
             }
             else if (s.StartsWith("[bgm:"))
             {
                 d.type = "指令";
-                d.bgm = s.Substring(5).TrimEnd(']');
+                d.bgm = s.Substring(5).TrimEnd(']').Trim();
             }
             else if (s.StartsWith("[fg:"))
             {
@@ -56,7 +56,7 @@ public static class DialogueParser
                 }
                 else
                 {
-                    d.fg = fgContent;
+                    d.fg = fgContent.Trim();
                 }
             }
             else if (s.StartsWith("[mg:"))
@@ -71,7 +71,7 @@ public static class DialogueParser
                 }
                 else
                 {
-                    d.mg = mgContent;
+                    d.mg = mgContent.Trim();
                 }
             }
             else if (s.StartsWith("[layer:"))
@@ -119,7 +119,7 @@ public static class DialogueParser
                 }
                 else
                 {
-                    d.solid = solidContent;
+                    d.solid = solidContent.Trim();
                 }
             }
             else if (s.StartsWith("[旁白]："))
