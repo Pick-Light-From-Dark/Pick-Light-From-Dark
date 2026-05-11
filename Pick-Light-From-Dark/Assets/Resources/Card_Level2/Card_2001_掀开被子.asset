@@ -10,14 +10,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bc03fbed09b109242b4b557e79d89449, type: 3}
-  m_Name: "Card_2001_\u6380\u5F00\u88AB\u5B50_\u7B2C\u4E8C\u591C"
+  m_Name: "Card_2001_\u6380\u5F00\u88AB\u5B50"
   m_EditorClassIdentifier: 
   cardData:
     id: 2001
     cardName: "\u6380\u5F00\u88AB\u5B50"
     description: "\u3010\u4F5C\u7528\u3011\u67E5\u770B\u88AB\u4E2D\u96F6\u98DF/\u9053\u5177\uFF0C\u79BB\u5F00\u88AB\u5B50\n\u3010\u63CF\u8FF0\u3011\u88AB\u5B50\u4E2D\u6709\u4EC0\u4E48\u4E1C\u897F\u6765\u7740\uFF1F\u6380\u5F00\u770B\u770B\u2026\u2026"
     iconPath: 
-    cardSprite: {fileID: 21300000, guid: b281acd298797c3488531fa39b202ef1, type: 3}
+    cardSprite: {fileID: 0}
     cardType: 0
     initialStack: 1
     segments:
@@ -38,4 +38,4 @@ MonoBehaviour:
     saveProgressOnInterrupt: 0
     cardBackgroundType: 1
     backgroundJumpId: 5002
-    sfxName: "DXH_SOUND/04.移动被子"
+    sfxName: 

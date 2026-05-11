@@ -54,6 +54,8 @@ public class GamePanel : BasePanel
     private CardDropZone cardDropZone;
     private CardManager cardManager;
     private CardInfoPopup activePopup;
+    private GameDialogueManager dialogueManager;
+    private int preDialogueBackgroundId;
 
     // 情绪值显示
     private TextMeshProUGUI chaosCountText;
@@ -149,6 +151,9 @@ public class GamePanel : BasePanel
 
         // 闭眼按钮 + 遮罩初始化
         SetupEyeClose();
+
+        // 局内剧情对话管理器
+        SetupDialogue();
     }
 
     private void SetupEmotionDisplay()
@@ -223,18 +228,40 @@ public class GamePanel : BasePanel
         EventCenter.Instance.AddEventListener<int>(E_EventType.BackgroundJump, OnBackgroundJump);
     }
 
-    private void OnStopBtnClicked()
+    private void SetupDialogue()
     {
-        UIMgr.Instance.ShowPanel<StopGamePanel>();
+        dialogueManager = gameObject.AddComponent<GameDialogueManager>();
+        var thinkRt = thinkingImgBk != null ? thinkingImgBk.GetComponent<RectTransform>() : null;
+        dialogueManager.Initialize(thinkRt);
+
+        EventCenter.Instance.AddEventListener<string>(E_EventType.GameDialogueStart, OnGameDialogueStart);
+        EventCenter.Instance.AddEventListener(E_EventType.GameDialogueEnd, OnGameDialogueEnd);
     }
 
-    private void OnBackgroundJump(int bgId)
+    private void OnGameDialogueStart(string resourcePath)
     {
-        SetSceneBackground(bgId);
+        // 保存当前背景画面ID，切换至床对面视角(5004)
+        preDialogueBackgroundId = GetCurrentBackgroundId();
+        SetSceneBackground(5004);
+
+        dialogueManager.StartDialogue(resourcePath);
+        Debug.Log("[GamePanel] 局内对话开始，卡牌交互锁定");
     }
 
+    private void OnGameDialogueEnd()
+    {
+        // 恢复对话前背景画面
+        if (preDialogueBackgroundId != 0)
+            SetSceneBackground(preDialogueBackgroundId);
+
+        Debug.Log("[GamePanel] 局内对话结束，卡牌交互解锁");
+    }
+
+    private int currentBackgroundId = 5001;
+    private int GetCurrentBackgroundId() => currentBackgroundId;
     private void SetSceneBackground(int bgId)
     {
+        currentBackgroundId = bgId;
         if (sceneBackgroundImage == null)
         {
             var imgBk = transform.Find("ImgBk");
@@ -255,6 +282,16 @@ public class GamePanel : BasePanel
                 Debug.LogWarning($"[GamePanel] 背景画面资源未找到: UI/Background/Bg_{bgId}");
             }
         }
+    }
+
+    private void OnStopBtnClicked()
+    {
+        UIMgr.Instance.ShowPanel<StopGamePanel>();
+    }
+
+    private void OnBackgroundJump(int bgId)
+    {
+        SetSceneBackground(bgId);
     }
 
     void Update()
@@ -793,6 +830,7 @@ public class GamePanel : BasePanel
     private void OnCardClicked(CardSlot card)
     {
         if (card.CardData == null) return;
+        if (dialogueManager != null && dialogueManager.IsDialogueActive) return;
 
         if (cardInfoPopupPrefab == null)
         {
@@ -829,6 +867,7 @@ public class GamePanel : BasePanel
     {
         if (card.CardData == null) return;
         if (isReading) return;
+        if (dialogueManager != null && dialogueManager.IsDialogueActive) return;
 
         Debug.Log($"[GamePanel] 卡牌拖入思考框: {card.CardData.cardName}");
         StartReading(card);
@@ -837,6 +876,7 @@ public class GamePanel : BasePanel
     private void OnCardDragStarted(CardSlot card)
     {
         if (card.CardData == null) return;
+        if (dialogueManager != null && dialogueManager.IsDialogueActive) return;
         ShowThinkingText(card.CardData);
     }
 
