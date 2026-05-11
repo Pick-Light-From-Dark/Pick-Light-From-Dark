@@ -234,6 +234,18 @@ namespace Game.Test
             maskImg.sprite = dialogMask;
             maskImg.color = Color.white;
             maskImg.raycastTarget = false;
+
+            // 将 Panel 原有背景设为透明，避免遮挡遮罩层
+            var panel = canvas.transform.Find("Panel");
+            if (panel != null)
+            {
+                var panelImg = panel.GetComponent<Image>();
+                if (panelImg != null)
+                {
+                    panelImg.sprite = null;
+                    panelImg.color = new Color(1, 1, 1, 0);
+                }
+            }
         }
 
         void SetupNameTextAlignment()
@@ -259,6 +271,16 @@ namespace Game.Test
             var nameText = nameTextObj.GetComponent<Text>();
             if (nameText != null)
                 nameText.alignment = TextAnchor.MiddleCenter;
+
+            // 调整 NameText 在 Panel 中顶部居中
+            var nameRect = nameTextObj.GetComponent<RectTransform>();
+            if (nameRect != null)
+            {
+                nameRect.anchorMin = new Vector2(0.5f, 1f);
+                nameRect.anchorMax = new Vector2(0.5f, 1f);
+                nameRect.pivot = new Vector2(0.5f, 1f);
+                nameRect.anchoredPosition = new Vector2(0f, -20f);
+            }
         }
 
         /// <summary>查找或创建某一层背景 Image</summary>
