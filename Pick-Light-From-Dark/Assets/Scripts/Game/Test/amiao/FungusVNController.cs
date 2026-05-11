@@ -75,6 +75,10 @@ namespace Game.Test
         private Text choiceText1;
         private Text choiceText2;
 
+        // 素材缺失占位符
+        private Text placeholderText;
+        private HashSet<string> missingAssetLogs = new HashSet<string>();
+
         void Awake()
         {
             EnsureComponents();
@@ -246,7 +250,7 @@ namespace Game.Test
             }
             else
             {
-                Debug.LogWarning($"[FungusVNController] 背景图未找到: {spriteName}");
+                ShowPlaceholder("图片素材", spriteName);
             }
         }
 
@@ -378,6 +382,22 @@ namespace Game.Test
 
             choiceText1 = choiceBtn1.GetComponentInChildren<Text>();
             choiceText2 = choiceBtn2.GetComponentInChildren<Text>();
+
+            // === 素材缺失占位符（左上角）===
+            var phGo = new GameObject("PlaceholderText");
+            phGo.transform.SetParent(vnCanvas.transform, false);
+            var phRect = phGo.AddComponent<RectTransform>();
+            phRect.anchorMin = new Vector2(0, 1);
+            phRect.anchorMax = new Vector2(0, 1);
+            phRect.pivot = new Vector2(0, 1);
+            phRect.anchoredPosition = new Vector2(10, -10);
+            phRect.sizeDelta = new Vector2(600, 200);
+            placeholderText = phGo.AddComponent<Text>();
+            placeholderText.fontSize = 18;
+            placeholderText.color = Color.red;
+            placeholderText.alignment = TextAnchor.UpperLeft;
+            placeholderText.raycastTarget = false;
+            phGo.SetActive(false);
         }
 
         Button CreateButton(string name, Transform parent, Vector2 anchoredPos, Vector2 size, string label, UnityEngine.Events.UnityAction onClick)
@@ -432,6 +452,32 @@ namespace Game.Test
             }
         }
 
+        /// <summary>显示素材缺失占位符（左上角）</summary>
+        void ShowPlaceholder(string assetType, string assetName)
+        {
+            string key = $"{assetType}:{assetName}";
+            if (missingAssetLogs.Contains(key)) return;
+            missingAssetLogs.Add(key);
+
+            if (placeholderText != null)
+            {
+                placeholderText.gameObject.SetActive(true);
+                placeholderText.text += $"{assetType}未找到：{assetName}\n";
+            }
+            Debug.LogWarning($"[FungusVNController] {assetType}未找到：{assetName}");
+        }
+
+        /// <summary>清除素材缺失占位符</summary>
+        public void ClearPlaceholder()
+        {
+            missingAssetLogs.Clear();
+            if (placeholderText != null)
+            {
+                placeholderText.text = "";
+                placeholderText.gameObject.SetActive(false);
+            }
+        }
+
         /// <summary>推进到下一行对话</summary>
         void ShowNextLine()
         {
@@ -473,6 +519,8 @@ namespace Game.Test
                 var se = soundEffects.Find(s => s.name == line.se);
                 if (se != null && se.clip != null && sfxSource != null)
                     sfxSource.PlayOneShot(se.clip);
+                else
+                    ShowPlaceholder("音效素材", line.se);
             }
 
             if (!string.IsNullOrEmpty(line.bgm))
@@ -482,6 +530,10 @@ namespace Game.Test
                 {
                     bgmSource.clip = bgm.clip;
                     bgmSource.Play();
+                }
+                else
+                {
+                    ShowPlaceholder("BGM素材", line.bgm);
                 }
             }
 
@@ -515,7 +567,11 @@ namespace Game.Test
                 if (charMapping != null && charMapping.fungusCharacter != null)
                     sayDialog.SetCharacter(charMapping.fungusCharacter);
                 else
+                {
                     sayDialog.SetCharacterName(speaker, Color.white);
+                    if (line.type == "对话")
+                        ShowPlaceholder("角色素材", speaker);
+                }
 
                 sayDialog.gameObject.SetActive(true);
 
