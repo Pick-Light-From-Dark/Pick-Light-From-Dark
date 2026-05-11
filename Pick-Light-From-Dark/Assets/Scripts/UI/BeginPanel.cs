@@ -1,10 +1,8 @@
 using UnityEngine;
+using Game.Flow;
 
 public class BeginPanel : BasePanel
 {
-    [Header("对话文本")]
-    public TextAsset dialogueText;
-
     public override void HideMe() { }
 
     public override void ShowMe() { }
@@ -15,21 +13,8 @@ public class BeginPanel : BasePanel
         {
             case "StartBtn":
                 MusicMgr.Instance.PlaySound("按钮点击音效");
-                // UIMgr.Instance.ShowPanel<GalDialoguePanel>(
-                //     E_UILayer.Middle,
-                //     (panel) =>
-                //     {
-                //         if (panel == null)
-                //         {
-                //             Debug.LogError("GalDialoguePanel 加载失败！");
-                //             return;
-                //         }
-                //         DialogueSystem.Instance.BindPanel(panel);
-                //         DialogueSystem.Instance.StartDialogue(dialogueText, DialogueSystem.DialogueMode.Gal);
-                //     }
-                // );
-                UIMgr.Instance.ShowPanel<GamePanel>();
                 UIMgr.Instance.HidePanel<BeginPanel>();
+                LevelFlowManager.Instance.StartGame();
                 break;
 
             case "SaveBtn":

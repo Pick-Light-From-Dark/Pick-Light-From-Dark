@@ -71,5 +71,15 @@ namespace Game.Config
 
         [Header("任务清单")]
         public List<TaskGoal> taskGoals;
+
+        [Header("关卡剧情")]
+        [Tooltip("前置对话文件名（Resources/Dialogue/ 下，不含扩展名）")]
+        public string preDialogueFile = "";
+        [Tooltip("通关后对话文件名")]
+        public string postDialogueFile = "";
+        [Tooltip("是否为选择关（选项2直接进结局）")]
+        public bool isChoiceLevel = false;
+        [Tooltip("选项2对应的结局对话文件名")]
+        public string choice2EndingDialogueFile = "";
     }
 }

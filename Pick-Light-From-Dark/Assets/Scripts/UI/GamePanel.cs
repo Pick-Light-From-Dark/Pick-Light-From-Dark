@@ -85,6 +85,16 @@ public class GamePanel : BasePanel
 
     private Vector2 closeEyesBtnOriginalPos;
 
+    [Header("关卡配置（留空则使用 TestLevelConfig）")]
+    [SerializeField] private Game.Config.LevelConfigSO overrideLevelConfig;
+
+    public void InitializeWithConfig(Game.Config.LevelConfigSO config)
+    {
+        overrideLevelConfig = config;
+        if (config != null)
+            Game.Flow.GameFlowController.Instance.Initialize(config);
+    }
+
     protected override void Awake()
     {
         base.Awake();
@@ -96,10 +106,12 @@ public class GamePanel : BasePanel
 
         cardManager = CardManager.Instance;
 
-        // 初始化所有游戏子系统（EmotionSystem、EyeCloseSystem 等）
-        var config = Resources.Load<Game.Config.LevelConfigSO>("TestData/TestLevelConfig");
-        if (config != null)
-            Game.Flow.GameFlowController.Instance.Initialize(config);
+        if (!Game.Flow.GameFlowController.Instance.IsInitialized)
+        {
+            var config = overrideLevelConfig ?? Resources.Load<Game.Config.LevelConfigSO>("TestData/TestLevelConfig");
+            if (config != null)
+                Game.Flow.GameFlowController.Instance.Initialize(config);
+        }
 
         // 提前触发 PlayerState 单例初始化，确保其 Update() 开始运行以监听 C 键
         var ps = PlayerState.Instance;
@@ -747,7 +759,7 @@ public class GamePanel : BasePanel
         // Initialize 内部会触发 OnSelectionChanged → 递归调用本方法完成刷新，此处直接返回避免重复创建
         if (cardManager != null && cardManager.GetAvailableCardCount() == 0)
         {
-            var config = Resources.Load<LevelConfigSO>("TestData/TestLevelConfig");
+            var config = overrideLevelConfig ?? Resources.Load<LevelConfigSO>("TestData/TestLevelConfig");
             if (config != null)
             {
                 Game.Flow.GameFlowController.Instance.Initialize(config);
