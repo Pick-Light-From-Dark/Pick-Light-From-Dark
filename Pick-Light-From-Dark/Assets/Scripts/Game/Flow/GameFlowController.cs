@@ -18,6 +18,8 @@ namespace Game.Flow
         [SerializeField] private bool hasStartedFirstFrame; // 是否已经过了第一帧
         [SerializeField] private bool isInitialized = false; // 是否已经初始化
 
+        public bool IsInitialized => isInitialized;
+
         private LevelConfigSO levelConfig;
         private EmotionSystem emotionSystem;
         private Task.TaskManager taskManager;

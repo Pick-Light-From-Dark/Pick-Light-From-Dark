@@ -15,6 +15,8 @@ namespace Game.Card
         public int remainingStacks;   // 剩余层数（可堆叠类）或 1/0（不可堆叠类）
         public bool isUnlocked;       // 是否已解锁（用于非持续关联判断）
         public bool isInitial;        // 是否为初始卡牌
+        public float savedReadTime;   // 打断时保存的读条进度（saveProgressOnInterrupt）
+        public int savedSegmentIndex; // 打断时保存的片段索引
 
         public bool IsDepleted => remainingStacks <= 0;
     }
@@ -278,16 +280,46 @@ namespace Game.Card
         {
             if (card == null) return;
 
-            if (card.cardType == CardType.Stackable)
-            {
-                if (globalPool.TryGetValue(card.id, out var pooled))
-                {
-                    pooled.remainingStacks++;
-                }
-            }
-
+            // remainingStacks 在 OnCardUsed 成功时才 -- ，打断无需回退
             RecordCardUse(card, false);
             OnSelectionChanged?.Invoke();
+        }
+
+        /// <summary>保存读条进度（打断时调用）</summary>
+        public void SaveReadProgress(int cardId, float readTime, int segmentIndex)
+        {
+            if (globalPool.TryGetValue(cardId, out var pooled))
+            {
+                pooled.savedReadTime = readTime;
+                pooled.savedSegmentIndex = segmentIndex;
+            }
+        }
+
+        /// <summary>读取并清除已保存的读条进度</summary>
+        public bool PopSavedReadProgress(int cardId, out float readTime, out int segmentIndex)
+        {
+            if (globalPool.TryGetValue(cardId, out var pooled)
+                && pooled.savedReadTime > 0f)
+            {
+                readTime = pooled.savedReadTime;
+                segmentIndex = pooled.savedSegmentIndex;
+                pooled.savedReadTime = 0f;
+                pooled.savedSegmentIndex = 0;
+                return true;
+            }
+            readTime = 0f;
+            segmentIndex = 0;
+            return false;
+        }
+
+        /// <summary>清除已保存的读条进度（读条完成时调用）</summary>
+        public void ClearSavedReadProgress(int cardId)
+        {
+            if (globalPool.TryGetValue(cardId, out var pooled))
+            {
+                pooled.savedReadTime = 0f;
+                pooled.savedSegmentIndex = 0;
+            }
         }
 
         /// <summary>
@@ -530,6 +562,48 @@ namespace Game.Card
                 {
                     isCard2016GenerationPaused = false;
                     Debug.Log("[CardManager] 特殊效果: 拿回拌面 → 解除2016生成暂停");
+                    break;
+                }
+
+                case 2025: // 吃面包：使用后将2026(拿走面包)隐藏且不再生成
+                {
+                    if (globalPool.TryGetValue(2026, out var pooled2026))
+                    {
+                        pooled2026.remainingStacks = 0;
+                        pooled2026.isUnlocked = false;
+                    }
+                    Debug.Log("[CardManager] 特殊效果: 吃面包(2025) → 隐藏2026(拿走面包)");
+                    break;
+                }
+
+                case 2026: // 拿走面包：如果2025(吃面包)未被使用过，将2025加入2001(掀开被子)的关联列表，并从当前视图和2024关联中移除2025
+                {
+                    if (!usedCardIds.Contains(2025))
+                    {
+                        var card2001 = GetCardDataById(2001);
+                        if (card2001 != null && card2001.relatedCardIds != null && !card2001.relatedCardIds.Contains(2025))
+                        {
+                            card2001.relatedCardIds.Add(2025);
+                            Debug.Log("[CardManager] 特殊效果: 拿走面包(2026) → 2025未用过，将2025加入2001(掀开被子)的关联列表");
+                        }
+                        // 从当前视图隐藏2025，后续通过2030→2001路径重新解锁
+                        if (globalPool.TryGetValue(2025, out var pooled2025))
+                        {
+                            pooled2025.isUnlocked = false;
+                            Debug.Log("[CardManager] 特殊效果: 拿走面包(2026) → 隐藏2025，需经2030→2001路径重新获取");
+                        }
+                        // 从2024(打开储物柜)的关联列表中移除2025，防止再次打开储物柜时重新生成
+                        var card2024 = GetCardDataById(2024);
+                        if (card2024 != null && card2024.relatedCardIds != null && card2024.relatedCardIds.Contains(2025))
+                        {
+                            card2024.relatedCardIds.Remove(2025);
+                            Debug.Log("[CardManager] 特殊效果: 拿走面包(2026) → 从2024(打开储物柜)关联列表中移除2025");
+                        }
+                    }
+                    else
+                    {
+                        Debug.Log("[CardManager] 特殊效果: 拿走面包(2026) → 2025已用过，不执行关联注入");
+                    }
                     break;
                 }
             }

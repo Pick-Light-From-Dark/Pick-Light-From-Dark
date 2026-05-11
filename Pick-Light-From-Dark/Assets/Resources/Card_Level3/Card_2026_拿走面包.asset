@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bc03fbed09b109242b4b557e79d89449, type: 3}
+  m_Name: "Card_2026_\u62FF\u8D70\u9762\u5305"
+  m_EditorClassIdentifier: 
+  cardData:
+    id: 2026
+    cardName: "\u62FF\u8D70\u9762\u5305"
+    description: "\u3010\u4F5C\u7528\u3011\u62FF\u8D70\u9762\u5305\uFF0C\u53EF\u4EE5\u6380\u5F00\u88AB\u5B50\u540E\u67E5\u770B\u98DF\u7528\n\u3010\u63CF\u8FF0\u3011\u62FF\u56DE\u88AB\u5B50\u91CC\u5403\u5427\uFF0C\u5728\u8FD9\u91CC\u6709\u70B9\u5371\u9669\u2026\u2026"
+    iconPath: 
+    cardSprite: {fileID: 0}
+    cardType: 0
+    initialStack: 1
+    segments:
+    - duration: 2
+      isInterruptible: 0
+    panicDelta: 1
+    exciteDelta: 2
+    interruptPanicAdd: 0
+    bindTaskId: 0
+    relatedType: 1
+    relatedCardIds: da070000ee070000
+    allowedLevelIds:
+    - 1003
+    bedStateChange: 0
+    specialEffect: "\u4F7F\u7528\u5B8C\u6210\u540E\u68C0\u67E5\uFF0C\u5982\u679C\u662F\u5361\u724CID\u4E3A2025\u7684\u5361\u724C\u6CA1\u6709\u88AB\u4F7F\u7528\u8FC7\uFF0C\u5219\u5C06\u5361\u724CID\u4E3A2025\u7684\u5361\u724C\u6539\u4E3A\u5361\u724CID\u4E3A2001\u7684\u5173\u8054\u5361\u724C\u3002"
+    saveProgressOnInterrupt: 0
+    cardBackgroundType: 0
+    backgroundJumpId: 0
+    sfxName: 

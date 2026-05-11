@@ -22,6 +22,9 @@ namespace Game.UI
         [Header("总读条时长 — TotalTimeText")]
         [SerializeField] private TextMeshProUGUI totalTimeText;
 
+        [Header("读条CD文本 — LoadingCDText")]
+        [SerializeField] private TextMeshProUGUI loadingCDText;
+
         [Header("可打断标识 — AlreadingLoadingText")]
         [SerializeField] private TextMeshProUGUI interruptibleText;
 
@@ -154,7 +157,8 @@ namespace Game.UI
             SetText(exciteText, $"兴奋{data.exciteDelta:+0;-0}");
 
             float total = data.CalculateTotalDuration();
-            SetText(totalTimeText, $"耗时{total:F0}s");
+            SetText(totalTimeText, $"{total:F0}s");
+            SetText(loadingCDText, $"耗时{total:F0}s");
         }
 
         private void BuildSegmentBar(CardData data)
