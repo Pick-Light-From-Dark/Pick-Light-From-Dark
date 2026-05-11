@@ -16,7 +16,7 @@
 *.log
 .claude/
 TODO2.md
-amiao TODO.md
+amiaoTODO.md
 plugins.md
 
 # 忽略整个 AI_Dialogue_Test 文件夹
