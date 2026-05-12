@@ -49,6 +49,7 @@ namespace Game.AI
             levelConfig = config;
             patrolCount = 0;
             flashPanicAccumulated = 0f;
+            IsPatrolPaused = false;
 
             // 获取系统引用
             emotionSystem = Game.Emotion.EmotionSystem.Instance;
@@ -59,9 +60,12 @@ namespace Game.AI
             Debug.Log("[TeacherAI] 初始化完成");
         }
 
+        /// <summary>卡牌2040(前往走廊)触发后暂停巡逻</summary>
+        public static bool IsPatrolPaused { get; set; }
+
         void Update()
         {
-            if (gameFlow != null && (gameFlow.IsPaused() || gameFlow.IsGameOver()))
+            if (gameFlow != null && (gameFlow.IsPaused() || gameFlow.IsGameOver() || IsPatrolPaused))
                 return;
 
             if (stateTimer > 0)

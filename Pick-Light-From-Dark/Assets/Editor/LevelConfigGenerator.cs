@@ -22,6 +22,7 @@ namespace Game.Editor
             GenerateLevel1Config();
             GenerateLevel2Config();
             GenerateLevel3Config();
+            GenerateLevel5Config();
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             Debug.Log("[LevelConfigGenerator] 全部关卡配置资产已生成");
@@ -135,6 +136,39 @@ namespace Game.Editor
 
             EditorUtility.SetDirty(config);
             Debug.Log("[LevelConfigGenerator] LevelConfig_3.asset 已更新");
+        }
+
+        [MenuItem("Game/Generate Level Configs/Generate Level 5 Config")]
+        public static void GenerateLevel5Config()
+        {
+            EnsureDirectory();
+            var config = CreateOrGetAsset("LevelConfig_5.asset");
+
+            config.levelId = 1005;
+            config.levelName = "第五夜";
+            config.timeLimit = 600;
+            config.maxLives = 2;
+            config.initialInBed = true;
+            config.initialPanic = 20;
+            config.initialExcite = 15;
+            config.criticalValue = 80;
+            config.eyeClosePanicDecreasePerSec = 1f;
+            config.eyeCloseAccelerationThreshold = 20f;
+            config.eyeCloseAccelerationMultiplier = 1.5f;
+            config.patrolIntervals = new Vector2(15f, 25f);
+            config.patrolTime = new Vector2(8f, 10f);
+            config.eyeCheckDuration = new Vector2(3f, 3f);
+            config.flashCheckDuration = new Vector2(3f, 3f);
+            config.flashPanicPerSec = 2;
+            config.cardDataPath = "Card_Level5";
+            config.initialCards = new List<int> { 2001, 2003, 2005, 2010 };
+            config.taskGoals = new List<TaskGoal>
+            {
+                new TaskGoal(2038, 1) { state = TaskState.InProgress },
+            };
+
+            EditorUtility.SetDirty(config);
+            Debug.Log("[LevelConfigGenerator] LevelConfig_5.asset 已更新");
         }
 
         private static void EnsureDirectory()

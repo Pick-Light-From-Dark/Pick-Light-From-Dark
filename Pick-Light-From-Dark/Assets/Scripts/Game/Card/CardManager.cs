@@ -42,6 +42,9 @@ namespace Game.Card
         /// <summary>顶替映射：被消耗的卡牌ID → 其关联卡牌ID列表（永久生效）</summary>
         private Dictionary<int, List<int>> replaceMap = new Dictionary<int, List<int>>();
 
+        /// <summary>运行时额外关联：卡牌ID → 临时追加的关联ID列表（仅本局有效，不修改ScriptableObject）</summary>
+        private Dictionary<int, List<int>> runtimeExtraAssociations = new Dictionary<int, List<int>>();
+
         private LevelConfigSO levelConfig;
 
         /// <summary>本局已成功使用的卡牌ID集合（用于条件生成判定）</summary>
@@ -94,6 +97,7 @@ namespace Game.Card
             unlockedNonPersistentIds.Clear();
             savedNonPersistentStacks.Clear();
             replaceMap.Clear();
+            runtimeExtraAssociations.Clear();
             cardHistory.Clear();
             pooledCardIds.Clear();
 
@@ -258,6 +262,12 @@ namespace Game.Card
             if (usedCard.relatedType == RelatedType.Persistent && usedCard.relatedCardIds != null && usedCard.relatedCardIds.Count > 0)
             {
                 var keepSet = new HashSet<int>(ResolveLinkedIds(usedCard.relatedCardIds));
+                // 合并运行时额外关联（仅本局有效，不修改ScriptableObject）
+                if (runtimeExtraAssociations.TryGetValue(usedCard.id, out var extras))
+                {
+                    foreach (int extra in extras)
+                        keepSet.Add(extra);
+                }
                 // 2016生成暂停时从keepSet中移除，保持隐藏
                 if (isCard2016GenerationPaused)
                     keepSet.Remove(2016);
@@ -370,6 +380,13 @@ namespace Game.Card
 
             // 递归解析顶替链
             var resolvedIds = ResolveLinkedIds(usedCard.relatedCardIds);
+            // 合并运行时额外关联（仅本局有效）
+            if (runtimeExtraAssociations.TryGetValue(usedCard.id, out var extras))
+            {
+                foreach (int extra in extras)
+                    if (!resolvedIds.Contains(extra))
+                        resolvedIds.Add(extra);
+            }
 
             Debug.Log($"[CardManager] TriggerLinkedCards: usedCard={usedCard.id}({usedCard.cardName}), rawIds=[{string.Join(",", usedCard.relatedCardIds)}], resolvedIds=[{string.Join(",", resolvedIds)}], relatedType={usedCard.relatedType}");
 
@@ -488,6 +505,23 @@ namespace Game.Card
         }
 
         /// <summary>
+        /// 添加运行时额外关联（仅本局有效，不修改ScriptableObject资产）
+        /// </summary>
+        private void AddRuntimeAssociation(int cardId, int extraId)
+        {
+            if (!runtimeExtraAssociations.TryGetValue(cardId, out var list))
+            {
+                list = new List<int>();
+                runtimeExtraAssociations[cardId] = list;
+            }
+            if (!list.Contains(extraId))
+            {
+                list.Add(extraId);
+                Debug.Log($"[CardManager] AddRuntimeAssociation: {extraId} 加入 runtimeExtras[{cardId}], 列表=[{string.Join(",", list)}]");
+            }
+        }
+
+        /// <summary>
         /// 处理卡牌特殊效果（测试案v2定义的条件生成、动态关联、特殊消耗等）
         /// </summary>
         private void HandleSpecialEffects(CardData usedCard)
@@ -498,10 +532,7 @@ namespace Game.Card
                     if (usedCardIds.Contains(2014))
                     {
                         UnlockCardById(2015);
-                        // 将2015加入自己和2014的replaceMap，确保通过任意路径都能解析到2015
-                        AddToReplaceChain(2013, 2015);
-                        AddToReplaceChain(2014, 2015);
-                        Debug.Log("[CardManager] 特殊效果: 酱包(2013)+海苔包(2014)均已使用，生成搅拌拌面(2015)并加入顶替链");
+                        Debug.Log("[CardManager] 特殊效果: 酱包(2013)+海苔包(2014)均已使用，生成搅拌拌面(2015)");
                     }
                     break;
 
@@ -509,32 +540,19 @@ namespace Game.Card
                     if (usedCardIds.Contains(2013))
                     {
                         UnlockCardById(2015);
-                        AddToReplaceChain(2013, 2015);
-                        AddToReplaceChain(2014, 2015);
-                        Debug.Log("[CardManager] 特殊效果: 海苔包(2014)+酱包(2013)均已使用，生成搅拌拌面(2015)并加入顶替链");
+                        Debug.Log("[CardManager] 特殊效果: 海苔包(2014)+酱包(2013)均已使用，生成搅拌拌面(2015)");
                     }
                     break;
 
-                case 2015: // 搅拌拌面：2016直接生成；2017加入2003导航路径；仅重置2003
+                case 2015: // 搅拌拌面：2016由关联列表[2010,2011,2016]自然生成；2017加入2003运行时关联；仅重置2003
                 {
-                    var card2002 = GetCardDataById(2002);
-                    if (card2002 != null && card2002.relatedCardIds != null && !card2002.relatedCardIds.Contains(2016))
-                    {
-                        card2002.relatedCardIds.Add(2016);
-                        Debug.Log("[CardManager] 特殊效果: 搅拌完成，2002(看向床下)关联列表新增 2016(吃拌面)");
-                    }
-                    var card2003 = GetCardDataById(2003);
-                    if (card2003 != null && card2003.relatedCardIds != null && !card2003.relatedCardIds.Contains(2017))
-                    {
-                        card2003.relatedCardIds.Add(2017);
-                        Debug.Log("[CardManager] 特殊效果: 搅拌完成，2003(看向床对面)关联列表新增 2017(分享拌面)");
-                    }
+                    AddRuntimeAssociation(2003, 2017);
                     if (globalPool.TryGetValue(2003, out var p2003))
                     {
                         p2003.remainingStacks = 1;
                         p2003.isUnlocked = true;
                     }
-                    Debug.Log("[CardManager] 特殊效果: 搅拌完成，2003已重置");
+                    Debug.Log("[CardManager] 特殊效果: 搅拌完成，2003已重置，2017已加入2003运行时关联");
                     break;
                 }
 
@@ -553,57 +571,86 @@ namespace Game.Card
                         isCard2016GenerationPaused = true;
                     }
                     // 触发局内剧情对话
-                    EventCenter.Instance.EventTrigger(E_EventType.GameDialogueStart, "Dialogue2");
+                    EventCenter.Instance.EventTrigger(E_EventType.GameDialogueStart, "Dialogue/Dialogue2");
                     Debug.Log("[CardManager] 特殊效果: 分享拌面 → 2016层数-1且隐藏, 暂停生成, 触发对话");
                     break;
                 }
 
-                case 2018: // 拿回拌面：解除2016生成暂停，后续通过2002路径可重新生成2016
+                case 2018: // 拿回拌面：解除2016生成暂停，恢复2016可见
                 {
                     isCard2016GenerationPaused = false;
-                    Debug.Log("[CardManager] 特殊效果: 拿回拌面 → 解除2016生成暂停");
-                    break;
-                }
-
-                case 2025: // 吃面包：使用后将2026(拿走面包)隐藏且不再生成
-                {
-                    if (globalPool.TryGetValue(2026, out var pooled2026))
+                    if (globalPool.TryGetValue(2016, out var pooled2016) && !pooled2016.IsDepleted)
                     {
-                        pooled2026.remainingStacks = 0;
-                        pooled2026.isUnlocked = false;
+                        pooled2016.isUnlocked = true;
                     }
-                    Debug.Log("[CardManager] 特殊效果: 吃面包(2025) → 隐藏2026(拿走面包)");
+                    Debug.Log("[CardManager] 特殊效果: 拿回拌面 → 解除2016生成暂停，恢复2016可见");
                     break;
                 }
 
-                case 2026: // 拿走面包：如果2025(吃面包)未被使用过，将2025加入2001(掀开被子)的关联列表，并从当前视图和2024关联中移除2025
+                case 2025:
                 {
-                    if (!usedCardIds.Contains(2025))
+                    if (levelConfig != null && levelConfig.levelId == 1005)
                     {
-                        var card2001 = GetCardDataById(2001);
-                        if (card2001 != null && card2001.relatedCardIds != null && !card2001.relatedCardIds.Contains(2025))
-                        {
-                            card2001.relatedCardIds.Add(2025);
-                            Debug.Log("[CardManager] 特殊效果: 拿走面包(2026) → 2025未用过，将2025加入2001(掀开被子)的关联列表");
-                        }
-                        // 从当前视图隐藏2025，后续通过2030→2001路径重新解锁
-                        if (globalPool.TryGetValue(2025, out var pooled2025))
-                        {
-                            pooled2025.isUnlocked = false;
-                            Debug.Log("[CardManager] 特殊效果: 拿走面包(2026) → 隐藏2025，需经2030→2001路径重新获取");
-                        }
-                        // 从2024(打开储物柜)的关联列表中移除2025，防止再次打开储物柜时重新生成
-                        var card2024 = GetCardDataById(2024);
-                        if (card2024 != null && card2024.relatedCardIds != null && card2024.relatedCardIds.Contains(2025))
-                        {
-                            card2024.relatedCardIds.Remove(2025);
-                            Debug.Log("[CardManager] 特殊效果: 拿走面包(2026) → 从2024(打开储物柜)关联列表中移除2025");
-                        }
+                        // 第五夜：拿走卫生纸 → 将2040(前往走廊)加入2005(下床)的运行时关联
+                        AddRuntimeAssociation(2005, 2040);
+                        Debug.Log("[CardManager] 特殊效果: 拿走卫生纸(2025) → 2005(下床)运行时关联新增 2040(前往走廊)");
                     }
                     else
                     {
-                        Debug.Log("[CardManager] 特殊效果: 拿走面包(2026) → 2025已用过，不执行关联注入");
+                        // 第三夜：吃面包 → 使用后将2026(拿走面包)隐藏且不再生成
+                        if (globalPool.TryGetValue(2026, out var pooled2026))
+                        {
+                            pooled2026.remainingStacks = 0;
+                            pooled2026.isUnlocked = false;
+                        }
+                        Debug.Log("[CardManager] 特殊效果: 吃面包(2025) → 隐藏2026(拿走面包)");
                     }
+                    break;
+                }
+
+                case 2026:
+                {
+                    if (levelConfig != null && levelConfig.levelId == 1005)
+                    {
+                        // 第五夜：寻求宋明月帮助 → 将2040(前往走廊)加入2005(下床)的运行时关联
+                        AddRuntimeAssociation(2005, 2040);
+                        Debug.Log("[CardManager] 特殊效果: 寻求宋明月帮助(2026) → 2005(下床)运行时关联新增 2040(前往走廊)");
+                    }
+                    else
+                    {
+                        // 第三夜：拿走面包 → 如果2025(吃面包)未被使用过，将2025加入2001的关联列表
+                        if (!usedCardIds.Contains(2025))
+                        {
+                            var card2001 = GetCardDataById(2001);
+                            if (card2001 != null && card2001.relatedCardIds != null && !card2001.relatedCardIds.Contains(2025))
+                            {
+                                card2001.relatedCardIds.Add(2025);
+                                Debug.Log("[CardManager] 特殊效果: 拿走面包(2026) → 2025未用过，将2025加入2001(掀开被子)的关联列表");
+                            }
+                            if (globalPool.TryGetValue(2025, out var pooled2025))
+                            {
+                                pooled2025.isUnlocked = false;
+                                Debug.Log("[CardManager] 特殊效果: 拿走面包(2026) → 隐藏2025，需经2030→2001路径重新获取");
+                            }
+                            var card2024 = GetCardDataById(2024);
+                            if (card2024 != null && card2024.relatedCardIds != null && card2024.relatedCardIds.Contains(2025))
+                            {
+                                card2024.relatedCardIds.Remove(2025);
+                                Debug.Log("[CardManager] 特殊效果: 拿走面包(2026) → 从2024(打开储物柜)关联列表中移除2025");
+                            }
+                        }
+                        else
+                        {
+                            Debug.Log("[CardManager] 特殊效果: 拿走面包(2026) → 2025已用过，不执行关联注入");
+                        }
+                    }
+                    break;
+                }
+
+                case 2040: // 前往走廊：暂停老师的查寝逻辑
+                {
+                    Game.AI.TeacherAI.IsPatrolPaused = true;
+                    Debug.Log("[CardManager] 特殊效果: 前往走廊(2040) → 暂停老师查寝");
                     break;
                 }
             }
@@ -665,6 +712,7 @@ namespace Game.Card
             unlockedNonPersistentIds.Clear();
             savedNonPersistentStacks.Clear();
             replaceMap.Clear();
+            runtimeExtraAssociations.Clear();
             cardHistory.Clear();
             pooledCardIds.Clear();
         }

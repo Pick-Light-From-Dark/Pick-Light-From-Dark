@@ -86,6 +86,9 @@ public class GamePanel : BasePanel
     // ==================== 闭眼状态 ====================
 
     private Vector2 closeEyesBtnOriginalPos;
+    private Image closeEyesBtnImage;
+    private Sprite openEyeSprite;
+    private Sprite closeEyeSprite;
 
     [Header("关卡配置（留空则使用 TestLevelConfig）")]
     [SerializeField] private Game.Config.LevelConfigSO overrideLevelConfig;
@@ -158,12 +161,8 @@ public class GamePanel : BasePanel
 
     private void SetupEmotionDisplay()
     {
-        var emoBk = transform.Find("ImgBk/PlayerMessage/EmoDesImgBk");
-        if (emoBk != null)
-        {
-            chaosCountText = emoBk.Find("ChaosCount")?.GetComponent<TextMeshProUGUI>();
-            happlyCountText = emoBk.Find("HapplyCount")?.GetComponent<TextMeshProUGUI>();
-        }
+        chaosCountText = transform.Find("ImgBk/PlayerMessage/ChaosCount")?.GetComponent<TextMeshProUGUI>();
+        happlyCountText = transform.Find("ImgBk/PlayerMessage/HapplyCount")?.GetComponent<TextMeshProUGUI>();
 
         EventCenter.Instance.AddEventListener<int>(E_EventType.PanicChanged, OnEmotionChanged);
         EventCenter.Instance.AddEventListener<int>(E_EventType.ExciteChanged, OnEmotionChanged);
@@ -195,6 +194,9 @@ public class GamePanel : BasePanel
         {
             closeEyesBtn.onClick.AddListener(OnCloseEyesClicked);
             closeEyesBtnOriginalPos = closeEyesBtn.GetComponent<RectTransform>().anchoredPosition;
+            closeEyesBtnImage = closeEyesBtn.GetComponent<Image>();
+            openEyeSprite = Resources.Load<Sprite>("UI/Icon/open_eye");
+            closeEyeSprite = Resources.Load<Sprite>("UI/Icon/close_eye");
         }
 
         if (eyeCloseOverlay == null)
@@ -747,6 +749,9 @@ public class GamePanel : BasePanel
                     if (rt != null)
                         rt.anchoredPosition = closed ? Vector2.zero : closeEyesBtnOriginalPos;
                     if (closed) child.SetAsLastSibling();
+                    // 切换睁眼/闭眼图片
+                    if (closeEyesBtnImage != null)
+                        closeEyesBtnImage.sprite = closed ? closeEyeSprite : openEyeSprite;
                     continue;
                 }
                 if (child.name == "ThinkingImgBk")
@@ -762,6 +767,9 @@ public class GamePanel : BasePanel
                     }
                     continue;
                 }
+                // 跳过对话面板，避免睁眼时误激活
+                if (child.name.StartsWith("PlayerGameDialogue") || child.name.StartsWith("OtherGameDialogue"))
+                    continue;
                 child.gameObject.SetActive(!closed);
             }
         }
