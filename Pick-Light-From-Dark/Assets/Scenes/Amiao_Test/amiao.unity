@@ -214,7 +214,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1001 &2026732362
+--- !u!1001 &1908751514
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -224,7 +224,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1000000000000000000, guid: 427fbd660cdbb754c84a3b016b4ec17d, type: 3}
       propertyPath: m_Name
-      value: FungusVN_2-1
+      value: FungusVN_2
       objectReference: {fileID: 0}
     - target: {fileID: 1000000000000000001, guid: 427fbd660cdbb754c84a3b016b4ec17d, type: 3}
       propertyPath: m_LocalPosition.x
@@ -266,10 +266,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 1000000000000000002, guid: 427fbd660cdbb754c84a3b016b4ec17d, type: 3}
-      propertyPath: dialogueText
-      value: 
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -280,4 +276,4 @@ SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 1135900075}
-  - {fileID: 2026732362}
+  - {fileID: 1908751514}
