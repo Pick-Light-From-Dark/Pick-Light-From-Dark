@@ -50,12 +50,13 @@ public class MusicMgr : BaseManager<MusicMgr>
                 soundList.RemoveAt(i);
                 continue;
             }
-            if(!soundList[i].isPlaying)
+            var source = soundList[i];
+            if (!source.isPlaying)
             {
-                //音效播放完毕 如果当前没有使用 我们就把音效片段置空
-                soundList[i].clip = null;
-                PoolMgr.Instance.PushObj(soundList[i].gameObject);
+                source.clip = null;
                 soundList.RemoveAt(i);
+                if (source != null && source.gameObject != null)
+                    PoolMgr.Instance.PushObj(source.gameObject);
             }
         }
     }
