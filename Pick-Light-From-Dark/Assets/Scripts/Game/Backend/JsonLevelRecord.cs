@@ -56,6 +56,7 @@ namespace Game.Backend
         public long timestamp;        // UTC 时间戳（毫秒）
         public bool isWin;           // 是否通关
         public float timeUsed;        // 耗时（秒）
+        public string endingBranch;   // 结局分支标识（如 eat1 / eat2）
         public List<CardUseEntry> cardUses;
         public List<TaskGoalRecord> taskGoals;
 

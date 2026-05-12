@@ -111,4 +111,9 @@ public enum E_EventType
     /// 背景画面跳转（int参数=背景画面ID）
     /// </summary>
     BackgroundJump,
+
+    /// <summary>
+    /// 剧情选项被选中（string参数=选项标识，如"eat1""not_eat"）
+    /// </summary>
+    StoryChoiceMade,
 }

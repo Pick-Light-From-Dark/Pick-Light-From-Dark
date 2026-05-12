@@ -855,6 +855,13 @@ namespace Game.Test
 
             if (currentChoiceLine == null) return;
 
+            // 发送剧情选择事件，记录结局分支
+            string choiceId = choice == 1 ? currentChoiceLine.choice1Id : currentChoiceLine.choice2Id;
+            if (!string.IsNullOrEmpty(choiceId))
+            {
+                EventCenter.Instance.EventTrigger(E_EventType.StoryChoiceMade, choiceId);
+            }
+
             string result = choice == 1 ? currentChoiceLine.choice1Result : currentChoiceLine.choice2Result;
 
             if (!string.IsNullOrEmpty(result))
