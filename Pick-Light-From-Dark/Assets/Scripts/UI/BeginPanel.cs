@@ -14,28 +14,20 @@ public class BeginPanel : BasePanel
         switch (btnName)
         {
             case "StartBtn":
-                if (dialogueText == null)
-                {
-                    Debug.LogError("BeginPanel: dialogueText 未赋值！请在 Inspector 中将对话文本文件拖到 BeginPanel 的 dialogueText 字段");
-                    return;
-                }
-
                 MusicMgr.Instance.PlaySound("按钮点击音效");
-                // UIMgr.Instance.ShowPanel<GalDialoguePanel>(
-                //     E_UILayer.Middle,
-                //     (panel) =>
-                //     {
-                //         if (panel == null)
-                //         {
-                //             Debug.LogError("GalDialoguePanel 加载失败！");
-                //             return;
-                //         }
-                //         DialogueSystem.Instance.BindPanel(panel);
-                //         DialogueSystem.Instance.StartDialogue(dialogueText, DialogueSystem.DialogueMode.Gal);
-                //     }
-                // );
-                UIMgr.Instance.ShowPanel<GamePanel>();
-                UIMgr.Instance.HidePanel<BeginPanel>();
+                // 启动关卡流程协调器（三段式：剧情→游玩→结尾）
+                var coordinator = FindObjectOfType<Game.Flow.LevelFlowCoordinator>();
+                if (coordinator != null)
+                {
+                    UIMgr.Instance.HidePanel<BeginPanel>();
+                    // LevelFlowCoordinator 在 Start() 中已自动开始流程
+                }
+                else
+                {
+                    Debug.LogWarning("[BeginPanel] 场景中未找到 LevelFlowCoordinator，直接进游戏");
+                    UIMgr.Instance.ShowPanel<GamePanel>();
+                    UIMgr.Instance.HidePanel<BeginPanel>();
+                }
                 break;
 
             case "SaveBtn":
