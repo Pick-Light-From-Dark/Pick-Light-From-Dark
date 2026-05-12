@@ -57,6 +57,7 @@ namespace Game.Backend
         public bool isWin;           // 是否通关
         public float timeUsed;        // 耗时（秒）
         public string endingBranch;   // 结局分支标识（如 eat1 / eat2）
+        public int endingId;          // 触发的结局ID（6001~6005）
         public List<CardUseEntry> cardUses;
         public List<TaskGoalRecord> taskGoals;
 

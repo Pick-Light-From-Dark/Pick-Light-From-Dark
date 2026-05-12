@@ -16,6 +16,7 @@ namespace Game.Backend
         private bool _isRecording;
 
         private string _pendingEndingBranch;
+        private int _pendingEndingId;
 
         private void Start()
         {
@@ -42,6 +43,15 @@ namespace Game.Backend
         }
 
         /// <summary>
+        /// 记录结局触发（由 EndingManager 调用）
+        /// </summary>
+        public void RecordEnding(int endingId)
+        {
+            _pendingEndingId = endingId;
+            Debug.Log($"[LevelRecordManager] 记录结局ID: {endingId}");
+        }
+
+        /// <summary>
         /// 关卡开始时由外界调用（也可通过 LevelStart 事件自动触发）
         /// </summary>
         public void StartRecording(int levelId)
@@ -50,6 +60,7 @@ namespace Game.Backend
             _levelStartTime = Time.time;
             _isRecording = true;
             _pendingEndingBranch = null;
+            _pendingEndingId = 0;
             SyncTaskGoals();
             Debug.Log($"[LevelRecordManager] 开始记录关卡 {levelId}");
         }
@@ -64,11 +75,13 @@ namespace Game.Backend
             _currentRecord.timeUsed = Time.time - _levelStartTime;
             _currentRecord.isWin = isWin;
             _currentRecord.endingBranch = _pendingEndingBranch;
+            _currentRecord.endingId = _pendingEndingId;
             SyncTaskGoals();
             PlayerDataStore.Instance.SaveLevelRecord(_currentRecord);
             _isRecording = false;
             _pendingEndingBranch = null;
-            Debug.Log($"[LevelRecordManager] 关卡结束 isWin={isWin} 耗时={_currentRecord.timeUsed:F1}s 结局分支={_currentRecord.endingBranch}");
+            _pendingEndingId = 0;
+            Debug.Log($"[LevelRecordManager] 关卡结束 isWin={isWin} 耗时={_currentRecord.timeUsed:F1}s 结局分支={_currentRecord.endingBranch} 结局ID={_currentRecord.endingId}");
         }
 
         private void OnLevelStart(int levelId)
