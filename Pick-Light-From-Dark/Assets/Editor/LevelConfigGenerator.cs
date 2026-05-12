@@ -55,6 +55,11 @@ namespace Game.Editor
                 new TaskGoal(2008, 1) { state = TaskState.InProgress },
             };
 
+            config.preDialogueFile = "Dialogue1-1_pre";
+            config.postDialogueFile = "Dialogue1-1_post_eat";
+            config.isChoiceLevel = true;
+            config.choice2EndingDialogueFile = "Dialogue1-1_post_noeat";
+
             EditorUtility.SetDirty(config);
             Debug.Log("[LevelConfigGenerator] LevelConfig_1.asset 已更新");
         }
@@ -88,6 +93,10 @@ namespace Game.Editor
                 new TaskGoal(2016, 1) { state = TaskState.InProgress },
                 new TaskGoal(2017, 1) { state = TaskState.InProgress },
             };
+
+            config.preDialogueFile = "Dialogue2_pre";
+            config.postDialogueFile = "Dialogue2_post";
+
             EditorUtility.SetDirty(config);
             Debug.Log("[LevelConfigGenerator] LevelConfig_2.asset 已更新");
         }

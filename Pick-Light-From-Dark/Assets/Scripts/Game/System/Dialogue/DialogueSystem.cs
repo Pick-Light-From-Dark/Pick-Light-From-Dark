@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class DialogueSystem : MonoBehaviour
 {
@@ -60,6 +59,12 @@ public class DialogueSystem : MonoBehaviour
     public bool IsFastForwarding => isFastForwarding;
     public bool IsAutoRewinding => isAutoRewinding;
 
+    /// <summary>最近一次选择结果：0=无选择, 1=选项1, 2=选项2</summary>
+    public int LastChoiceIndex { get; private set; } = 0;
+
+    /// <summary>对话结束回调（一次性，触发后自动清空）</summary>
+    private System.Action onDialogueComplete;
+
     private void Awake()
     {
         if (_instance != null && _instance != this)
@@ -90,6 +95,11 @@ public class DialogueSystem : MonoBehaviour
         panelUI = panel;
     }
 
+    public void SetOnComplete(System.Action callback)
+    {
+        onDialogueComplete = callback;
+    }
+
     // =========================================
     // 启动对话
     // =========================================
@@ -110,6 +120,7 @@ public class DialogueSystem : MonoBehaviour
         currentMode = mode;
         lines = DialogueParser.Parse(txt);
         lineIndex = 0;
+        LastChoiceIndex = 0;
 
         panelUI.Show();
         NextLine();
@@ -482,6 +493,7 @@ public class DialogueSystem : MonoBehaviour
     void OnChoose1(DialogueLine line)
     {
         isChoosing = false;
+        LastChoiceIndex = 1;
         if (btnsObj != null) btnsObj.SetActive(false);
 
         panelUI.SetContent("", line.choice1Result);
@@ -491,9 +503,9 @@ public class DialogueSystem : MonoBehaviour
     void OnChoose2(DialogueLine line)
     {
         isChoosing = false;
+        LastChoiceIndex = 2;
         if (btnsObj != null) btnsObj.SetActive(false);
 
-        // 如果有 choice2Result，显示结果后继续
         if (!string.IsNullOrEmpty(line.choice2Result))
         {
             panelUI.SetContent("", line.choice2Result);
@@ -502,7 +514,6 @@ public class DialogueSystem : MonoBehaviour
         else
         {
             EndDialogue();
-            SceneManager.LoadScene("GameScene");
         }
     }
 
@@ -531,5 +542,8 @@ public class DialogueSystem : MonoBehaviour
 
         // [已注释] Fungus 桥接：隐藏 SayDialog
         // FungusBridge.Instance?.HideSayDialog();
+
+        onDialogueComplete?.Invoke();
+        onDialogueComplete = null;
     }
 }

@@ -10,6 +10,7 @@ namespace Game.AI
     /// </summary>
     public class TeacherAI : MonoBehaviour
     {
+        public static TeacherAI Instance { get; private set; }
         [Header("当前状态")]
         [SerializeField] private TeacherState currentState;
         [SerializeField] private InspectType currentInspectType;
@@ -32,7 +33,13 @@ namespace Game.AI
 
         void Awake()
         {
+            Instance = this;
             gameFlow = GameFlowController.Instance;
+        }
+
+        void OnDestroy()
+        {
+            if (Instance == this) Instance = null;
         }
 
         /// <summary>
@@ -231,16 +238,20 @@ namespace Game.AI
             // 获取玩家状态
             bool playerInBed = playerState != null && playerState.IsInBed();
             bool playerEyesClosed = playerState != null && playerState.IsEyesClosed();
-            bool isReading = cardReadingSystem != null && cardReadingSystem.IsReading();
+            bool isReading = cardReadingSystem != null ? cardReadingSystem.IsReading() : GamePanel.IsCardReading;
 
             // 获取当前读条片段
             Game.Data.Segment currentSegment = null;
             bool isInUninterruptibleSegment = false;
 
-            if (isReading && cardReadingSystem != null)
+            if (cardReadingSystem != null && isReading)
             {
                 currentSegment = cardReadingSystem.GetCurrentSegment();
                 isInUninterruptibleSegment = (currentSegment != null && !currentSegment.isInterruptible);
+            }
+            else if (isReading)
+            {
+                isInUninterruptibleSegment = GamePanel.IsInUninterruptibleSegment;
             }
 
             // 获取情绪值

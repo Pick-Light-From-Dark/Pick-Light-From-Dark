@@ -23,6 +23,7 @@ namespace Game.Flow
         public FungusVNController vnController;
 
         private bool isGameOver = false;
+        private Game.AI.TeacherAI teacherAI;
 
         void Start()
         {
@@ -81,18 +82,19 @@ namespace Game.Flow
         {
             Debug.Log("[LevelFlowCoordinator] === 阶段2：游玩 ===");
 
-            // 显示游戏面板
-            UIMgr.Instance.ShowPanel<GamePanel>();
+            // 创建老师AI
+            var teacherObj = new GameObject("TeacherAI");
+            teacherAI = teacherObj.AddComponent<Game.AI.TeacherAI>();
 
-            // 初始化游戏流程控制器
-            if (levelConfig != null)
-            {
-                GameFlowController.Instance.Initialize(levelConfig);
-            }
-            else
-            {
-                Debug.LogWarning("[LevelFlowCoordinator] levelConfig 未赋值，GameFlowController 未初始化");
-            }
+            // 显示游戏面板并初始化
+            UIMgr.Instance.ShowPanel<GamePanel>(
+                E_UILayer.Middle,
+                (panel) =>
+                {
+                    panel.InitializeWithConfig(levelConfig);
+                    teacherAI.Initialize(levelConfig);
+                }
+            );
 
             // 监听游玩结束事件
             EventCenter.Instance.AddEventListener(E_EventType.GameWin, OnGameWin);
@@ -106,6 +108,8 @@ namespace Game.Flow
             isGameOver = true;
 
             Debug.Log("[LevelFlowCoordinator] 游戏胜利，进入结尾剧情...");
+            CleanupTeacherAI();
+            UIMgr.Instance.HidePanel<GamePanel>();
             UnsubscribeGameEvents();
             StartEndingStory();
         }
@@ -117,11 +121,11 @@ namespace Game.Flow
             isGameOver = true;
 
             Debug.Log($"[LevelFlowCoordinator] 游戏失败: {reason}");
+            CleanupTeacherAI();
+            UIMgr.Instance.HidePanel<GamePanel>();
             UnsubscribeGameEvents();
 
-            // 显示失败提示面板（或返回主菜单）
             UIMgr.Instance.ShowPanel<TipPanel>();
-            Debug.Log("[LevelFlowCoordinator] 已显示 TipPanel（失败提示），可在此扩展失败 UI");
         }
 
         /// <summary>阶段3：结尾剧情</summary>
@@ -162,8 +166,18 @@ namespace Game.Flow
             EventCenter.Instance.RemoveEventListener<string>(E_EventType.GameLose, OnGameLose);
         }
 
+        void CleanupTeacherAI()
+        {
+            if (teacherAI != null)
+            {
+                Destroy(teacherAI.gameObject);
+                teacherAI = null;
+            }
+        }
+
         void OnDestroy()
         {
+            CleanupTeacherAI();
             UnsubscribeGameEvents();
         }
     }

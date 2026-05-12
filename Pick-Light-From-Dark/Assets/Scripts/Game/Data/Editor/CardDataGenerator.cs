@@ -92,7 +92,7 @@ namespace Game.Data.Editor
             CreateCard(folder, 2003, "看向床对面", "转为床对面视角，可以看到舍友，也有可能和舍友聊天。仍然为在被子中状态。",
                 "想换个姿势睡觉……", CardType.NonStackable, 1,
                 new[] { new Segment(3f, true) },
-                0, 3, 2, RelatedType.Persistent, new[] { 2010, 2011 }, 0,
+                0, 3, 2, RelatedType.Persistent, new[] { 2001, 2002, 2010 }, 0,
                 "1002", BedStateChange.None, false, "无",
                 1, 5004, "");
 
@@ -117,7 +117,7 @@ namespace Game.Data.Editor
             CreateCard(folder, 2011, "盖回被子", "盖回被子中，回到装睡状态",
                 "身体融入被子中，还是盖着被子有安全感……", CardType.NonStackable, 1,
                 new[] { new Segment(2f, true) },
-                4, -4, -2, RelatedType.Persistent, new[] { 2001, 2002, 2010 }, 0,
+                4, -4, -2, RelatedType.Persistent, new[] { 2001, 2002, 2003, 2010 }, 0,
                 "all", BedStateChange.EnterBed, false,
                 "本张卡为老师查寝判定条件之一的回到被子中的值的改变卡，当使用这张卡时，回到被子中，这个值就会变成TRUE",
                 1, 5001, "");
@@ -223,6 +223,10 @@ namespace Game.Data.Editor
             container.cardData = data;
 
             string path = $"{folder}Card_{id}_{name}.asset";
+            // 删除旧资产，确保数据更新
+            var existing = AssetDatabase.LoadAssetAtPath<CardDataContainer>(path);
+            if (existing != null)
+                AssetDatabase.DeleteAsset(path);
             AssetDatabase.CreateAsset(container, path);
         }
     }

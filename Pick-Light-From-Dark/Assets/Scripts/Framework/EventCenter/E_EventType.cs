@@ -113,6 +113,14 @@ public enum E_EventType
     BackgroundJump,
 
     /// <summary>
+    /// 局内剧情对话开始（string参数=对话资源路径，如"Dialogue2"）
+    /// </summary>
+    GameDialogueStart,
+    /// <summary>
+    /// 局内剧情对话结束（无参）
+    /// </summary>
+    GameDialogueEnd,
+    /// <summary>
     /// 剧情选项被选中（string参数=选项标识，如"eat1""not_eat"）
     /// </summary>
     StoryChoiceMade,

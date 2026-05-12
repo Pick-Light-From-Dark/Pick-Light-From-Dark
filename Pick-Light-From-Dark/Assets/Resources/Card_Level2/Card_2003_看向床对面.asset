@@ -28,7 +28,7 @@ MonoBehaviour:
     interruptPanicAdd: 0
     bindTaskId: 0
     relatedType: 0
-    relatedCardIds: da070000db070000
+    relatedCardIds: d1070000d2070000da070000
     allowedLevelIds:
     - 1002
     bedStateChange: 0

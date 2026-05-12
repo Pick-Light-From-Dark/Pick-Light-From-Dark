@@ -1,10 +1,8 @@
 using UnityEngine;
+using Game.Flow;
 
 public class BeginPanel : BasePanel
 {
-    [Header("对话文本")]
-    public TextAsset dialogueText;
-
     public override void HideMe() { }
 
     public override void ShowMe() { }
@@ -15,8 +13,7 @@ public class BeginPanel : BasePanel
         {
             case "StartBtn":
                 MusicMgr.Instance.PlaySound("按钮点击音效");
-                // 启动关卡流程协调器（三段式：剧情→游玩→结尾）
-                var coordinator = FindObjectOfType<Game.Flow.LevelFlowCoordinator>();
+                var coordinator = FindObjectOfType<LevelFlowCoordinator>();
                 if (coordinator != null)
                 {
                     UIMgr.Instance.HidePanel<BeginPanel>();
@@ -24,9 +21,9 @@ public class BeginPanel : BasePanel
                 }
                 else
                 {
-                    Debug.LogWarning("[BeginPanel] 场景中未找到 LevelFlowCoordinator，直接进游戏");
-                    UIMgr.Instance.ShowPanel<GamePanel>();
+                    Debug.LogWarning("[BeginPanel] 未找到 LevelFlowCoordinator，使用 LevelFlowManager 兜底");
                     UIMgr.Instance.HidePanel<BeginPanel>();
+                    LevelFlowManager.Instance.StartGame();
                 }
                 break;
 
