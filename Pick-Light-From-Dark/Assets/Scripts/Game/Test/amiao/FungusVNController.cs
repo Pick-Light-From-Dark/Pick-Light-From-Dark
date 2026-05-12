@@ -300,15 +300,33 @@ namespace Game.Test
 
         void SetupDialogMask()
         {
-            if (sayDialog == null || dialogMask == null) return;
+            if (sayDialog == null)
+            {
+                Debug.LogWarning("[SetupDialogMask] sayDialog 为 null，跳过");
+                return;
+            }
+            if (dialogMask == null)
+            {
+                Debug.LogWarning("[SetupDialogMask] dialogMask 未赋值，跳过");
+                return;
+            }
 
             var canvas = sayDialog.GetComponent<Canvas>();
-            if (canvas == null) return;
+            if (canvas == null)
+            {
+                Debug.LogWarning("[SetupDialogMask] sayDialog 上没有 Canvas，跳过");
+                return;
+            }
 
             // 查找是否已存在遮罩层
             var existing = canvas.transform.Find("DialogMask");
-            if (existing != null) return;
+            if (existing != null)
+            {
+                Debug.Log("[SetupDialogMask] DialogMask 已存在，跳过创建");
+                return;
+            }
 
+            // 创建全屏遮罩层
             var maskGo = new GameObject("DialogMask");
             maskGo.transform.SetParent(canvas.transform, false);
             maskGo.transform.SetAsFirstSibling();
@@ -323,17 +341,58 @@ namespace Game.Test
             maskImg.sprite = dialogMask;
             maskImg.color = Color.white;
             maskImg.raycastTarget = false;
+            // 确保使用 Simple 模式，避免 Sliced 模式下 sprite 为 null 时的显示异常
+            maskImg.type = Image.Type.Simple;
 
-            // 将 Panel 原有背景设为透明，避免遮挡遮罩层
-            var panel = canvas.transform.Find("Panel");
-            if (panel != null)
+            Debug.Log("[SetupDialogMask] DialogMask 已创建并设置 sprite");
+
+            // 将 Panel 及其子对象中的所有 Image 背景设为透明
+            bool panelCleared = ClearPanelBackground(canvas.transform);
+            if (!panelCleared)
             {
-                var panelImg = panel.GetComponent<Image>();
-                if (panelImg != null)
+                Debug.LogWarning("[SetupDialogMask] 未找到 Panel，尝试查找其他背景对象...");
+                // 兜底：尝试常见背景对象名
+                string[] fallbackNames = { "Background", "Bg", "BackGround", "Panel" };
+                foreach (var name in fallbackNames)
                 {
-                    panelImg.sprite = null;
-                    panelImg.color = new Color(1, 1, 1, 0);
+                    var bg = canvas.transform.Find(name);
+                    if (bg != null)
+                    {
+                        ClearImageRecursive(bg);
+                        Debug.Log($"[SetupDialogMask] 已清除背景对象 '{name}'");
+                        break;
+                    }
                 }
+            }
+        }
+
+        /// <summary>清除 Panel 及其子对象中的所有 Image 背景</summary>
+        bool ClearPanelBackground(Transform canvasTransform)
+        {
+            var panel = canvasTransform.Find("Panel");
+            if (panel == null) return false;
+
+            ClearImageRecursive(panel);
+            Debug.Log("[SetupDialogMask] Panel 及其子对象的 Image 已设为透明");
+            return true;
+        }
+
+        /// <summary>递归清除指定 Transform 及其子对象中的 Image 颜色</summary>
+        void ClearImageRecursive(Transform target)
+        {
+            if (target == null) return;
+
+            var img = target.GetComponent<Image>();
+            if (img != null)
+            {
+                img.sprite = null;
+                img.color = new Color(1, 1, 1, 0);
+                img.type = Image.Type.Simple;
+            }
+
+            foreach (Transform child in target)
+            {
+                ClearImageRecursive(child);
             }
         }
 
@@ -592,6 +651,24 @@ namespace Game.Test
             if (s == null) s = Resources.Load<Sprite>("Backgrounds/" + name);
             if (s == null) s = Resources.Load<Sprite>("UI/Dialogue/Backgrounds/" + name);
 
+#if UNITY_EDITOR
+            if (s == null)
+            {
+                string[] artPaths = new string[]
+                {
+                    $"Assets/Art/Characters/cg/{name}.png",
+                    $"Assets/Art/DialogueTestArt/{name}.png",
+                    $"Assets/Art/Scene/{name}.png",
+                    $"Assets/Art/{name}.png"
+                };
+                foreach (var path in artPaths)
+                {
+                    s = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(path);
+                    if (s != null) break;
+                }
+            }
+#endif
+
             return s;
         }
 
@@ -797,6 +874,15 @@ namespace Game.Test
             txt.fontSize = 26;
             txt.color = Color.white;
             txt.alignment = TextAnchor.MiddleCenter;
+
+            var chineseFont = Resources.Load<Font>("Font/文软雅黑");
+            if (chineseFont == null) chineseFont = Resources.Load<Font>("Fonts/文软雅黑");
+            if (chineseFont == null && sayDialog != null)
+            {
+                var existingText = sayDialog.GetComponentInChildren<Text>(true);
+                if (existingText != null) chineseFont = existingText.font;
+            }
+            if (chineseFont != null) txt.font = chineseFont;
 
             return btn;
         }
