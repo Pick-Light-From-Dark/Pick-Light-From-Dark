@@ -1,0 +1,31 @@
+// 备份文件：StoryProgressRecord — 已迁移至 Fungus Save System
+// 如需恢复自研 JSON 存档，可将此代码复制回 JsonLevelRecord.cs
+
+using System;
+
+namespace Game.Backend
+{
+    /// <summary>
+    /// 剧情进度存档记录（支持中途存档/读档）
+    /// </summary>
+    [Serializable]
+    public class StoryProgressRecord
+    {
+        public int levelId;           // 所属关卡
+        public string storyFileName;  // 剧情文件名
+        public int lineIndex;         // 当前行号
+        public long timestamp;        // 存档时间
+        public bool isOpeningDone;    // 开场剧情是否已看完
+
+        public StoryProgressRecord() { }
+
+        public StoryProgressRecord(int levelId, string storyFileName, int lineIndex, bool isOpeningDone)
+        {
+            this.levelId = levelId;
+            this.storyFileName = storyFileName;
+            this.lineIndex = lineIndex;
+            this.timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            this.isOpeningDone = isOpeningDone;
+        }
+    }
+}

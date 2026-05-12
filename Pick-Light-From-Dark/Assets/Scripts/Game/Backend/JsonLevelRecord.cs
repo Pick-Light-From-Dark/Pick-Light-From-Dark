@@ -73,34 +73,8 @@ namespace Game.Backend
         }
     }
 
-    /*
-     * StoryProgressRecord 已迁移至 Fungus Save System。
-     * 保留代码作为备份，如需恢复自研 JSON 存档可取消注释。
-     *
-    /// <summary>
-    /// 剧情进度存档记录（支持中途存档/读档）
-    /// </summary>
-    [Serializable]
-    public class StoryProgressRecord
-    {
-        public int levelId;           // 所属关卡
-        public string storyFileName;  // 剧情文件名
-        public int lineIndex;         // 当前行号
-        public long timestamp;        // 存档时间
-        public bool isOpeningDone;    // 开场剧情是否已看完
-
-        public StoryProgressRecord() { }
-
-        public StoryProgressRecord(int levelId, string storyFileName, int lineIndex, bool isOpeningDone)
-        {
-            this.levelId = levelId;
-            this.storyFileName = storyFileName;
-            this.lineIndex = lineIndex;
-            this.timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-            this.isOpeningDone = isOpeningDone;
-        }
-    }
-    */
+    // StoryProgressRecord 已迁移至 Fungus Save System。
+    // 备份代码位于 Backup/StoryProgressRecord_backup.cs.txt
 
     /// <summary>
     /// 所有玩家记录的顶层容器（对应整个 JSON 文件）
@@ -109,7 +83,7 @@ namespace Game.Backend
     public class PlayerDataFile
     {
         public List<JsonLevelRecord> records;
-        // public StoryProgressRecord storyProgress; // 已迁移至 Fungus Save System
+        // StoryProgressRecord storyProgress 已迁移至 Fungus Save System。备份代码见 Backup/
 
         public PlayerDataFile()
         {

@@ -1,0 +1,27 @@
+// 备份文件：SaveStoryProgress / LoadStoryProgress — 已迁移至 Fungus Save System
+// 如需恢复自研 JSON 存档，可将此代码复制回 PlayerDataStore.cs
+
+        /// <summary>
+        /// 保存剧情进度（覆盖式，仅存最新进度）
+        /// </summary>
+        public void SaveStoryProgress(StoryProgressRecord record)
+        {
+            if (record == null)
+            {
+                Debug.LogWarning("[PlayerDataStore] SaveStoryProgress 传入 record 为 null，忽略保存");
+                return;
+            }
+            var data = LoadOrCreate();
+            data.storyProgress = record;
+            WriteFile(data);
+            Debug.Log($"[PlayerDataStore] 已保存剧情进度: {record.storyFileName} 行号 {record.lineIndex}");
+        }
+
+        /// <summary>
+        /// 读取剧情进度
+        /// </summary>
+        public StoryProgressRecord LoadStoryProgress()
+        {
+            var data = LoadOrCreate();
+            return data.storyProgress;
+        }
