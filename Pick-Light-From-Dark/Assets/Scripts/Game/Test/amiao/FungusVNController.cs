@@ -62,6 +62,9 @@ namespace Game.Test
         [Header("快进配置")]
         public float fastForwardInterval = 0.1f;
 
+        [Header("Fungus 存档")]
+        public Flowchart saveFlowchart; // VN_SaveFlowchart
+
         private List<DialogueLine> lines;
         private int lineIndex;
         private bool isProcessing;
@@ -99,7 +102,27 @@ namespace Game.Test
                 return;
             }
             lines = DialogueParser.Parse(dialogueText);
-            lineIndex = 0;
+
+            // 检查是否有 Fungus 存档需要恢复
+            if (saveFlowchart != null)
+            {
+                int savedLine = saveFlowchart.GetIntegerVariable("VN_LineIndex");
+                string savedFile = saveFlowchart.GetStringVariable("VN_StoryFile");
+                if (savedLine > 0 && dialogueText.name == savedFile)
+                {
+                    lineIndex = savedLine;
+                    Debug.Log($"[FungusVNController] 从 Fungus 存档恢复，行号: {lineIndex}");
+                }
+                else
+                {
+                    lineIndex = 0;
+                }
+            }
+            else
+            {
+                lineIndex = 0;
+            }
+
             ShowNextLine();
         }
 
@@ -634,19 +657,44 @@ namespace Game.Test
             }
         }
 
-        /// <summary>手动保存当前剧情进度</summary>
+        /// <summary>手动保存当前剧情进度（使用 Fungus SaveManager）</summary>
         public void SaveProgress()
         {
-            if (dialogueText == null) return;
-
-            var record = new Game.Backend.StoryProgressRecord
+            if (saveFlowchart == null)
             {
-                storyFileName = dialogueText.name,
-                lineIndex = lineIndex,
-                isOpeningDone = false
-            };
-            Game.Backend.PlayerDataStore.Instance.SaveStoryProgress(record);
-            Debug.Log($"[FungusVNController] 剧情进度已存档: {dialogueText.name} 行号 {lineIndex}");
+                Debug.LogWarning("[FungusVNController] saveFlowchart 未赋值，无法存档");
+                return;
+            }
+
+            UpdateSaveVars();
+
+            var saveManager = FungusManager.Instance.SaveManager;
+            saveManager.AddSavePoint("ManualSave", $"手动存档 - {dialogueText.name} 行{lineIndex}");
+            saveManager.Save("vn_save");
+            Debug.Log($"[FungusVNController] Fungus 存档已保存: {dialogueText.name} 行{lineIndex}");
+        }
+
+        /// <summary>从 Fungus 存档恢复进度</summary>
+        public void LoadProgress()
+        {
+            var saveManager = FungusManager.Instance.SaveManager;
+            if (!saveManager.SaveDataExists("vn_save"))
+            {
+                Debug.Log("[FungusVNController] 无存档，从头开始");
+                return;
+            }
+
+            // Fungus Load 会重新加载场景并恢复 Flowchart 变量
+            // 场景加载完成后 Start() 中读取 Flowchart 变量恢复 lineIndex
+            saveManager.Load("vn_save");
+        }
+
+        /// <summary>更新 Flowchart 存档变量</summary>
+        void UpdateSaveVars()
+        {
+            if (saveFlowchart == null) return;
+            saveFlowchart.SetIntegerVariable("VN_LineIndex", lineIndex);
+            saveFlowchart.SetStringVariable("VN_StoryFile", dialogueText != null ? dialogueText.name : "");
         }
 
         /// <summary>推进到下一行对话</summary>
@@ -662,6 +710,7 @@ namespace Game.Test
             isProcessing = true;
 
             var line = lines[lineIndex++];
+            UpdateSaveVars(); // 每行切换后更新 Flowchart 存档变量
 
             // ========== 分层背景处理 ==========
             if (line.isLayerCommand)

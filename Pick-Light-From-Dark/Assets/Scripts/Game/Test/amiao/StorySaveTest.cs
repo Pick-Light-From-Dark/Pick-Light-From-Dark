@@ -1,28 +1,27 @@
 using UnityEngine;
-using Game.Backend;
+using Fungus;
 
 namespace Game.Test
 {
     /// <summary>
-    /// 存档系统测试工具 — 挂载到任意 FungusVN 实例上即可测试存档/读档
+    /// Fungus 存档系统测试工具 — 挂载到任意 FungusVN 实例上即可测试存档/读档
     /// 快捷键：
     ///   F5 = 手动存档当前剧情进度
     ///   F8 = 模拟"开场剧情结束自动存档"
-    ///   F9 = 读档验证（打印存档内容到 Console）
-    ///   F12 = 清空所有存档数据
+    ///   F9 = 读档验证（从 Fungus 存档恢复）
+    ///   F12 = 清空 Fungus 存档数据
     /// </summary>
     public class StorySaveTest : MonoBehaviour
     {
         [Header("测试配置")]
         public FungusVNController vnController;
-        public int testLevelId = 1;
 
         void Start()
         {
             if (vnController == null)
                 vnController = GetComponent<FungusVNController>();
 
-            Debug.Log("[StorySaveTest] 存档测试工具已启动");
+            Debug.Log("[StorySaveTest] Fungus 存档测试工具已启动");
             Debug.Log("[StorySaveTest] F5=手动存档 | F8=模拟自动存档 | F9=读档验证 | F12=清空存档");
         }
 
@@ -44,31 +43,25 @@ namespace Game.Test
             // F8 — 模拟"开场剧情结束自动存档"
             if (Input.GetKeyDown(KeyCode.F8))
             {
-                var record = new StoryProgressRecord
+                if (vnController != null && vnController.saveFlowchart != null)
                 {
-                    levelId = testLevelId,
-                    storyFileName = vnController != null && vnController.dialogueText != null
-                        ? vnController.dialogueText.name
-                        : "TestStory",
-                    lineIndex = -1, // -1 表示开场剧情已全部看完
-                    isOpeningDone = true
-                };
-                PlayerDataStore.Instance.SaveStoryProgress(record);
-                Debug.Log($"[StorySaveTest] 模拟自动存档完成: level={testLevelId}, isOpeningDone=true");
+                    vnController.saveFlowchart.SetBooleanVariable("VN_IsOpeningDone", true);
+                }
+
+                var saveManager = FungusManager.Instance.SaveManager;
+                saveManager.AddSavePoint("OpeningComplete", "开场剧情结束自动存档");
+                saveManager.Save("vn_save");
+                Debug.Log("[StorySaveTest] 模拟自动存档完成: isOpeningDone=true");
             }
 
-            // F9 — 读档验证
+            // F9 — 读档验证（从 Fungus 存档恢复）
             if (Input.GetKeyDown(KeyCode.F9))
             {
-                var progress = PlayerDataStore.Instance.LoadStoryProgress();
-                if (progress != null)
+                var saveManager = FungusManager.Instance.SaveManager;
+                if (saveManager.SaveDataExists("vn_save"))
                 {
-                    Debug.Log($"[StorySaveTest] 读档成功 ===");
-                    Debug.Log($"  关卡ID: {progress.levelId}");
-                    Debug.Log($"  剧情文件: {progress.storyFileName}");
-                    Debug.Log($"  当前行号: {progress.lineIndex} (-1=已看完)");
-                    Debug.Log($"  开场完成: {progress.isOpeningDone}");
-                    Debug.Log($"  存档时间: {System.DateTimeOffset.FromUnixTimeMilliseconds(progress.timestamp).LocalDateTime}");
+                    Debug.Log("[StorySaveTest] 读档中... Fungus 将重新加载场景并恢复 Flowchart 变量");
+                    saveManager.Load("vn_save");
                 }
                 else
                 {
@@ -76,11 +69,35 @@ namespace Game.Test
                 }
             }
 
-            // F12 — 清空所有存档
+            // F12 — 清空 Fungus 存档
             if (Input.GetKeyDown(KeyCode.F12))
             {
-                PlayerDataStore.Instance.ClearAllRecords();
-                Debug.Log("[StorySaveTest] 已清空所有存档数据");
+                string savePath = System.IO.Path.Combine(Application.persistentDataPath, "FungusSaves", "vn_save.json");
+                try
+                {
+                    if (System.IO.File.Exists(savePath))
+                    {
+                        System.IO.File.Delete(savePath);
+                        Debug.Log($"[StorySaveTest] 已删除 Fungus 存档: {savePath}");
+                    }
+                    else
+                    {
+                        Debug.Log("[StorySaveTest] 存档文件不存在，无需删除");
+                    }
+
+                    // 同时清空 Flowchart 变量
+                    if (vnController != null && vnController.saveFlowchart != null)
+                    {
+                        vnController.saveFlowchart.SetIntegerVariable("VN_LineIndex", 0);
+                        vnController.saveFlowchart.SetStringVariable("VN_StoryFile", "");
+                        vnController.saveFlowchart.SetBooleanVariable("VN_IsOpeningDone", false);
+                        Debug.Log("[StorySaveTest] 已重置 Flowchart 存档变量");
+                    }
+                }
+                catch (System.Exception ex)
+                {
+                    Debug.LogError($"[StorySaveTest] 清空存档失败: {ex.Message}");
+                }
             }
         }
     }

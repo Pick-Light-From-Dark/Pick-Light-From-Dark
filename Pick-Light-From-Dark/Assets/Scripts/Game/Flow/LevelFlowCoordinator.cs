@@ -1,7 +1,6 @@
 using UnityEngine;
 using Game.Config;
-using Game.Backend;
-using Game.Test;
+using Fungus;
 
 namespace Game.Flow
 {
@@ -61,15 +60,16 @@ namespace Game.Flow
         {
             Debug.Log("[LevelFlowCoordinator] 开场剧情结束，自动存档...");
 
-            // 自动存档：记录已完成开场剧情
-            var record = new StoryProgressRecord
+            // 自动存档：使用 Fungus SaveManager
+            if (vnController != null && vnController.saveFlowchart != null)
             {
-                levelId = levelId,
-                storyFileName = openingStory != null ? openingStory.name : "",
-                lineIndex = -1, // -1 表示开场剧情已全部看完
-                isOpeningDone = true
-            };
-            PlayerDataStore.Instance.SaveStoryProgress(record);
+                vnController.saveFlowchart.SetBooleanVariable("VN_IsOpeningDone", true);
+            }
+
+            var saveManager = FungusManager.Instance.SaveManager;
+            saveManager.AddSavePoint("OpeningComplete", "开场剧情结束自动存档");
+            saveManager.Save("vn_save");
+            Debug.Log("[LevelFlowCoordinator] 开场剧情结束，Fungus 自动存档完成");
 
             StartGameplay();
         }

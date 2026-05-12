@@ -72,6 +72,10 @@ namespace Game.Backend
         }
     }
 
+    /*
+     * StoryProgressRecord 已迁移至 Fungus Save System。
+     * 保留代码作为备份，如需恢复自研 JSON 存档可取消注释。
+     *
     /// <summary>
     /// 剧情进度存档记录（支持中途存档/读档）
     /// </summary>
@@ -95,6 +99,7 @@ namespace Game.Backend
             this.isOpeningDone = isOpeningDone;
         }
     }
+    */
 
     /// <summary>
     /// 所有玩家记录的顶层容器（对应整个 JSON 文件）
@@ -103,7 +108,7 @@ namespace Game.Backend
     public class PlayerDataFile
     {
         public List<JsonLevelRecord> records;
-        public StoryProgressRecord storyProgress;
+        // public StoryProgressRecord storyProgress; // 已迁移至 Fungus Save System
 
         public PlayerDataFile()
         {

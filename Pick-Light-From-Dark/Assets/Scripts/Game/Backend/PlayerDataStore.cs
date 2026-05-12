@@ -82,6 +82,10 @@ namespace Game.Backend
             return LoadOrCreate().records;
         }
 
+        /*
+         * 剧情进度存档已迁移至 Fungus Save System（SaveManager + SaveData）。
+         * 保留以下代码作为备份，如需恢复自研 JSON 存档可取消注释。
+         *
         /// <summary>
         /// 保存剧情进度（覆盖式，仅存最新进度）
         /// </summary>
@@ -106,6 +110,7 @@ namespace Game.Backend
             var data = LoadOrCreate();
             return data.storyProgress;
         }
+        */
 
         /// <summary>
         /// 清除所有数据
