@@ -73,12 +73,37 @@ namespace Game.Backend
     }
 
     /// <summary>
+    /// 剧情进度存档记录（支持中途存档/读档）
+    /// </summary>
+    [Serializable]
+    public class StoryProgressRecord
+    {
+        public int levelId;           // 所属关卡
+        public string storyFileName;  // 剧情文件名
+        public int lineIndex;         // 当前行号
+        public long timestamp;        // 存档时间
+        public bool isOpeningDone;    // 开场剧情是否已看完
+
+        public StoryProgressRecord() { }
+
+        public StoryProgressRecord(int levelId, string storyFileName, int lineIndex, bool isOpeningDone)
+        {
+            this.levelId = levelId;
+            this.storyFileName = storyFileName;
+            this.lineIndex = lineIndex;
+            this.timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            this.isOpeningDone = isOpeningDone;
+        }
+    }
+
+    /// <summary>
     /// 所有玩家记录的顶层容器（对应整个 JSON 文件）
     /// </summary>
     [Serializable]
     public class PlayerDataFile
     {
         public List<JsonLevelRecord> records;
+        public StoryProgressRecord storyProgress;
 
         public PlayerDataFile()
         {

@@ -83,6 +83,31 @@ namespace Game.Backend
         }
 
         /// <summary>
+        /// 保存剧情进度（覆盖式，仅存最新进度）
+        /// </summary>
+        public void SaveStoryProgress(StoryProgressRecord record)
+        {
+            if (record == null)
+            {
+                Debug.LogWarning("[PlayerDataStore] SaveStoryProgress 传入 record 为 null，忽略保存");
+                return;
+            }
+            var data = LoadOrCreate();
+            data.storyProgress = record;
+            WriteFile(data);
+            Debug.Log($"[PlayerDataStore] 已保存剧情进度: {record.storyFileName} 行号 {record.lineIndex}");
+        }
+
+        /// <summary>
+        /// 读取剧情进度
+        /// </summary>
+        public StoryProgressRecord LoadStoryProgress()
+        {
+            var data = LoadOrCreate();
+            return data.storyProgress;
+        }
+
+        /// <summary>
         /// 清除所有数据
         /// </summary>
         public void ClearAllRecords()

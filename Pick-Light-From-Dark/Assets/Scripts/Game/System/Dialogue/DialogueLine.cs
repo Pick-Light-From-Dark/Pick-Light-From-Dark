@@ -17,4 +17,5 @@ public class DialogueLine
     public string solid;          // [solid:#000000] 或 [solid:black,fade] — 纯色背景
     public string se;             // [se:xxx]
     public string bgm;            // [bgm:xxx]
+    public float wait;            // [wait:6] — 暂停秒数
 }

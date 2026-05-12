@@ -82,6 +82,9 @@ namespace Game.Test
         private Text placeholderText;
         private HashSet<string> missingAssetLogs = new HashSet<string>();
 
+        /// <summary>剧情全部结束后的回调（供流程控制器订阅）</summary>
+        public System.Action OnDialogueComplete;
+
         void Awake()
         {
             EnsureComponents();
@@ -314,7 +317,7 @@ namespace Game.Test
         }
 
         /// <summary>设置某一层背景图（空值=清空）</summary>
-        void SetLayerBackground(Image layerImage, string spriteName)
+        void SetLayerBackground(Image layerImage, string spriteName, string transition = null)
         {
             if (layerImage == null) return;
 
@@ -326,23 +329,56 @@ namespace Game.Test
             }
 
             var mapping = backgrounds.Find(b => b.name == spriteName);
+            Sprite targetSprite = null;
             if (mapping != null && mapping.sprite != null)
             {
-                layerImage.sprite = mapping.sprite;
-                layerImage.color = Color.white;
-                return;
+                targetSprite = mapping.sprite;
             }
-
-            // Fallback：尝试从 Resources 加载
-            Sprite fallback = LoadBgSprite(spriteName);
-            if (fallback != null)
+            else
             {
-                layerImage.sprite = fallback;
-                layerImage.color = Color.white;
+                targetSprite = LoadBgSprite(spriteName);
+            }
+
+            if (targetSprite == null)
+            {
+                ShowPlaceholder("Image", spriteName);
                 return;
             }
 
-            ShowPlaceholder("Image", spriteName);
+            if (transition == "fade")
+            {
+                StartCoroutine(BackgroundFadeTransition(layerImage, targetSprite));
+            }
+            else
+            {
+                layerImage.sprite = targetSprite;
+                layerImage.color = Color.white;
+            }
+        }
+
+        IEnumerator BackgroundFadeTransition(Image layerImage, Sprite newSprite)
+        {
+            float duration = 0.5f;
+            Color startColor = layerImage.color;
+
+            // 淡出到透明
+            for (float t = 0; t < duration; t += Time.unscaledDeltaTime)
+            {
+                layerImage.color = Color.Lerp(startColor, Color.clear, t / duration);
+                yield return null;
+            }
+
+            layerImage.sprite = newSprite;
+            layerImage.color = Color.clear;
+
+            // 淡入到白色
+            for (float t = 0; t < duration; t += Time.unscaledDeltaTime)
+            {
+                layerImage.color = Color.Lerp(Color.clear, Color.white, t / duration);
+                yield return null;
+            }
+
+            layerImage.color = Color.white;
         }
 
         Sprite LoadBgSprite(string name)
@@ -460,6 +496,15 @@ namespace Game.Test
             ffButton.GetComponent<RectTransform>().anchorMax = new Vector2(1, 1);
             ffButton.GetComponent<RectTransform>().pivot = new Vector2(1, 1);
             ffButton.GetComponent<RectTransform>().anchoredPosition = new Vector2(-30, -30);
+
+            // === 存档按钮（快进按钮左侧）===
+            var saveBtn = CreateButton("SaveBtn", vnCanvas.transform,
+                new Vector2(-140, -30), new Vector2(100, 45), "存档",
+                () => SaveProgress());
+            saveBtn.GetComponent<RectTransform>().anchorMin = new Vector2(1, 1);
+            saveBtn.GetComponent<RectTransform>().anchorMax = new Vector2(1, 1);
+            saveBtn.GetComponent<RectTransform>().pivot = new Vector2(1, 1);
+            saveBtn.GetComponent<RectTransform>().anchoredPosition = new Vector2(-140, -30);
 
             // === 选项面板（屏幕中央）===
             choicePanel = new GameObject("ChoicePanel");
@@ -589,6 +634,21 @@ namespace Game.Test
             }
         }
 
+        /// <summary>手动保存当前剧情进度</summary>
+        public void SaveProgress()
+        {
+            if (dialogueText == null) return;
+
+            var record = new Game.Backend.StoryProgressRecord
+            {
+                storyFileName = dialogueText.name,
+                lineIndex = lineIndex,
+                isOpeningDone = false
+            };
+            Game.Backend.PlayerDataStore.Instance.SaveStoryProgress(record);
+            Debug.Log($"[FungusVNController] 剧情进度已存档: {dialogueText.name} 行号 {lineIndex}");
+        }
+
         /// <summary>推进到下一行对话</summary>
         void ShowNextLine()
         {
@@ -607,16 +667,16 @@ namespace Game.Test
             if (line.isLayerCommand)
             {
                 // [layer:...] 全换指令：显式指定的层才更新（null=未指定，保持原样；空字符串=清空）
-                if (line.bg != null) SetLayerBackground(backgroundImage, line.bg);
-                if (line.mg != null) SetLayerBackground(midgroundImage, line.mg);
-                if (line.fg != null) SetLayerBackground(foregroundImage, line.fg);
+                if (line.bg != null) SetLayerBackground(backgroundImage, line.bg, line.transition);
+                if (line.mg != null) SetLayerBackground(midgroundImage, line.mg, line.transition);
+                if (line.fg != null) SetLayerBackground(foregroundImage, line.fg, line.transition);
             }
             else
             {
                 // 单换指令：有值才更新
-                if (!string.IsNullOrEmpty(line.bg)) SetLayerBackground(backgroundImage, line.bg);
-                if (!string.IsNullOrEmpty(line.mg)) SetLayerBackground(midgroundImage, line.mg);
-                if (!string.IsNullOrEmpty(line.fg)) SetLayerBackground(foregroundImage, line.fg);
+                if (!string.IsNullOrEmpty(line.bg)) SetLayerBackground(backgroundImage, line.bg, line.transition);
+                if (!string.IsNullOrEmpty(line.mg)) SetLayerBackground(midgroundImage, line.mg, line.transition);
+                if (!string.IsNullOrEmpty(line.fg)) SetLayerBackground(foregroundImage, line.fg, line.transition);
             }
 
             // ========== 纯色背景处理 ==========
@@ -646,6 +706,13 @@ namespace Game.Test
                 {
                     ShowPlaceholder("BGM", line.bgm);
                 }
+            }
+
+            // ========== 等待指令 ==========
+            if (line.wait > 0)
+            {
+                StartCoroutine(WaitAndContinue(line.wait));
+                return;
             }
 
             // ========== 黑屏检测 ==========
@@ -782,6 +849,13 @@ namespace Game.Test
             ShowNextLine();
         }
 
+        IEnumerator WaitAndContinue(float seconds)
+        {
+            yield return new WaitForSecondsRealtime(seconds);
+            isProcessing = false;
+            ShowNextLine();
+        }
+
         void EndDialogue()
         {
             if (choicePanel != null)
@@ -789,6 +863,7 @@ namespace Game.Test
             if (sayDialog != null)
                 sayDialog.gameObject.SetActive(false);
             Debug.Log("[FungusVNController] 对话结束");
+            OnDialogueComplete?.Invoke();
         }
     }
 }

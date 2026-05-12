@@ -122,6 +122,12 @@ public static class DialogueParser
                     d.solid = solidContent.Trim();
                 }
             }
+            else if (s.StartsWith("[wait:"))
+            {
+                d.type = "指令";
+                if (float.TryParse(s.Substring(6).TrimEnd(']').Trim(), out float waitSec))
+                    d.wait = waitSec;
+            }
             else if (s.StartsWith("[旁白]："))
             {
                 d.type = "旁白";
