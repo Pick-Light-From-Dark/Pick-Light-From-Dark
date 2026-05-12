@@ -1,0 +1,48 @@
+# ==========================
+# VN 转场效果测试剧本
+# ==========================
+#
+# Fungus 原生转场能力（当前 VN 系统未接入）：
+# - FadeScreen    全屏淡入淡出
+# - FadeToView    淡出+镜头移动+淡入
+# - ShakeCamera   屏幕震动
+# - FadeUI        UI 透明度/颜色渐变
+# - MoveLean      LeanTween 位移动画
+# - ScaleLean     LeanTween 缩放动画
+# - RotateLean    LeanTween 旋转动画
+# - Stage         立绘舞台 fade/move/dim
+# - 30+ Ease 曲线  linear / easeInOutQuad / bounce / elastic 等
+# ==========================
+
+系统：=== 测试开始：无转场 ===
+[bg:phone_connect_1]
+系统：无转场，直接切换背景。
+
+系统：=== 测试：fade 淡入淡出 ===
+[bg:phone_connect_2,fade]
+系统：fade 转场（0.5秒淡入淡出）。
+
+系统：=== 测试：slide 划入（尚未实现） ===
+[bg:phone_connect_3,slide]
+系统：slide 转场当前未实现，将使用直切。GalDialoguePanel 支持此转场。
+
+系统：=== 测试：黑屏 + 强制等待3秒（不可点击） ===
+[solid:black,fade]
+[wait:3]
+系统：黑屏等待3秒结束。期间点击无效。
+
+系统：=== 测试：wipe 擦除（尚未实现） ===
+[bg:Song_talk_1,wipe]
+系统：wipe 转场尚未实现，将直切。
+
+系统：=== 测试：dissolve 溶解（尚未实现） ===
+[bg:Song_talk_2,dissolve]
+系统：dissolve 转场尚未实现，将直切。
+
+系统：=== 测试：多层背景（当前仅支持直切） ===
+[layer:bg=Song_talk_3,mg=Song_talk_4,fade]
+系统：多层 fade 转场当前仅支持直切。
+
+系统：=== 所有转场测试结束 ===
+[bg:Song_talk_1]
+系统：测试完毕。请查看 Console 日志了解各转场支持状态。

@@ -385,6 +385,10 @@ namespace Game.Test
             }
             else
             {
+                if (!string.IsNullOrEmpty(transition))
+                {
+                    Debug.Log($"[VNTransitionTest] 转场 '{transition}' 尚未实现，使用直切。");
+                }
                 layerImage.sprite = targetSprite;
                 layerImage.color = Color.white;
             }
