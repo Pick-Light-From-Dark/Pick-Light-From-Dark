@@ -856,8 +856,13 @@ namespace Game.Test
             ShowNextLine();
         }
 
+        private bool hasEnded = false;
+
         void EndDialogue()
         {
+            if (hasEnded) return;
+            hasEnded = true;
+
             if (choicePanel != null)
                 choicePanel.SetActive(false);
             if (sayDialog != null)
