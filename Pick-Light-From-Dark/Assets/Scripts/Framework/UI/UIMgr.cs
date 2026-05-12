@@ -279,7 +279,25 @@ public class UIMgr : BaseManager<UIMgr>
     /// ��ȡ���
     /// </summary>
     /// <typeparam name="T">��������</typeparam>
-    public void GetPanel<T>( UnityAction<T> callBack ) where T:BasePanel
+    
+    public void HideAllPanels()
+    {
+        var keys = new List<string>(panelDic.Keys);
+        foreach (var key in keys)
+        {
+            var info = panelDic[key];
+            var panelField = info.GetType().GetField("panel");
+            var panel = panelField?.GetValue(info) as BasePanel;
+            if (panel != null)
+            {
+                panel.HideMe();
+                GameObject.Destroy(panel.gameObject);
+            }
+        }
+        panelDic.Clear();
+    }
+
+public void GetPanel<T>( UnityAction<T> callBack ) where T:BasePanel
     {
         string panelName = typeof(T).Name;
         if (panelDic.ContainsKey(panelName))

@@ -14,7 +14,7 @@ namespace Game.Editor
         public static void ConfigureChineseFont()
         {
             // 中文字体资源路径
-            string chineseFontPath = "Assets/Resources/Font/卓特自由体-TTF SDF.asset";
+            string chineseFontPath = "Assets/Resources/Font/wenkai.asset";
             TMP_FontAsset chineseFont = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(chineseFontPath);
 
             if (chineseFont == null)

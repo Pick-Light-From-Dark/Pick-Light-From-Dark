@@ -41,8 +41,11 @@ namespace Game.Test
         [Header("Fungus 组件（为空则运行时自动查找/创建）")]
         public SayDialog sayDialog;
 
+        [Header("背景 Canvas（为空则运行时自动创建）")]
+        public Canvas vnCanvas;
+
         [Header("背景设置（为空则运行时自动创建）")]
-        public Image backgroundImage;   // 后景（向后兼容）
+        public Image backgroundImage;   // 后景
         public Image midgroundImage;    // 中景
         public Image foregroundImage;   // 前景
         private Image backdropImage;    // 黑色兜底层（转场时提供黑色背景）
@@ -72,7 +75,6 @@ namespace Game.Test
         private bool isChoosing;
         private DialogueLine currentChoiceLine;
         private bool isFastForwarding;
-        private Canvas vnCanvas;
 
         // 段落跳转索引：段落名 → lines 中的起始索引
         private Dictionary<string, int> blockStartIndices = new Dictionary<string, int>();
@@ -221,7 +223,6 @@ namespace Game.Test
         void EnsureComponents()
         {
             // 1. 确保有 Canvas（用于背景）
-            vnCanvas = FindObjectOfType<Canvas>();
             if (vnCanvas == null)
             {
                 var canvasGo = new GameObject("VNCanvas");
@@ -295,11 +296,10 @@ namespace Game.Test
             if (sayDialog == null) return;
 
             // 尝试加载项目中文字体
-            var chineseFont = Resources.Load<Font>("Font/文软雅黑");
+            var chineseFont = Resources.Load<Font>("Font/LXGWWenKaiScreen");
             if (chineseFont == null)
             {
-                // 尝试其他可能路径
-                chineseFont = Resources.Load<Font>("Fonts/文软雅黑");
+                chineseFont = Resources.Load<Font>("Font/文软雅黑");
             }
 
             if (chineseFont != null)
@@ -417,28 +417,13 @@ namespace Game.Test
             if (sayDialog == null) return;
 
             var nameTextObj = sayDialog.gameObject.transform.Find("Panel/NameText");
-            if (nameTextObj == null)
-            {
-                // 尝试直接查找
-                var allTexts = sayDialog.GetComponentsInChildren<Text>(true);
-                foreach (var t in allTexts)
-                {
-                    if (t.gameObject.name == "NameText")
-                    {
-                        t.alignment = TextAnchor.MiddleCenter;
-                        return;
-                    }
-                }
-                return;
-            }
+            if (nameTextObj == null) return;
 
-            var nameText = nameTextObj.GetComponent<Text>();
-            if (nameText != null)
-                nameText.alignment = TextAnchor.MiddleCenter;
-
-            // 调整 NameText 在 Panel 中顶部居中
-            var nameRect = nameTextObj.GetComponent<RectTransform>();
-            if (nameRect != null)
+            // 只设居中对齐，位置由预制体决定
+            var tmp = nameTextObj.GetComponent<TMPro.TextMeshProUGUI>();
+            if (tmp != null)
+                tmp.alignment = TMPro.TextAlignmentOptions.Center;
+            else
             {
                 nameRect.anchorMin = new Vector2(0.5f, 1f);
                 nameRect.anchorMax = new Vector2(0.5f, 1f);
@@ -447,36 +432,9 @@ namespace Game.Test
             }
         }
 
-        /// <summary>调整对话文字位置，使其更靠下</summary>
         void SetupStoryTextPosition()
         {
-            if (sayDialog == null) return;
-
-            var storyTextObj = sayDialog.gameObject.transform.Find("Panel/StoryText");
-            if (storyTextObj == null)
-            {
-                // 兜底遍历查找
-                var allTexts = sayDialog.GetComponentsInChildren<Text>(true);
-                foreach (var t in allTexts)
-                {
-                    if (t.gameObject.name == "StoryText")
-                    {
-                        storyTextObj = t.gameObject.transform;
-                        break;
-                    }
-                }
-            }
-
-            if (storyTextObj == null) return;
-
-            var storyRect = storyTextObj.GetComponent<RectTransform>();
-            if (storyRect == null) return;
-
-            // 在当前位置基础上向下偏移（y 值减小 = 更靠下）
-            storyRect.anchoredPosition = new Vector2(
-                storyRect.anchoredPosition.x,
-                storyRect.anchoredPosition.y - 60f
-            );
+            // 位置由预制体决定，不再运行时覆盖
         }
 
         /// <summary>查找或创建某一层背景 Image</summary>
@@ -1012,6 +970,7 @@ namespace Game.Test
             txt.fontSize = 26;
             txt.color = Color.white;
             txt.alignment = TextAnchor.MiddleCenter;
+            txt.font = Resources.Load<Font>("Font/LXGWWenKaiScreen") ?? Resources.Load<Font>("Font/文软雅黑");
 
             var chineseFont = Resources.Load<Font>("Font/文软雅黑");
             if (chineseFont == null) chineseFont = Resources.Load<Font>("Fonts/文软雅黑");
