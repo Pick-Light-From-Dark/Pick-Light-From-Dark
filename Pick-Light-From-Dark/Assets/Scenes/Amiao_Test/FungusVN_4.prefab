@@ -44,7 +44,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3ccf659d409546deafce9a033b3bded4, type: 3}
   m_Name:
   m_EditorClassIdentifier:
-  dialogueText: {fileID: 4900000, guid: c12be82cff577594f96d53628e517de9, type: 3}
+  dialogueText: {fileID: 4900000, guid: 1b04dbb18033b354da3a317fe6e56f83, type: 3}
   sayDialog: {fileID: 0}
   stage: {fileID: 0}
   backgroundImage: {fileID: 0}
