@@ -53,6 +53,7 @@ namespace Game.Flow
             vnController.OnDialogueComplete = OnOpeningStoryEnd;
             // 重置 VN 控制器状态
             vnController.ClearPlaceholder();
+            vnController.SetSkipButtonVisible(true);
         }
 
         /// <summary>开场剧情结束 → 自动存档 → 进入游玩</summary>
@@ -136,6 +137,7 @@ namespace Game.Flow
             vnController.dialogueText = endingStory;
             vnController.OnDialogueComplete = OnEndingStoryEnd;
             vnController.ClearPlaceholder();
+            vnController.SetSkipButtonVisible(false);
         }
 
         /// <summary>结尾剧情结束 → 显示胜利/结算面板</summary>

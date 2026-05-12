@@ -75,6 +75,7 @@ namespace Game.Test
 
         // UI 按钮
         private Button ffButton;
+        private Button skipButton;
         private GameObject choicePanel;
         private Button choiceBtn1;
         private Button choiceBtn2;
@@ -106,8 +107,18 @@ namespace Game.Test
             // 检查是否有 Fungus 存档需要恢复
             if (saveFlowchart != null)
             {
-                int savedLine = saveFlowchart.GetIntegerVariable("VN_LineIndex");
+                bool isOpeningDone = saveFlowchart.GetBooleanVariable("VN_IsOpeningDone");
                 string savedFile = saveFlowchart.GetStringVariable("VN_StoryFile");
+
+                // 若开场剧情已看完且匹配当前文件，直接结束（由 LevelFlowCoordinator 进入 gameplay）
+                if (isOpeningDone && dialogueText.name == savedFile)
+                {
+                    Debug.Log("[FungusVNController] 开场剧情已看完，跳过剧情");
+                    EndDialogue();
+                    return;
+                }
+
+                int savedLine = saveFlowchart.GetIntegerVariable("VN_LineIndex");
                 if (savedLine > 0 && dialogueText.name == savedFile)
                 {
                     lineIndex = savedLine;
@@ -529,6 +540,16 @@ namespace Game.Test
             saveBtn.GetComponent<RectTransform>().pivot = new Vector2(1, 1);
             saveBtn.GetComponent<RectTransform>().anchoredPosition = new Vector2(-140, -30);
 
+            // === 跳过按钮（存档按钮左侧，开场剧情时显示）===
+            skipButton = CreateButton("SkipBtn", vnCanvas.transform,
+                new Vector2(-250, -30), new Vector2(100, 45), "跳过",
+                () => OnSkipStory());
+            skipButton.GetComponent<RectTransform>().anchorMin = new Vector2(1, 1);
+            skipButton.GetComponent<RectTransform>().anchorMax = new Vector2(1, 1);
+            skipButton.GetComponent<RectTransform>().pivot = new Vector2(1, 1);
+            skipButton.GetComponent<RectTransform>().anchoredPosition = new Vector2(-250, -30);
+            skipButton.gameObject.SetActive(false);
+
             // === 选项面板（屏幕中央）===
             choicePanel = new GameObject("ChoicePanel");
             choicePanel.transform.SetParent(vnCanvas.transform, false);
@@ -695,6 +716,20 @@ namespace Game.Test
             if (saveFlowchart == null) return;
             saveFlowchart.SetIntegerVariable("VN_LineIndex", lineIndex);
             saveFlowchart.SetStringVariable("VN_StoryFile", dialogueText != null ? dialogueText.name : "");
+        }
+
+        /// <summary>跳过当前剧情（直接结束）</summary>
+        void OnSkipStory()
+        {
+            Debug.Log("[FungusVNController] 用户跳过剧情");
+            EndDialogue();
+        }
+
+        /// <summary>设置跳过按钮显隐（供 LevelFlowCoordinator 调用）</summary>
+        public void SetSkipButtonVisible(bool visible)
+        {
+            if (skipButton != null)
+                skipButton.gameObject.SetActive(visible);
         }
 
         /// <summary>推进到下一行对话</summary>
