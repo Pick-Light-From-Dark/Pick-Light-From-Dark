@@ -958,6 +958,8 @@ namespace Game.Test
                 choicePanel.SetActive(false);
             if (sayDialog != null)
                 sayDialog.gameObject.SetActive(false);
+            if (skipButton != null)
+                skipButton.gameObject.SetActive(false);
             Debug.Log("[FungusVNController] 对话结束");
             OnDialogueComplete?.Invoke();
         }
