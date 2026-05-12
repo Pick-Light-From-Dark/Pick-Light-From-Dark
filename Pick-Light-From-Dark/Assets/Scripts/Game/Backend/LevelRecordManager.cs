@@ -15,12 +15,15 @@ namespace Game.Backend
         private float _levelStartTime;
         private bool _isRecording;
 
+        private string _pendingEndingBranch;
+
         private void Start()
         {
             EventCenter.Instance.AddEventListener<int>(E_EventType.CardReadComplete, OnCardReadComplete);
             EventCenter.Instance.AddEventListener<int>(E_EventType.LevelStart, OnLevelStart);
             EventCenter.Instance.AddEventListener(E_EventType.GameWin, OnGameWin);
             EventCenter.Instance.AddEventListener<string>(E_EventType.GameLose, OnGameLose);
+            EventCenter.Instance.AddEventListener<string>(E_EventType.StoryChoiceMade, OnStoryChoiceMade);
         }
 
         private void OnDestroy()
@@ -29,6 +32,13 @@ namespace Game.Backend
             EventCenter.Instance.RemoveEventListener<int>(E_EventType.LevelStart, OnLevelStart);
             EventCenter.Instance.RemoveEventListener(E_EventType.GameWin, OnGameWin);
             EventCenter.Instance.RemoveEventListener<string>(E_EventType.GameLose, OnGameLose);
+            EventCenter.Instance.RemoveEventListener<string>(E_EventType.StoryChoiceMade, OnStoryChoiceMade);
+        }
+
+        private void OnStoryChoiceMade(string choiceId)
+        {
+            _pendingEndingBranch = choiceId;
+            Debug.Log($"[LevelRecordManager] 记录剧情选择: {choiceId}");
         }
 
         /// <summary>
@@ -39,6 +49,7 @@ namespace Game.Backend
             _currentRecord = new JsonLevelRecord(levelId);
             _levelStartTime = Time.time;
             _isRecording = true;
+            _pendingEndingBranch = null;
             SyncTaskGoals();
             Debug.Log($"[LevelRecordManager] 开始记录关卡 {levelId}");
         }
@@ -52,10 +63,12 @@ namespace Game.Backend
 
             _currentRecord.timeUsed = Time.time - _levelStartTime;
             _currentRecord.isWin = isWin;
+            _currentRecord.endingBranch = _pendingEndingBranch;
             SyncTaskGoals();
             PlayerDataStore.Instance.SaveLevelRecord(_currentRecord);
             _isRecording = false;
-            Debug.Log($"[LevelRecordManager] 关卡结束 isWin={isWin} 耗时={_currentRecord.timeUsed:F1}s");
+            _pendingEndingBranch = null;
+            Debug.Log($"[LevelRecordManager] 关卡结束 isWin={isWin} 耗时={_currentRecord.timeUsed:F1}s 结局分支={_currentRecord.endingBranch}");
         }
 
         private void OnLevelStart(int levelId)

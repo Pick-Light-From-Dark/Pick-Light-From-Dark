@@ -82,6 +82,9 @@ namespace Game.Backend
             return LoadOrCreate().records;
         }
 
+        // 剧情进度存档已迁移至 Fungus Save System（SaveManager + SaveData）。
+        // 备份代码位于 Backup/PlayerDataStore_SaveStoryProgress_backup.cs.txt
+
         /// <summary>
         /// 清除所有数据
         /// </summary>

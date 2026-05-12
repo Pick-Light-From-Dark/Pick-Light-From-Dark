@@ -62,6 +62,9 @@ namespace Game.Test
         [Header("快进配置")]
         public float fastForwardInterval = 0.1f;
 
+        [Header("Fungus 存档")]
+        public Flowchart saveFlowchart; // VN_SaveFlowchart
+
         private List<DialogueLine> lines;
         private int lineIndex;
         private bool isProcessing;
@@ -72,6 +75,7 @@ namespace Game.Test
 
         // UI 按钮
         private Button ffButton;
+        private Button skipButton;
         private GameObject choicePanel;
         private Button choiceBtn1;
         private Button choiceBtn2;
@@ -81,6 +85,9 @@ namespace Game.Test
         // 素材缺失占位符
         private Text placeholderText;
         private HashSet<string> missingAssetLogs = new HashSet<string>();
+
+        /// <summary>剧情全部结束后的回调（供流程控制器订阅）</summary>
+        public System.Action OnDialogueComplete;
 
         void Awake()
         {
@@ -96,7 +103,37 @@ namespace Game.Test
                 return;
             }
             lines = DialogueParser.Parse(dialogueText);
-            lineIndex = 0;
+
+            // 检查是否有 Fungus 存档需要恢复
+            if (saveFlowchart != null)
+            {
+                bool isOpeningDone = saveFlowchart.GetBooleanVariable("VN_IsOpeningDone");
+                string savedFile = saveFlowchart.GetStringVariable("VN_StoryFile");
+
+                // 若开场剧情已看完且匹配当前文件，直接结束（由 LevelFlowCoordinator 进入 gameplay）
+                if (isOpeningDone && dialogueText.name == savedFile)
+                {
+                    Debug.Log("[FungusVNController] 开场剧情已看完，跳过剧情");
+                    EndDialogue();
+                    return;
+                }
+
+                int savedLine = saveFlowchart.GetIntegerVariable("VN_LineIndex");
+                if (savedLine > 0 && dialogueText.name == savedFile)
+                {
+                    lineIndex = savedLine;
+                    Debug.Log($"[FungusVNController] 从 Fungus 存档恢复，行号: {lineIndex}");
+                }
+                else
+                {
+                    lineIndex = 0;
+                }
+            }
+            else
+            {
+                lineIndex = 0;
+            }
+
             ShowNextLine();
         }
 
@@ -314,7 +351,7 @@ namespace Game.Test
         }
 
         /// <summary>设置某一层背景图（空值=清空）</summary>
-        void SetLayerBackground(Image layerImage, string spriteName)
+        void SetLayerBackground(Image layerImage, string spriteName, string transition = null)
         {
             if (layerImage == null) return;
 
@@ -326,23 +363,56 @@ namespace Game.Test
             }
 
             var mapping = backgrounds.Find(b => b.name == spriteName);
+            Sprite targetSprite = null;
             if (mapping != null && mapping.sprite != null)
             {
-                layerImage.sprite = mapping.sprite;
-                layerImage.color = Color.white;
-                return;
+                targetSprite = mapping.sprite;
             }
-
-            // Fallback：尝试从 Resources 加载
-            Sprite fallback = LoadBgSprite(spriteName);
-            if (fallback != null)
+            else
             {
-                layerImage.sprite = fallback;
-                layerImage.color = Color.white;
+                targetSprite = LoadBgSprite(spriteName);
+            }
+
+            if (targetSprite == null)
+            {
+                ShowPlaceholder("Image", spriteName);
                 return;
             }
 
-            ShowPlaceholder("Image", spriteName);
+            if (transition == "fade")
+            {
+                StartCoroutine(BackgroundFadeTransition(layerImage, targetSprite));
+            }
+            else
+            {
+                layerImage.sprite = targetSprite;
+                layerImage.color = Color.white;
+            }
+        }
+
+        IEnumerator BackgroundFadeTransition(Image layerImage, Sprite newSprite)
+        {
+            float duration = 0.5f;
+            Color startColor = layerImage.color;
+
+            // 淡出到透明
+            for (float t = 0; t < duration; t += Time.unscaledDeltaTime)
+            {
+                layerImage.color = Color.Lerp(startColor, Color.clear, t / duration);
+                yield return null;
+            }
+
+            layerImage.sprite = newSprite;
+            layerImage.color = Color.clear;
+
+            // 淡入到白色
+            for (float t = 0; t < duration; t += Time.unscaledDeltaTime)
+            {
+                layerImage.color = Color.Lerp(Color.clear, Color.white, t / duration);
+                yield return null;
+            }
+
+            layerImage.color = Color.white;
         }
 
         Sprite LoadBgSprite(string name)
@@ -452,14 +522,24 @@ namespace Game.Test
         {
             if (vnCanvas == null) return;
 
-            // === 快进按钮（右上角）===
-            ffButton = CreateButton("FFButton", vnCanvas.transform,
-                new Vector2(-30, -30), new Vector2(100, 45), "快进",
-                () => ToggleFastForward());
-            ffButton.GetComponent<RectTransform>().anchorMin = new Vector2(1, 1);
-            ffButton.GetComponent<RectTransform>().anchorMax = new Vector2(1, 1);
-            ffButton.GetComponent<RectTransform>().pivot = new Vector2(1, 1);
-            ffButton.GetComponent<RectTransform>().anchoredPosition = new Vector2(-30, -30);
+            // === 存档按钮（右上角）===
+            var saveBtn = CreateButton("SaveBtn", vnCanvas.transform,
+                new Vector2(-30, -30), new Vector2(100, 45), "存档",
+                () => SaveProgress());
+            saveBtn.GetComponent<RectTransform>().anchorMin = new Vector2(1, 1);
+            saveBtn.GetComponent<RectTransform>().anchorMax = new Vector2(1, 1);
+            saveBtn.GetComponent<RectTransform>().pivot = new Vector2(1, 1);
+            saveBtn.GetComponent<RectTransform>().anchoredPosition = new Vector2(-30, -30);
+
+            // === 跳过按钮（存档按钮左侧，开场剧情时显示）===
+            skipButton = CreateButton("SkipBtn", vnCanvas.transform,
+                new Vector2(-140, -30), new Vector2(100, 45), "跳过",
+                () => OnSkipStory());
+            skipButton.GetComponent<RectTransform>().anchorMin = new Vector2(1, 1);
+            skipButton.GetComponent<RectTransform>().anchorMax = new Vector2(1, 1);
+            skipButton.GetComponent<RectTransform>().pivot = new Vector2(1, 1);
+            skipButton.GetComponent<RectTransform>().anchoredPosition = new Vector2(-140, -30);
+            skipButton.gameObject.SetActive(false);
 
             // === 选项面板（屏幕中央）===
             choicePanel = new GameObject("ChoicePanel");
@@ -589,6 +669,60 @@ namespace Game.Test
             }
         }
 
+        /// <summary>手动保存当前剧情进度（使用 Fungus SaveManager）</summary>
+        public void SaveProgress()
+        {
+            if (saveFlowchart == null)
+            {
+                Debug.LogWarning("[FungusVNController] saveFlowchart 未赋值，无法存档");
+                return;
+            }
+
+            UpdateSaveVars();
+
+            var saveManager = FungusManager.Instance.SaveManager;
+            saveManager.AddSavePoint("ManualSave", $"手动存档 - {dialogueText.name} 行{lineIndex}");
+            saveManager.Save("vn_save");
+            Debug.Log($"[FungusVNController] Fungus 存档已保存: {dialogueText.name} 行{lineIndex}");
+        }
+
+        /// <summary>从 Fungus 存档恢复进度</summary>
+        public void LoadProgress()
+        {
+            var saveManager = FungusManager.Instance.SaveManager;
+            if (!saveManager.SaveDataExists("vn_save"))
+            {
+                Debug.Log("[FungusVNController] 无存档，从头开始");
+                return;
+            }
+
+            // Fungus Load 会重新加载场景并恢复 Flowchart 变量
+            // 场景加载完成后 Start() 中读取 Flowchart 变量恢复 lineIndex
+            saveManager.Load("vn_save");
+        }
+
+        /// <summary>更新 Flowchart 存档变量</summary>
+        void UpdateSaveVars()
+        {
+            if (saveFlowchart == null) return;
+            saveFlowchart.SetIntegerVariable("VN_LineIndex", lineIndex);
+            saveFlowchart.SetStringVariable("VN_StoryFile", dialogueText != null ? dialogueText.name : "");
+        }
+
+        /// <summary>跳过当前剧情（直接结束）</summary>
+        void OnSkipStory()
+        {
+            Debug.Log("[FungusVNController] 用户跳过剧情");
+            EndDialogue();
+        }
+
+        /// <summary>设置跳过按钮显隐（供 LevelFlowCoordinator 调用）</summary>
+        public void SetSkipButtonVisible(bool visible)
+        {
+            if (skipButton != null)
+                skipButton.gameObject.SetActive(visible);
+        }
+
         /// <summary>推进到下一行对话</summary>
         void ShowNextLine()
         {
@@ -602,21 +736,22 @@ namespace Game.Test
             isProcessing = true;
 
             var line = lines[lineIndex++];
+            UpdateSaveVars(); // 每行切换后更新 Flowchart 存档变量
 
             // ========== 分层背景处理 ==========
             if (line.isLayerCommand)
             {
                 // [layer:...] 全换指令：显式指定的层才更新（null=未指定，保持原样；空字符串=清空）
-                if (line.bg != null) SetLayerBackground(backgroundImage, line.bg);
-                if (line.mg != null) SetLayerBackground(midgroundImage, line.mg);
-                if (line.fg != null) SetLayerBackground(foregroundImage, line.fg);
+                if (line.bg != null) SetLayerBackground(backgroundImage, line.bg, line.transition);
+                if (line.mg != null) SetLayerBackground(midgroundImage, line.mg, line.transition);
+                if (line.fg != null) SetLayerBackground(foregroundImage, line.fg, line.transition);
             }
             else
             {
                 // 单换指令：有值才更新
-                if (!string.IsNullOrEmpty(line.bg)) SetLayerBackground(backgroundImage, line.bg);
-                if (!string.IsNullOrEmpty(line.mg)) SetLayerBackground(midgroundImage, line.mg);
-                if (!string.IsNullOrEmpty(line.fg)) SetLayerBackground(foregroundImage, line.fg);
+                if (!string.IsNullOrEmpty(line.bg)) SetLayerBackground(backgroundImage, line.bg, line.transition);
+                if (!string.IsNullOrEmpty(line.mg)) SetLayerBackground(midgroundImage, line.mg, line.transition);
+                if (!string.IsNullOrEmpty(line.fg)) SetLayerBackground(foregroundImage, line.fg, line.transition);
             }
 
             // ========== 纯色背景处理 ==========
@@ -646,6 +781,13 @@ namespace Game.Test
                 {
                     ShowPlaceholder("BGM", line.bgm);
                 }
+            }
+
+            // ========== 等待指令 ==========
+            if (line.wait > 0)
+            {
+                StartCoroutine(WaitAndContinue(line.wait));
+                return;
             }
 
             // ========== 黑屏检测 ==========
@@ -739,6 +881,13 @@ namespace Game.Test
 
             if (currentChoiceLine == null) return;
 
+            // 发送剧情选择事件，记录结局分支
+            string choiceId = choice == 1 ? currentChoiceLine.choice1Id : currentChoiceLine.choice2Id;
+            if (!string.IsNullOrEmpty(choiceId))
+            {
+                EventCenter.Instance.EventTrigger(E_EventType.StoryChoiceMade, choiceId);
+            }
+
             string result = choice == 1 ? currentChoiceLine.choice1Result : currentChoiceLine.choice2Result;
 
             if (!string.IsNullOrEmpty(result))
@@ -782,13 +931,28 @@ namespace Game.Test
             ShowNextLine();
         }
 
+        IEnumerator WaitAndContinue(float seconds)
+        {
+            yield return new WaitForSecondsRealtime(seconds);
+            isProcessing = false;
+            ShowNextLine();
+        }
+
+        private bool hasEnded = false;
+
         void EndDialogue()
         {
+            if (hasEnded) return;
+            hasEnded = true;
+
             if (choicePanel != null)
                 choicePanel.SetActive(false);
             if (sayDialog != null)
                 sayDialog.gameObject.SetActive(false);
+            if (skipButton != null)
+                skipButton.gameObject.SetActive(false);
             Debug.Log("[FungusVNController] 对话结束");
+            OnDialogueComplete?.Invoke();
         }
     }
 }

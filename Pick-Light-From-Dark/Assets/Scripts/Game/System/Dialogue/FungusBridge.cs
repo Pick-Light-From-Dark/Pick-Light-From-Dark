@@ -5,7 +5,7 @@ using Fungus;
 /// <summary>
 /// Fungus 桥接层：在现有对话系统运行时，同步驱动 Fungus 的 SayDialog 与 Stage。
 /// 完全自包含，运行时自动从 Fungus Resources 实例化所需组件，无需手动场景配置。
-/// 不使用 Fungus 存档系统，存档继续走现有 PlayerDataStore。
+/// 剧情存档已迁移至 Fungus Save System（SaveManager + SaveData），关卡数据继续走 PlayerDataStore。
 /// </summary>
 public class FungusBridge : MonoBehaviour
 {

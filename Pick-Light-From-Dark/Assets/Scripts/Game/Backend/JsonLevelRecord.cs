@@ -56,6 +56,7 @@ namespace Game.Backend
         public long timestamp;        // UTC 时间戳（毫秒）
         public bool isWin;           // 是否通关
         public float timeUsed;        // 耗时（秒）
+        public string endingBranch;   // 结局分支标识（如 eat1 / eat2）
         public List<CardUseEntry> cardUses;
         public List<TaskGoalRecord> taskGoals;
 
@@ -72,6 +73,9 @@ namespace Game.Backend
         }
     }
 
+    // StoryProgressRecord 已迁移至 Fungus Save System。
+    // 备份代码位于 Backup/StoryProgressRecord_backup.cs.txt
+
     /// <summary>
     /// 所有玩家记录的顶层容器（对应整个 JSON 文件）
     /// </summary>
@@ -79,6 +83,7 @@ namespace Game.Backend
     public class PlayerDataFile
     {
         public List<JsonLevelRecord> records;
+        // StoryProgressRecord storyProgress 已迁移至 Fungus Save System。备份代码见 Backup/
 
         public PlayerDataFile()
         {

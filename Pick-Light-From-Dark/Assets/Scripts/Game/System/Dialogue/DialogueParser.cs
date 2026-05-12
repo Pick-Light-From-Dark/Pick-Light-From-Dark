@@ -122,6 +122,12 @@ public static class DialogueParser
                     d.solid = solidContent.Trim();
                 }
             }
+            else if (s.StartsWith("[wait:"))
+            {
+                d.type = "指令";
+                if (float.TryParse(s.Substring(6).TrimEnd(']').Trim(), out float waitSec))
+                    d.wait = waitSec;
+            }
             else if (s.StartsWith("[旁白]："))
             {
                 d.type = "旁白";
@@ -163,44 +169,30 @@ public static class DialogueParser
                 list.Add(d);
                 continue;
             }
-            else if (s.StartsWith("【选项-吃1】"))
+            else if (s.StartsWith("【选项-"))
             {
-                // 解析选项1的结果文本
-                string result = ReadUntilBreak(rawLines, i + 1);
-                // 找到最近的"选项"
-                for (int j = list.Count - 1; j >= 0; j--)
-                {
-                    if (list[j].type == "选项")
-                    {
-                        list[j].choice1Result = result;
-                        break;
-                    }
-                }
-                continue;
-            }
-            else if (s.StartsWith("【选项-吃2】"))
-            {
-                // 解析选项2的结果文本
+                // 解析选项结果文本，同时提取选项标识
+                // 格式：【选项-xxx】，xxx 为选项标识（如 吃1、吃2）
+                int idStart = 4; // 跳过 "【选项-"
+                int idEnd = s.IndexOf('】');
+                string choiceId = idEnd > idStart ? s.Substring(idStart, idEnd - idStart).Trim() : "";
+
                 string result = ReadUntilBreak(rawLines, i + 1);
                 for (int j = list.Count - 1; j >= 0; j--)
                 {
                     if (list[j].type == "选项")
                     {
-                        list[j].choice2Result = result;
-                        break;
-                    }
-                }
-                continue;
-            }
-            else if (s.StartsWith("【选项-吃】"))
-            {
-                // 兼容旧格式，默认当作 choice1Result
-                string result = ReadUntilBreak(rawLines, i + 1);
-                for (int j = list.Count - 1; j >= 0; j--)
-                {
-                    if (list[j].type == "选项")
-                    {
-                        list[j].choice1Result = result;
+                        // 根据选项标识末尾数字分配 choice1/choice2
+                        if (choiceId.EndsWith("2"))
+                        {
+                            list[j].choice2Result = result;
+                            list[j].choice2Id = choiceId;
+                        }
+                        else
+                        {
+                            list[j].choice1Result = result;
+                            list[j].choice1Id = choiceId;
+                        }
                         break;
                     }
                 }
