@@ -74,6 +74,15 @@ namespace Game.Test
         private bool isFastForwarding;
         private Canvas vnCanvas;
 
+        // 段落跳转索引：段落名 → lines 中的起始索引
+        private Dictionary<string, int> blockStartIndices = new Dictionary<string, int>();
+
+        /// <summary>剧情结束后的分支类型（供流程控制器读取）</summary>
+        public VNExitType exitType { get; private set; } = VNExitType.None;
+
+        /// <summary>剧情全部结束后的回调（带分支类型）</summary>
+        public System.Action<VNExitType> OnDialogueExit;
+
         // UI 按钮
         private Button ffButton;
         private Button skipButton;
@@ -87,7 +96,7 @@ namespace Game.Test
         private Text placeholderText;
         private HashSet<string> missingAssetLogs = new HashSet<string>();
 
-        /// <summary>剧情全部结束后的回调（供流程控制器订阅）</summary>
+        /// <summary>剧情全部结束后的回调（供流程控制器订阅，兼容旧代码）</summary>
         public System.Action OnDialogueComplete;
 
         void Awake()
@@ -98,12 +107,33 @@ namespace Game.Test
 
         void Start()
         {
+            RestartDialogue();
+        }
+
+        /// <summary>
+        /// 重新启动对话（供 LevelFlowCoordinator 在切换 opening/ending 文本时调用）
+        /// </summary>
+        public void RestartDialogue()
+        {
             if (dialogueText == null)
             {
                 Debug.LogError("[FungusVNController] dialogueText 未赋值");
                 return;
             }
+
+            // 重置状态
+            hasEnded = false;
+            exitType = VNExitType.None;
+            isProcessing = false;
+            isChoosing = false;
+            currentChoiceLine = null;
+
             lines = DialogueParser.Parse(dialogueText);
+            BuildBlockIndex();
+
+            // 保险：确保 SetupDialogMask 在 sayDialog 有效后再执行一次
+            if (sayDialog != null)
+                SetupDialogMask();
 
             // 检查是否有 Fungus 存档需要恢复
             if (saveFlowchart != null)
@@ -136,6 +166,20 @@ namespace Game.Test
             }
 
             ShowNextLine();
+        }
+
+        /// <summary>扫描 lines 建立段落名到行号的索引</summary>
+        void BuildBlockIndex()
+        {
+            blockStartIndices.Clear();
+            if (lines == null) return;
+            for (int i = 0; i < lines.Count; i++)
+            {
+                if (lines[i].type == "段落" && !string.IsNullOrEmpty(lines[i].content))
+                {
+                    blockStartIndices[lines[i].content] = i + 1; // 跳到段落标记的下一行
+                }
+            }
         }
 
         /// <summary>切换快进模式（供按钮调用）</summary>
@@ -174,24 +218,20 @@ namespace Game.Test
                 canvasGo.AddComponent<GraphicRaycaster>();
             }
 
-            // 2. SayDialog：优先查找场景中的，没有则实例化 Fungus 预制体
+            // 2. SayDialog：如果 Inspector 未赋值，则实例化新的（不复用场景中已有的，避免遮罩设置到错误的对话框）
             if (sayDialog == null)
             {
-                sayDialog = FindObjectOfType<SayDialog>();
-                if (sayDialog == null)
+                var prefab = Resources.Load<GameObject>("Prefabs/SayDialog");
+                if (prefab != null)
                 {
-                    var prefab = Resources.Load<GameObject>("Prefabs/SayDialog");
-                    if (prefab != null)
-                    {
-                        var go = Instantiate(prefab);
-                        go.name = "SayDialog";
-                        sayDialog = go.GetComponent<SayDialog>();
-                        Debug.Log("[FungusVNController] 已自动实例化 SayDialog");
-                    }
-                    else
-                    {
-                        Debug.LogError("[FungusVNController] 未找到 SayDialog prefab。请确保 Fungus 已正确导入，或在 Inspector 中手动赋值。");
-                    }
+                    var go = Instantiate(prefab);
+                    go.name = $"SayDialog_{gameObject.name}";
+                    sayDialog = go.GetComponent<SayDialog>();
+                    Debug.Log($"[FungusVNController] 已自动实例化 SayDialog: {go.name}");
+                }
+                else
+                {
+                    Debug.LogError("[FungusVNController] 未找到 SayDialog prefab。请确保 Fungus 已正确导入，或在 Inspector 中手动赋值。");
                 }
             }
 
@@ -871,7 +911,23 @@ namespace Game.Test
             isProcessing = true;
 
             var line = lines[lineIndex++];
+
+            // 段落标记行直接跳过
+            if (line.type == "段落")
+            {
+                isProcessing = false;
+                ShowNextLine();
+                return;
+            }
+
             UpdateSaveVars(); // 每行切换后更新 Flowchart 存档变量
+
+            // ========== 分支动作指令（最高优先级）==========
+            if (!string.IsNullOrEmpty(line.action))
+            {
+                ExecuteAction(line.action);
+                return;
+            }
 
             // ========== 分层背景处理 ==========
             if (line.isLayerCommand)
@@ -1023,6 +1079,25 @@ namespace Game.Test
                 EventCenter.Instance.EventTrigger(E_EventType.StoryChoiceMade, choiceId);
             }
 
+            string jumpTarget = choice == 1 ? currentChoiceLine.choice1JumpTarget : currentChoiceLine.choice2JumpTarget;
+            string action = choice == 1 ? currentChoiceLine.choice1Action : currentChoiceLine.choice2Action;
+
+            // 优先处理跳转目标
+            if (!string.IsNullOrEmpty(jumpTarget))
+            {
+                if (blockStartIndices.TryGetValue(jumpTarget, out int targetIndex))
+                {
+                    lineIndex = targetIndex;
+                    isProcessing = false;
+                    ShowNextLine();
+                    return;
+                }
+                else
+                {
+                    Debug.LogWarning($"[FungusVNController] 未找到跳转段落: {jumpTarget}");
+                }
+            }
+
             string result = choice == 1 ? currentChoiceLine.choice1Result : currentChoiceLine.choice2Result;
 
             if (!string.IsNullOrEmpty(result))
@@ -1031,23 +1106,48 @@ namespace Game.Test
                 sayDialog.NameText = "";
                 sayDialog.gameObject.SetActive(true);
 
+                System.Action onResultDone = () =>
+                {
+                    if (!string.IsNullOrEmpty(action))
+                        ExecuteAction(action);
+                    else
+                        EndDialogue();
+                };
+
                 if (isFastForwarding)
                 {
                     sayDialog.Say(result, true, false, false, true, false, null, null);
-                    StartCoroutine(FastForwardSkipRoutine());
+                    StartCoroutine(FastForwardChoiceRoutine(action));
                 }
                 else
                 {
                     sayDialog.Say(result, true, true, false, true, false, null, () =>
                     {
-                        EndDialogue();
+                        onResultDone?.Invoke();
                     });
                 }
             }
             else
             {
-                EndDialogue();
+                if (!string.IsNullOrEmpty(action))
+                    ExecuteAction(action);
+                else
+                    EndDialogue();
             }
+        }
+
+        IEnumerator FastForwardChoiceRoutine(string action)
+        {
+            yield return new WaitForSeconds(0.02f);
+            var writer = sayDialog.GetComponent<Writer>();
+            if (writer != null && writer.IsWriting)
+                writer.Stop();
+            yield return new WaitForSeconds(fastForwardInterval);
+            isProcessing = false;
+            if (!string.IsNullOrEmpty(action))
+                ExecuteAction(action);
+            else
+                ShowNextLine();
         }
 
         IEnumerator FastForwardSkipRoutine()
@@ -1073,6 +1173,31 @@ namespace Game.Test
             ShowNextLine();
         }
 
+        /// <summary>执行分支动作指令</summary>
+        void ExecuteAction(string action)
+        {
+            switch (action)
+            {
+                case "ending":
+                    exitType = VNExitType.Ending;
+                    EndDialogue();
+                    break;
+                case "gameplay":
+                    exitType = VNExitType.Gameplay;
+                    EndDialogue();
+                    break;
+                case "nextlevel":
+                    exitType = VNExitType.NextLevel;
+                    EndDialogue();
+                    break;
+                default:
+                    Debug.LogWarning($"[FungusVNController] 未知动作指令: {action}");
+                    isProcessing = false;
+                    ShowNextLine();
+                    break;
+            }
+        }
+
         private bool hasEnded = false;
 
         void EndDialogue()
@@ -1086,7 +1211,8 @@ namespace Game.Test
                 sayDialog.gameObject.SetActive(false);
             if (skipButton != null)
                 skipButton.gameObject.SetActive(false);
-            Debug.Log("[FungusVNController] 对话结束");
+            Debug.Log($"[FungusVNController] 对话结束，分支类型: {exitType}");
+            OnDialogueExit?.Invoke(exitType);
             OnDialogueComplete?.Invoke();
         }
     }
