@@ -50,6 +50,9 @@ public class GamePanel : BasePanel
     [Header("场景背景")]
     [SerializeField] private Image sceneBackgroundImage;
 
+    [Header("老师巡查状态")]
+    [SerializeField] private TextMeshProUGUI teacherStatusText;
+
     private CardGrid cardGrid;
     private CardDropZone cardDropZone;
     private CardManager cardManager;
@@ -80,6 +83,9 @@ public class GamePanel : BasePanel
 
     /// <summary>供PlayerState等外部系统查询当前是否正在读条</summary>
     public static bool IsCardReading { get; private set; }
+
+    /// <summary>当前读条片段是否不可打断（供TeacherAI查询）</summary>
+    public static bool IsInUninterruptibleSegment { get; private set; }
 
     private Sprite loadingFillSprite;
 
@@ -149,6 +155,9 @@ public class GamePanel : BasePanel
         // 情绪值显示
         SetupEmotionDisplay();
 
+        // 老师巡查状态
+        SetupTeacherStatus();
+
         // 闭眼按钮 + 遮罩初始化
         SetupEyeClose();
 
@@ -182,6 +191,54 @@ public class GamePanel : BasePanel
         var info = emo.GetEmotionInfo();
         if (chaosCountText != null) chaosCountText.text = info.panicValue.ToString();
         if (happlyCountText != null) happlyCountText.text = info.exciteValue.ToString();
+    }
+
+    private void SetupTeacherStatus()
+    {
+        if (teacherStatusText == null)
+        {
+            var statusGo = transform.Find("ImgBk/TeacherStatus");
+            if (statusGo != null)
+                teacherStatusText = statusGo.GetComponent<TextMeshProUGUI>();
+        }
+        if (teacherStatusText != null)
+            teacherStatusText.text = "";
+    }
+
+    private void UpdateTeacherStatusDisplay()
+    {
+        if (teacherStatusText == null) return;
+
+        var teacher = Game.AI.TeacherAI.Instance;
+        if (teacher == null) return;
+
+        var state = teacher.GetCurrentState();
+        switch (state)
+        {
+            case Game.Config.TeacherState.Idle:
+                teacherStatusText.text = "安静...";
+                teacherStatusText.color = new Color32(180, 180, 180, 255);
+                break;
+            case Game.Config.TeacherState.Approaching:
+                float progress = teacher.GetApproachProgress();
+                int filled = Mathf.RoundToInt(progress * 10);
+                string bar = new string('=', filled) + new string(' ', 10 - filled);
+                int pct = Mathf.RoundToInt(progress * 100);
+                teacherStatusText.text = $"脚步声 [{bar}] {pct}%";
+                teacherStatusText.color = new Color32(255, 200, 0, 255);
+                break;
+            case Game.Config.TeacherState.Inspecting:
+                if (teacher.GetCurrentInspectType() == Game.Config.InspectType.Flash)
+                    teacherStatusText.text = "手电筒检查——闭眼！";
+                else
+                    teacherStatusText.text = "查寝中——闭眼！";
+                teacherStatusText.color = new Color32(255, 60, 60, 255);
+                break;
+            case Game.Config.TeacherState.Leaving:
+                teacherStatusText.text = "离开中...";
+                teacherStatusText.color = new Color32(100, 220, 100, 255);
+                break;
+        }
     }
 
     private void SetupEyeClose()
@@ -314,6 +371,8 @@ public class GamePanel : BasePanel
             if (readTime >= totalReadTime)
                 OnReadingComplete();
         }
+
+        UpdateTeacherStatusDisplay();
     }
 
     /// <summary>根据已读时间定位当前片段，控制 ClearBtn 显隐</summary>
@@ -338,6 +397,7 @@ public class GamePanel : BasePanel
         {
             currentSegmentIndex = newIndex;
             bool canInterrupt = readingCardData.segments[currentSegmentIndex].isInterruptible;
+            IsInUninterruptibleSegment = !canInterrupt;
             if (ClearBtn != null)
                 ClearBtn.gameObject.SetActive(canInterrupt);
         }
@@ -379,6 +439,7 @@ public class GamePanel : BasePanel
         currentSegmentIndex = 0;
         isReading = true;
         IsCardReading = true;
+        IsInUninterruptibleSegment = card.CardData.segments.Count > 0 && !card.CardData.segments[0].isInterruptible;
 
         // 将卡牌移入思考框
         var dropRt = cardDropZoneObj != null ? cardDropZoneObj.GetComponent<RectTransform>() : null;
@@ -533,6 +594,8 @@ public class GamePanel : BasePanel
     {
         isReading = false;
         IsCardReading = false;
+        IsInUninterruptibleSegment = false;
+        IsCardReading = false;
 
         // 销毁思考框中的卡牌
         DestroyReadingCard();
@@ -567,6 +630,9 @@ public class GamePanel : BasePanel
         // 通知 CardManager
         cardManager.OnCardUsed(readingCardData);
 
+        // 通知 TaskManager 推进任务进度
+        EventCenter.Instance.EventTrigger(E_EventType.CardReadComplete, readingCardData.id);
+
         // 跳转背景画面
         if (readingCardData.backgroundJumpId != 0)
             SetSceneBackground(readingCardData.backgroundJumpId);
@@ -583,6 +649,7 @@ public class GamePanel : BasePanel
 
         isReading = false;
         IsCardReading = false;
+        IsInUninterruptibleSegment = false;
         readTime = 0f;
 
         DestroyReadingCard();
@@ -730,6 +797,7 @@ public class GamePanel : BasePanel
     }
 
     private bool thinkingWasVisible;
+    private Dictionary<string, bool> preEyeCloseActiveState = new Dictionary<string, bool>();
 
     private void OnPlayerEyeCloseChanged(bool closed)
     {
@@ -738,31 +806,50 @@ public class GamePanel : BasePanel
 
         if (gameplayUIRoot != null)
         {
-            foreach (Transform child in gameplayUIRoot.transform)
+            if (closed)
             {
-                if (child.name == "EyeCloseOverlay") continue;
-                if (child.name == "CloseEyesBtn")
+                // 记住每个子物体的当前状态，然后隐藏
+                preEyeCloseActiveState.Clear();
+                foreach (Transform child in gameplayUIRoot.transform)
                 {
-                    var rt = child.GetComponent<RectTransform>();
-                    if (rt != null)
-                        rt.anchoredPosition = closed ? Vector2.zero : closeEyesBtnOriginalPos;
-                    if (closed) child.SetAsLastSibling();
-                    continue;
+                    if (child.name == "EyeCloseOverlay") continue;
+                    if (child.name == "CloseEyesBtn")
+                    {
+                        var rt = child.GetComponent<RectTransform>();
+                        if (rt != null)
+                            rt.anchoredPosition = Vector2.zero;
+                        child.SetAsLastSibling();
+                        continue;
+                    }
+                    if (child.name == "TeacherStatus")
+                    {
+                        child.SetAsLastSibling();
+                        continue;
+                    }
+                    preEyeCloseActiveState[child.name] = child.gameObject.activeSelf;
+                    child.gameObject.SetActive(false);
                 }
-                if (child.name == "ThinkingImgBk")
+                // 闭眼按钮始终在最上层
+                if (closeEyesBtn != null)
+                    closeEyesBtn.transform.SetAsLastSibling();
+            }
+            else
+            {
+                // 恢复闭眼前的状态
+                foreach (Transform child in gameplayUIRoot.transform)
                 {
-                    if (closed)
+                    if (child.name == "EyeCloseOverlay") continue;
+                    if (child.name == "CloseEyesBtn")
                     {
-                        thinkingWasVisible = child.gameObject.activeSelf;
-                        child.gameObject.SetActive(false);
+                        var rt = child.GetComponent<RectTransform>();
+                        if (rt != null)
+                            rt.anchoredPosition = closeEyesBtnOriginalPos;
+                        continue;
                     }
-                    else if (thinkingWasVisible)
-                    {
-                        child.gameObject.SetActive(true);
-                    }
-                    continue;
+                    if (preEyeCloseActiveState.TryGetValue(child.name, out bool wasActive))
+                        child.gameObject.SetActive(wasActive);
                 }
-                child.gameObject.SetActive(!closed);
+                preEyeCloseActiveState.Clear();
             }
         }
     }

@@ -15,6 +15,7 @@ namespace Game.Flow
         private FlowState currentState = FlowState.Idle;
         private int currentLevelIndex;
         private LevelConfigSO currentLevelConfig;
+        private Game.AI.TeacherAI teacherAI;
 
         void Start()
         {
@@ -132,13 +133,29 @@ namespace Game.Flow
         private void BeginGameplay()
         {
             currentState = FlowState.Gameplay;
+
+            // 创建老师AI
+            var teacherObj = new GameObject("TeacherAI");
+            DontDestroyOnLoad(teacherObj);
+            teacherAI = teacherObj.AddComponent<Game.AI.TeacherAI>();
+
             UIMgr.Instance.ShowPanel<GamePanel>(
                 E_UILayer.Middle,
                 (panel) =>
                 {
                     panel.InitializeWithConfig(currentLevelConfig);
+                    teacherAI.Initialize(currentLevelConfig);
                 }
             );
+        }
+
+        private void CleanupTeacherAI()
+        {
+            if (teacherAI != null)
+            {
+                Destroy(teacherAI.gameObject);
+                teacherAI = null;
+            }
         }
 
         private void OnGameWin()
@@ -146,6 +163,7 @@ namespace Game.Flow
             if (currentState != FlowState.Gameplay) return;
 
             Debug.Log($"[LevelFlow] 关卡 {currentLevelIndex + 1} 胜利");
+            CleanupTeacherAI();
 
             if (!string.IsNullOrEmpty(currentLevelConfig.postDialogueFile))
             {
@@ -164,6 +182,7 @@ namespace Game.Flow
             if (currentState != FlowState.Gameplay) return;
 
             Debug.Log($"[LevelFlow] 关卡 {currentLevelIndex + 1} 失败: {reason}");
+            CleanupTeacherAI();
             UIMgr.Instance.HidePanel<GamePanel>();
             BackToMenu();
         }
