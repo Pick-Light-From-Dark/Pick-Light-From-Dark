@@ -13,8 +13,18 @@ public class BeginPanel : BasePanel
         {
             case "StartBtn":
                 MusicMgr.Instance.PlaySound("按钮点击音效");
-                UIMgr.Instance.HidePanel<BeginPanel>();
-                LevelFlowManager.Instance.StartGame();
+                var coordinator = FindObjectOfType<LevelFlowCoordinator>();
+                if (coordinator != null)
+                {
+                    UIMgr.Instance.HidePanel<BeginPanel>();
+                    // LevelFlowCoordinator 在 Start() 中已自动开始流程
+                }
+                else
+                {
+                    Debug.LogWarning("[BeginPanel] 未找到 LevelFlowCoordinator，使用 LevelFlowManager 兜底");
+                    UIMgr.Instance.HidePanel<BeginPanel>();
+                    LevelFlowManager.Instance.StartGame();
+                }
                 break;
 
             case "SaveBtn":
