@@ -1,16 +1,11 @@
 # 开发待办清单
 
-## 1. 语言设置修正
-- [ ] 修改 `.claude/settings.local.json`
-- [ ] 确保 `/clear` 后不会触发文言文设置
-- [ ] 全局使用现代汉语，删掉文言文的设置
-
 ## 2. 结局关卡测试 Prefab
-- [ ] 按照结局设计逻辑，生成可测试的结局关卡 Prefab
-- [ ] 设计 `EndingData` 数据结构（ScriptableObject 或字典）
-- [ ] 设计 `EndingUIController` / `EndingManager`
-- [ ] 实现结局面板：显示结局名称 + 描述 + 返回主界面/读取存档按钮
-- [ ] 生成测试 Prefab 验证结局流程
+- [x] 按照结局设计逻辑Pick-Light-From-Dark\Assets\Scripts\Game\Test\amiao\ending.md，生成可测试的结局关卡 Prefab
+- [x] 设计 `EndingData` 数据结构（ScriptableObject 或字典）
+- [x] 设计 `EndingUIController` / `EndingManager`
+- [x] 实现结局面板：显示结局名称 + 描述 + 返回主界面/读取存档按钮
+- [x] 生成测试 Prefab 验证结局流程
 
 ## 3. 存档系统测试 Prefab
 - [ ] 设计存档数据结构（每关剧情开始存档）
