@@ -522,32 +522,23 @@ namespace Game.Test
         {
             if (vnCanvas == null) return;
 
-            // === 快进按钮（右上角）===
-            ffButton = CreateButton("FFButton", vnCanvas.transform,
-                new Vector2(-30, -30), new Vector2(100, 45), "快进",
-                () => ToggleFastForward());
-            ffButton.GetComponent<RectTransform>().anchorMin = new Vector2(1, 1);
-            ffButton.GetComponent<RectTransform>().anchorMax = new Vector2(1, 1);
-            ffButton.GetComponent<RectTransform>().pivot = new Vector2(1, 1);
-            ffButton.GetComponent<RectTransform>().anchoredPosition = new Vector2(-30, -30);
-
-            // === 存档按钮（快进按钮左侧）===
+            // === 存档按钮（右上角）===
             var saveBtn = CreateButton("SaveBtn", vnCanvas.transform,
-                new Vector2(-140, -30), new Vector2(100, 45), "存档",
+                new Vector2(-30, -30), new Vector2(100, 45), "存档",
                 () => SaveProgress());
             saveBtn.GetComponent<RectTransform>().anchorMin = new Vector2(1, 1);
             saveBtn.GetComponent<RectTransform>().anchorMax = new Vector2(1, 1);
             saveBtn.GetComponent<RectTransform>().pivot = new Vector2(1, 1);
-            saveBtn.GetComponent<RectTransform>().anchoredPosition = new Vector2(-140, -30);
+            saveBtn.GetComponent<RectTransform>().anchoredPosition = new Vector2(-30, -30);
 
             // === 跳过按钮（存档按钮左侧，开场剧情时显示）===
             skipButton = CreateButton("SkipBtn", vnCanvas.transform,
-                new Vector2(-250, -30), new Vector2(100, 45), "跳过",
+                new Vector2(-140, -30), new Vector2(100, 45), "跳过",
                 () => OnSkipStory());
             skipButton.GetComponent<RectTransform>().anchorMin = new Vector2(1, 1);
             skipButton.GetComponent<RectTransform>().anchorMax = new Vector2(1, 1);
             skipButton.GetComponent<RectTransform>().pivot = new Vector2(1, 1);
-            skipButton.GetComponent<RectTransform>().anchoredPosition = new Vector2(-250, -30);
+            skipButton.GetComponent<RectTransform>().anchoredPosition = new Vector2(-140, -30);
             skipButton.gameObject.SetActive(false);
 
             // === 选项面板（屏幕中央）===
