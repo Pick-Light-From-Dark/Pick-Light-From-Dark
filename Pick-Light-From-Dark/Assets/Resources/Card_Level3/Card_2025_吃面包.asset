@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bc03fbed09b109242b4b557e79d89449, type: 3}
+  m_Name: "Card_2025_\u5403\u9762\u5305"
+  m_EditorClassIdentifier: 
+  cardData:
+    id: 2025
+    cardName: "\u5403\u9762\u5305"
+    description: "\u3010\u4F5C\u7528\u3011\u5403\u6389\u9762\u5305\u6240\u7528\u65F6\u95F412\u79D2\uFF0C\u4F7F\u7528\u65F6\u6BCF2\u79D2\u589E\u52A0\u4E00\u70B9\u5174\u594B\u503C\uFF0C\u6253\u65AD\u540E\u4E0D\u4F1A\u91CD\u7F6E\u4F7F\u7528\u65F6\u95F4\n\u3010\u63CF\u8FF0\u3011\u91CC\u9762\u662F\u5976\u6CB9\u9985\u7684\uFF0C\u5F88\u597D\u5403\u2026\u2026"
+    iconPath: 
+    cardSprite: {fileID: 0}
+    cardType: 0
+    initialStack: 1
+    segments:
+    - duration: 12
+      isInterruptible: 1
+    panicDelta: 2
+    exciteDelta: 6
+    interruptPanicAdd: 0
+    bindTaskId: 3006
+    relatedType: 1
+    relatedCardIds: 
+    allowedLevelIds:
+    - 1003
+    bedStateChange: 0
+    specialEffect: "\u5F53\u6B64\u5361\u724C\u88AB\u624B\u52A8\u6253\u65AD\u65F6\uFF0C\u4E0D\u4F1A\u56E0\u4E3A\u6253\u65AD\u5361\u724C\u800C\u91CD\u7F6E\u8BFB\u6761\u8FDB\u5EA6\uFF0C\u4E5F\u5C31\u662F\u8BF4\uFF0C\u5F53\u4E0B\u4E00\u6B21\u5C06\u6B64\u5361\u724C\u62D6\u52A8\u5230\u5361\u724C\u6846\u4E2D\u65F6\uFF0C\u4F1A\u63A5\u7EED\u4E0A\u4E00\u6B21\u8FDB\u5EA6\u3002\u4F7F\u7528\u65F6\u6BCF2\u79D2\u589E\u52A0\u4E00\u70B9\u5174\u594B\u503C\u3002\u614C\u4E71\u503C\u589E\u52A0\u662F\u4F7F\u7528\u540E\u7ED3\u7B97\u3002\u672C\u5F20\u5361\u4F7F\u7528\u540E\uFF0C\u5907\u9009\u53D6\u7684\u5176\u4ED6\u5361\u724C\u7684\u663E\u793A\u4FDD\u6301\u4E0D\u53D8\uFF0C\u4E0D\u6309\u7167\u6B64\u5361\u724C\u7684\u5173\u8054\u5217\u8868\u751F\u6210\u5361\u724C\u3002\u4F7F\u7528\u5361\u724C\u540E\uFF0C\u5C06\u5361\u724CID\u4E3A2026\u7684\u5361\u724C\u53D8\u4E3A\u5DF2\u4F7F\u7528\u76F4\u63A5\u9690\u85CF\uFF0C\u4E0D\u518D\u751F\u6210\u3002"
+    saveProgressOnInterrupt: 1
+    cardBackgroundType: 0
+    backgroundJumpId: 0
+    sfxName: 

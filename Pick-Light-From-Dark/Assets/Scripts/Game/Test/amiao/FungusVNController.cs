@@ -138,6 +138,9 @@ namespace Game.Test
             isChoosing = false;
             currentChoiceLine = null;
 
+            if (vnCanvas != null)
+                vnCanvas.gameObject.SetActive(true);
+
             // 保险：清理未使用的中景/前景层，避免旧图残留透显
             if (midgroundImage != null)  { midgroundImage.sprite = null;  midgroundImage.color = Color.clear; }
             if (foregroundImage != null) { foregroundImage.sprite = null; foregroundImage.color = Color.clear; }
@@ -1430,6 +1433,8 @@ namespace Game.Test
                 sayDialog.gameObject.SetActive(false);
             if (skipButton != null)
                 skipButton.gameObject.SetActive(false);
+            if (vnCanvas != null)
+                vnCanvas.gameObject.SetActive(false);
             Debug.Log($"[FungusVNController] 对话结束，分支类型: {exitType}");
             OnDialogueExit?.Invoke(exitType);
             OnDialogueComplete?.Invoke();

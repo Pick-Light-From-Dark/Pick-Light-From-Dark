@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bc03fbed09b109242b4b557e79d89449, type: 3}
+  m_Name: "Card_2019_\u70B9\u4EAE\u624B\u673A\u5C4F\u5E55"
+  m_EditorClassIdentifier: 
+  cardData:
+    id: 2019
+    cardName: "\u70B9\u4EAE\u624B\u673A\u5C4F\u5E55"
+    description: "\u3010\u4F5C\u7528\u3011\u4EAE\u8D77\u624B\u673A\u5C4F\u5E55\uFF0C\u53EF\u4EE5\u64CD\u4F5C\u624B\u673A\u4E2D\u7684\u8F6F\u4EF6\n\u3010\u63CF\u8FF0\u3011\u5DF2\u7ECF\u662F\u6700\u4F4E\u4EAE\u5EA6\u4E86\uFF0C\u600E\u4E48\u8FD8\u8FD9\u4E48\u4EAE\u2026\u2026"
+    iconPath: 
+    cardSprite: {fileID: 0}
+    cardType: 0
+    initialStack: 1
+    segments:
+    - duration: 1
+      isInterruptible: 1
+    panicDelta: 2
+    exciteDelta: 0
+    interruptPanicAdd: 0
+    bindTaskId: 0
+    relatedType: 0
+    relatedCardIds: da070000e4070000e5070000e6070000
+    allowedLevelIds:
+    - 1003
+    bedStateChange: 0
+    specialEffect: "\u65E0"
+    saveProgressOnInterrupt: 0
+    cardBackgroundType: 0
+    backgroundJumpId: 0
+    sfxName: 
