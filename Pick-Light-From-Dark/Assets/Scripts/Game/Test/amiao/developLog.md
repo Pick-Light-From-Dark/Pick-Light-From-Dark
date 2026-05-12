@@ -58,6 +58,37 @@
 - 测试脚本：`Assets/Scripts/Game/Test/amiao/SoundTestRunner.cs`
 - 音效资源：`Assets/Resources/Sound/sound/`、`Assets/Audio/SFX/`
 
+## 2026-05-13 演出效果增强
+
+**功能**：参考 Dialogue1.txt 演出方式，为 Dialogue2/3/4 增强画面与音效演出，不修改对话原文。
+
+**Dialogue2.txt 增强**：
+- 电话场景：`[se:DXH_SOUND/07.对话声]` 环境音
+- 挂断瞬间：`[se:按钮点击音效]` + `[hide_dialog]` / `[wait:2]` / `[show_dialog]` 停顿
+- 回寝：`[se:DXH_SOUND/04.移动被子]`
+- 吃面：黑屏转场 → `[bg:the spread quilt]` → `[bg:quilt aside]` + `[se:DXH_SOUND/04.移动被子]`
+- 巡逻：`[se:DXH_SOUND/08.脚步声]`
+
+**Dialogue3.txt 增强**：
+- 自省段落：`[hide_dialog]` / `[wait:2]` / `[show_dialog]`
+- 熄灯：`[bg:indoor light]`
+- 翻柜子：`[bg:cabinet _ open _ backpack]`
+- 失眠：`[bg:night_room]` + `[se:DXH_SOUND/06.深呼吸]`
+- 巡逻：`[se:DXH_SOUND/08.脚步声]`
+- 结尾：`[solid:black,fade,1]` 沉思氛围
+
+**Dialogue4.txt 增强**：
+- 聊天：`[se:DXH_SOUND/07.对话声]` + `[bg:寝室]`
+- 熄灯：`[hide_dialog]` / `[wait:3]` / `[show_dialog]`
+- 巡逻：`[bg:night_room]` + `[se:DXH_SOUND/08.脚步声]`
+
+**素材引用**：
+- 图片：`the spread quilt`、`quilt aside`、`indoor light`、`cabinet _ open _ backpack`、`night_room`、`寝室`（均来自 `Assets/Art/Scene/`、`Assets/Art/DialogueTestArt/`）
+- 音效：`07.对话声`、`08.脚步声`、`06.深呼吸`、`04.移动被子`、`按钮点击音效`（均来自 `Assets/Audio/SFX/`、`Assets/Resources/Sound/sound/`）
+
+**重要路径**：
+- 剧本：`Assets/Resources/Dialogue/Dialogue2.txt`、`Dialogue3.txt`、`Dialogue4.txt`
+
 ## 2026-05-13 Skip Button 不可见修复
 
 **问题**：`FungusVNController` 中跳过按钮（SkipBtn）在 VN 剧情中不显示，只有存档按钮可见。

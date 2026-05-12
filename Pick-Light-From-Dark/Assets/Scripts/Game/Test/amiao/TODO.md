@@ -25,11 +25,11 @@
 - [x] 排查并修复
 
 ## 6. 演出效果增强
-- [ ] 不修改对话内容
-- [ ] 参考 `Dialogue1.txt` 的演出方式
-- [ ] 修改 Dialogue2/3/4/5 增强演出效果
-- [ ] 在 `Assets/Art` 下找图片素材
-- [ ] 在 `Assets/Audio` 下找声音素材
+- [x] 不修改对话内容
+- [x] 参考 `Dialogue1.txt` 的演出方式
+- [x] 修改 Dialogue2/3/4 增强演出效果（Dialogue5 不存在，未创建）
+- [x] 在 `Assets/Art` 下找图片素材
+- [x] 在 `Assets/Audio` 下找声音素材
 
 ## 结局数据配置
 
