@@ -425,10 +425,14 @@ namespace Game.Test
                 tmp.alignment = TMPro.TextAlignmentOptions.Center;
             else
             {
-                nameRect.anchorMin = new Vector2(0.5f, 1f);
-                nameRect.anchorMax = new Vector2(0.5f, 1f);
-                nameRect.pivot = new Vector2(0.5f, 1f);
-                nameRect.anchoredPosition = new Vector2(-20f, 0f);
+                var nameRect = nameTextObj.GetComponent<RectTransform>();
+                if (nameRect != null)
+                {
+                    nameRect.anchorMin = new Vector2(0.5f, 1f);
+                    nameRect.anchorMax = new Vector2(0.5f, 1f);
+                    nameRect.pivot = new Vector2(0.5f, 1f);
+                    nameRect.anchoredPosition = new Vector2(-20f, 0f);
+                }
             }
         }
 

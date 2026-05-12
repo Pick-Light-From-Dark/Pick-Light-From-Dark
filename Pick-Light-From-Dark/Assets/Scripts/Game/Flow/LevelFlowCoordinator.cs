@@ -168,7 +168,7 @@ namespace Game.Flow
             vnController.OnDialogueExit = OnEndingStoryExit;
             vnController.OnDialogueComplete = OnEndingStoryEnd;
             vnController.ClearPlaceholder();
-            vnController.SetSkipButtonVisible(false);
+            vnController.SetSkipButtonVisible(true);
             vnController.RestartDialogue();
         }
 
