@@ -36,3 +36,20 @@
 - 记录器：`Assets/Scripts/Game/Backend/LevelRecordManager.cs`
 - 测试：`Assets/Scripts/Game/Test/amiao/SaveSystemTestRunner.cs`
 - 存档管理：`Assets/Scripts/Game/Backend/PlayerDataStore.cs`
+
+## 2026-05-13 Skip Button 不可见修复
+
+**问题**：`FungusVNController` 中跳过按钮（SkipBtn）在 VN 剧情中不显示，只有存档按钮可见。
+
+**修复**：
+- 为 SkipBtn / SaveBtn 动态添加独立 `Canvas` 组件（`overrideSorting = true, sortingOrder = 100`），确保按钮不被其他 UI（如 BgFadeTest 或 SayDialog）遮挡
+- `SetSkipButtonVisible` 增加调试日志，方便运行时排查显隐状态
+
+**测试方式**：
+1. 挂载 `SkipButtonTest` 到场景中的 FungusVNController 所在 GameObject
+2. 运行后按 F1 切换跳过按钮显隐
+3. 观察 Console 日志确认 `SetSkipButtonVisible` 调用情况
+
+**重要路径**：
+- 修复代码：`Assets/Scripts/Game/Test/amiao/FungusVNController.cs`
+- 测试脚本：`Assets/Scripts/Game/Test/amiao/SkipButtonTest.cs`

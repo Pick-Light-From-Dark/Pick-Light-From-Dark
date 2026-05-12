@@ -15,9 +15,9 @@
 - [x] 显示重要存档数据
 
 ## 4. Skip Button 不可见排查
-- [ ] 在 `BgFadeTest.cs` 中只看到存档按钮
-- [ ] 排查 `FungusVNController` 中跳过按钮未显示的原因
-- [ ] 修复并验证
+- [x] 在 `BgFadeTest.cs` 中只看到存档按钮
+- [x] 排查 `FungusVNController` 中跳过按钮未显示的原因
+- [x] 修复并验证
 
 ## 5. 音效未加载排查
 - [ ] `Assets/Scenes/Amiao_Test` 中音效未加载

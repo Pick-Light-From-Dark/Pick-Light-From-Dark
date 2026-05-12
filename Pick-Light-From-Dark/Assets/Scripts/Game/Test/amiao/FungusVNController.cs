@@ -885,6 +885,7 @@ namespace Game.Test
             saveBtn.GetComponent<RectTransform>().anchorMax = new Vector2(1, 1);
             saveBtn.GetComponent<RectTransform>().pivot = new Vector2(1, 1);
             saveBtn.GetComponent<RectTransform>().anchoredPosition = new Vector2(-30, -30);
+            EnsureButtonOnTop(saveBtn);
 
             // === 跳过按钮（存档按钮左侧，开场剧情时显示）===
             skipButton = CreateButton("SkipBtn", vnCanvas.transform,
@@ -895,6 +896,7 @@ namespace Game.Test
             skipButton.GetComponent<RectTransform>().pivot = new Vector2(1, 1);
             skipButton.GetComponent<RectTransform>().anchoredPosition = new Vector2(-140, -30);
             skipButton.gameObject.SetActive(false);
+            EnsureButtonOnTop(skipButton);
 
             // === 选项面板（屏幕中央）===
             choicePanel = new GameObject("ChoicePanel");
@@ -1105,11 +1107,30 @@ namespace Game.Test
             EndDialogue();
         }
 
+        /// <summary>为按钮添加独立 Canvas，确保在最上层显示</summary>
+        void EnsureButtonOnTop(Button btn)
+        {
+            if (btn == null) return;
+            var canvas = btn.gameObject.GetComponent<Canvas>();
+            if (canvas == null) canvas = btn.gameObject.AddComponent<Canvas>();
+            canvas.overrideSorting = true;
+            canvas.sortingOrder = 100;
+            var raycaster = btn.gameObject.GetComponent<GraphicRaycaster>();
+            if (raycaster == null) btn.gameObject.AddComponent<GraphicRaycaster>();
+        }
+
         /// <summary>设置跳过按钮显隐（供 LevelFlowCoordinator 调用）</summary>
         public void SetSkipButtonVisible(bool visible)
         {
             if (skipButton != null)
+            {
                 skipButton.gameObject.SetActive(visible);
+                Debug.Log($"[FungusVNController] 跳过按钮显隐设置为: {visible}");
+            }
+            else
+            {
+                Debug.LogWarning("[FungusVNController] skipButton 为 null，无法设置显隐");
+            }
         }
 
         /// <summary>推进到下一行对话</summary>
