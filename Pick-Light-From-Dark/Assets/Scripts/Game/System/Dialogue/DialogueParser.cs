@@ -114,6 +114,16 @@ public static class DialogueParser
                 d.type = "指令";
                 d.action = s.Substring(8).TrimEnd(']').Trim().ToLower();
             }
+            else if (s.StartsWith("[hide_dialog"))
+            {
+                d.type = "指令";
+                d.dialogAction = "hide";
+            }
+            else if (s.StartsWith("[show_dialog"))
+            {
+                d.type = "指令";
+                d.dialogAction = "show";
+            }
             else if (s.StartsWith("[旁白]："))
             {
                 d.type = "旁白";
