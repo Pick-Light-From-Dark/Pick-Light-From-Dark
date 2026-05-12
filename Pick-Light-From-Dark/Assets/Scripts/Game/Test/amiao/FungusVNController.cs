@@ -80,6 +80,9 @@ namespace Game.Test
         /// <summary>剧情结束后的分支类型（供流程控制器读取）</summary>
         public VNExitType exitType { get; private set; } = VNExitType.None;
 
+        /// <summary>第一关跳过按钮是否跳到选项（否则直接结束剧情）</summary>
+        public bool skipToChoiceIfAvailable = false;
+
         /// <summary>剧情全部结束后的回调（带分支类型）</summary>
         public System.Action<VNExitType> OnDialogueExit;
 
@@ -440,7 +443,7 @@ namespace Game.Test
                 nameRect.anchorMin = new Vector2(0.5f, 1f);
                 nameRect.anchorMax = new Vector2(0.5f, 1f);
                 nameRect.pivot = new Vector2(0.5f, 1f);
-                nameRect.anchoredPosition = new Vector2(0f, -5f);
+                nameRect.anchoredPosition = new Vector2(-20f, 0f);
             }
         }
 
@@ -753,6 +756,7 @@ namespace Game.Test
 #if UNITY_EDITOR
             if (s == null)
             {
+                // 1. 先查常见硬编码路径（快路径）
                 string[] artPaths = new string[]
                 {
                     $"Assets/Art/Characters/cg/{name}.png",
@@ -768,8 +772,6 @@ namespace Game.Test
                         Debug.Log($"[LoadBgSprite] 从 Art 路径找到 Sprite: {path}");
                         return s;
                     }
-
-                    // 兜底：尝试加载为 Texture2D 再创建 Sprite（兼容导入设置非 Sprite 的情况）
                     Texture2D tex = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>(path);
                     if (tex != null)
                     {
@@ -777,8 +779,29 @@ namespace Game.Test
                         s = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
                         return s;
                     }
+                }
 
-                    Debug.Log($"[LoadBgSprite] 未找到: {path}");
+                // 2. 递归扫描 Assets/Art 所有子目录（兜底）
+                if (System.IO.Directory.Exists("Assets/Art"))
+                {
+                    var files = System.IO.Directory.GetFiles("Assets/Art", $"{name}.png", System.IO.SearchOption.AllDirectories);
+                    foreach (var file in files)
+                    {
+                        string path = file.Replace('\\', '/');
+                        s = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(path);
+                        if (s != null)
+                        {
+                            Debug.Log($"[LoadBgSprite] 从 Art 子目录递归找到 Sprite: {path}");
+                            return s;
+                        }
+                        Texture2D tex = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+                        if (tex != null)
+                        {
+                            Debug.LogWarning($"[LoadBgSprite] {path} 是 Texture2D，非 Sprite。尝试动态创建 Sprite。");
+                            s = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
+                            return s;
+                        }
+                    }
                 }
             }
 #endif
@@ -1085,10 +1108,34 @@ namespace Game.Test
             saveFlowchart.SetStringVariable("VN_StoryFile", dialogueText != null ? dialogueText.name : "");
         }
 
-        /// <summary>跳过当前剧情（直接结束）</summary>
+        /// <summary>跳过当前剧情：第一关跳到选项，其他直接结束</summary>
         void OnSkipStory()
         {
             Debug.Log("[FungusVNController] 用户跳过剧情");
+
+            if (skipToChoiceIfAvailable)
+            {
+                int choiceIndex = -1;
+                for (int i = lineIndex; i < lines.Count; i++)
+                {
+                    if (lines[i].type == "选项")
+                    {
+                        choiceIndex = i;
+                        break;
+                    }
+                }
+
+                if (choiceIndex != -1)
+                {
+                    StopAllCoroutines();
+                    isProcessing = false;
+                    isFastForwarding = false;
+                    lineIndex = choiceIndex;
+                    ShowNextLine();
+                    return;
+                }
+            }
+
             EndDialogue();
         }
 
@@ -1215,8 +1262,6 @@ namespace Game.Test
             if (line.type != "指令")
             {
                 string speaker = line.speaker;
-                if (line.type == "旁白" || line.type == "场景")
-                    speaker = "陆萤";
 
                 var charMapping = characters.Find(c => c.name == speaker);
                 if (charMapping != null && charMapping.fungusCharacter != null)
@@ -1263,7 +1308,7 @@ namespace Game.Test
             sayDialog.SetCharacter(null);
             sayDialog.NameText = "";
             sayDialog.gameObject.SetActive(true);
-            sayDialog.StoryText = "";
+            // 保留之前的文本，不清空 StoryText，使选项与旁白同时显示
 
             // 设置按钮文本并显示
             if (choiceText1 != null)

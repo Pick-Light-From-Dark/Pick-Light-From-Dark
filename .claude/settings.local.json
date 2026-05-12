@@ -14,7 +14,15 @@
       "PowerShell(cmd /c dir \"E:\\\\UnityPro\\\\Pick-Light-From-Dark\\\\Pick-Light-From-Dark\\\\Assets\")",
       "PowerShell(cmd /c dir /s /b \"E:\\\\UnityPro\\\\Pick-Light-From-Dark\\\\Pick-Light-From-Dark\\\\Assets\\\\Resources\\\\Dialogue\")",
       "PowerShell(cmd /c dir /s /b \"E:\\\\UnityPro\\\\Pick-Light-From-Dark\\\\Pick-Light-From-Dark\\\\Assets\\\\Scripts\\\\Game\\\\System\\\\Dialogue\")",
-      "PowerShell(git add *)"
+      "PowerShell(git add *)",
+      "PowerShell(git push *)",
+      "PowerShell(git checkout *)",
+      "PowerShell([guid]::NewGuid\\(\\).ToString\\('n'\\))",
+      "PowerShell(@\\([guid]::NewGuid\\(\\).ToString\\('n'\\), [guid]::NewGuid\\(\\).ToString\\('n'\\)\\) -join \"`n\")",
+      "PowerShell(git commit *)",
+      "PowerShell(Get-ChildItem -Path E:\\\\UnityPro\\\\Pick-Light-From-Dark\\\\Assets -Recurse -Directory | Where-Object { $_.Name -match 'amiao|Amiao|Test|VN|Fungus' } | Select-Object FullName)",
+      "PowerShell(Get-Content 'C:\\\\Users\\\\30891\\\\.claude\\\\projects\\\\E--UnityPro-Pick-Light-From-Dark\\\\922012b4-faa1-4836-bf8e-945b157b86df.jsonl' -TotalCount 5 | ForEach-Object { $_.Substring\\(0, [Math]::Min\\(500, $_.Length\\)\\) })",
+      "PowerShell(Get-ChildItem *)"
     ]
   }
 }

@@ -127,7 +127,7 @@ public static class DialogueParser
             else if (s.StartsWith("[旁白]："))
             {
                 d.type = "旁白";
-                d.speaker = "";
+                d.speaker = "旁白";
                 d.content = s.Substring(5).Trim();
             }
             else if (s.StartsWith("[场景]："))

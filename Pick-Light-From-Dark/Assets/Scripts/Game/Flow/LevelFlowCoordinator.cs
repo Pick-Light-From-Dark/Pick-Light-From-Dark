@@ -57,6 +57,7 @@ namespace Game.Flow
             vnController.dialogueText = openingStory;
             vnController.OnDialogueExit = OnOpeningStoryExit;
             vnController.OnDialogueComplete = OnOpeningStoryEnd;
+            vnController.skipToChoiceIfAvailable = (levelId == 1);
             // 重置并启动 VN 控制器
             vnController.ClearPlaceholder();
             vnController.SetSkipButtonVisible(true);
