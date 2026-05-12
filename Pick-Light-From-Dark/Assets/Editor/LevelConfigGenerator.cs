@@ -55,10 +55,10 @@ namespace Game.Editor
                 new TaskGoal(2008, 1) { state = TaskState.InProgress },
             };
 
-            config.preDialogueFile = "Dialogue1-1_pre";
-            config.postDialogueFile = "Dialogue1-1_post_eat";
-            config.isChoiceLevel = true;
-            config.choice2EndingDialogueFile = "Dialogue1-1_post_noeat";
+            config.preDialogueFile = "Dialogue1";
+            config.postDialogueFile = "";
+            config.isChoiceLevel = false;
+            config.choice2EndingDialogueFile = "";
 
             EditorUtility.SetDirty(config);
             Debug.Log("[LevelConfigGenerator] LevelConfig_1.asset 已更新");

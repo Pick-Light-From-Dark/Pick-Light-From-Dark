@@ -10,6 +10,11 @@ public class DialogueLine
     public string choice1Id;      // 选择1标识（如 eat1）
     public string choice2Id;      // 选择2标识（如 eat2）
 
+    public string choice1JumpTarget; // 选项1跳转目标段落名（block名）
+    public string choice2JumpTarget; // 选项2跳转目标段落名（block名）
+    public string choice1Action;    // 选项1后续动作: ending, gameplay, nextlevel
+    public string choice2Action;    // 选项2后续动作: ending, gameplay, nextlevel
+
     // 显式演出指令（与文本解耦）
     public string bg;             // [bg:xxx] 或 [bg:xxx,fade] — 后景（向后兼容）
     public string mg;             // [mg:xxx] — 中景
@@ -21,4 +26,6 @@ public class DialogueLine
     public string se;             // [se:xxx]
     public string bgm;            // [bgm:xxx]
     public float wait;            // [wait:6] — 暂停秒数
+    public string action;         // [action:ending/gameplay/nextlevel] — 分支动作指令
+    public string dialogAction;   // [hide_dialog] / [show_dialog] — 对话框显隐控制
 }

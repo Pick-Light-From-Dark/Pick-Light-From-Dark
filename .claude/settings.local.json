@@ -7,7 +7,14 @@
       "Bash(:)",
       "Read(//c/Users/l'w't/.claude/**)",
       "mcp__ide__executeCode",
-      "mcp__ide__getDiagnostics"
+      "mcp__ide__getDiagnostics",
+      "PowerShell(Get-ChildItem -Path \"E:\\\\UnityPro\\\\Pick-Light-From-Dark\\\\Pick-Light-From-Dark\\\\Assets\" -Recurse -File | Select-Object FullName, Length | Where-Object { $_.FullName -match \"Dialogue\" })",
+      "PowerShell(Get-ChildItem -Path \"E:\\\\UnityPro\\\\Pick-Light-From-Dark\\\\Pick-Light-From-Dark\\\\Assets\" -Recurse -File | Where-Object { $_.Name -match \"Dialogue\" } | Select-Object FullName, Length)",
+      "PowerShell(Get-ChildItem -Path \"E:\\\\UnityPro\\\\Pick-Light-From-Dark\\\\Pick-Light-From-Dark\\\\Assets\" -Recurse -File | Where-Object { $_.Name -match \"Dialogue\" -or $_.Name -match \"dialogue\" } | Select-Object FullName, Length)",
+      "PowerShell(cmd /c dir \"E:\\\\UnityPro\\\\Pick-Light-From-Dark\\\\Pick-Light-From-Dark\\\\Assets\")",
+      "PowerShell(cmd /c dir /s /b \"E:\\\\UnityPro\\\\Pick-Light-From-Dark\\\\Pick-Light-From-Dark\\\\Assets\\\\Resources\\\\Dialogue\")",
+      "PowerShell(cmd /c dir /s /b \"E:\\\\UnityPro\\\\Pick-Light-From-Dark\\\\Pick-Light-From-Dark\\\\Assets\\\\Scripts\\\\Game\\\\System\\\\Dialogue\")",
+      "PowerShell(git add *)"
     ]
   }
 }

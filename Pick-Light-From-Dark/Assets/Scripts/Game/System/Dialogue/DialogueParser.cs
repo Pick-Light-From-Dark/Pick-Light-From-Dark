@@ -104,6 +104,26 @@ public static class DialogueParser
                 if (float.TryParse(s.Substring(6).TrimEnd(']').Trim(), out float waitSec))
                     d.wait = waitSec;
             }
+            else if (s.StartsWith("[block:"))
+            {
+                d.type = "段落";
+                d.content = s.Substring(7).TrimEnd(']').Trim();
+            }
+            else if (s.StartsWith("[action:"))
+            {
+                d.type = "指令";
+                d.action = s.Substring(8).TrimEnd(']').Trim().ToLower();
+            }
+            else if (s.StartsWith("[hide_dialog"))
+            {
+                d.type = "指令";
+                d.dialogAction = "hide";
+            }
+            else if (s.StartsWith("[show_dialog"))
+            {
+                d.type = "指令";
+                d.dialogAction = "show";
+            }
             else if (s.StartsWith("[旁白]："))
             {
                 d.type = "旁白";
@@ -133,41 +153,80 @@ public static class DialogueParser
                 d.type = "选项";
                 d.speaker = "";
 
-                int start = s.IndexOf("-");
+                // 兼容格式：选项 -A or -B。 / 选项 - A or - B。 / 选项 -A or B。
+                int start = s.IndexOf('-');
                 int orIndex = s.IndexOf("or");
 
-                if (start != -1 && orIndex != -1)
+                if (start != -1 && orIndex != -1 && orIndex > start)
                 {
                     d.choice1 = s.Substring(start + 1, orIndex - start - 1).Trim();
-                    d.choice2 = s.Substring(orIndex + 2).Replace("。", "").Trim();
+                    d.choice1 = d.choice1.TrimStart('-').Trim();
+
+                    string afterOr = s.Substring(orIndex + 2).Replace("。", "").Trim();
+                    d.choice2 = afterOr.TrimStart('-').Trim();
                 }
 
                 list.Add(d);
                 continue;
             }
-            else if (s.StartsWith("【选项-"))
+            else if (s.StartsWith("【选项"))
             {
-                // 解析选项结果文本，同时提取选项标识
-                // 格式：【选项-xxx】，xxx 为选项标识（如 吃1、吃2）
-                int idStart = 4; // 跳过 "【选项-"
+                // 解析选项结果文本，同时提取选项标识和跳转目标
+                // 兼容格式：【选项-xxx】、【选项 - xxx】、【选项-x】等
+                int idStart = s.IndexOf('-');
+                if (idStart == -1) idStart = s.IndexOf('一'); // 备用分隔符
+                if (idStart == -1) idStart = 3; // 兜底
                 int idEnd = s.IndexOf('】');
-                string choiceId = idEnd > idStart ? s.Substring(idStart, idEnd - idStart).Trim() : "";
+                string choiceId = (idEnd > idStart + 1) ? s.Substring(idStart + 1, idEnd - idStart - 1).Trim() : "";
+
+                // 提取跳转目标：跳转【段落名】
+                string jumpTarget = "";
+                int jumpIdx = s.IndexOf("跳转【");
+                if (jumpIdx != -1)
+                {
+                    int targetStart = jumpIdx + 3; // 跳过 "跳转【"
+                    int targetEnd = s.IndexOf('】', targetStart);
+                    if (targetEnd != -1)
+                        jumpTarget = s.Substring(targetStart, targetEnd - targetStart).Trim();
+                }
+
+                // 提取动作：动作【xxx】
+                string choiceAction = "";
+                int actionIdx = s.IndexOf("动作【");
+                if (actionIdx != -1)
+                {
+                    int actionStart = actionIdx + 3; // 跳过 "动作【"
+                    int actionEnd = s.IndexOf('】', actionStart);
+                    if (actionEnd != -1)
+                        choiceAction = s.Substring(actionStart, actionEnd - actionStart).Trim().ToLower();
+                }
 
                 string result = ReadUntilBreak(rawLines, i + 1);
                 for (int j = list.Count - 1; j >= 0; j--)
                 {
                     if (list[j].type == "选项")
                     {
-                        // 根据选项标识末尾数字分配 choice1/choice2
-                        if (choiceId.EndsWith("2"))
+                        // 兼容格式：按顺序绑定，第一个结果→choice1，第二个→choice2
+                        // 同时也兼容带数字后缀的格式（如 吃1/吃2）
+                        bool bindToChoice2 = choiceId.EndsWith("2");
+                        if (!bindToChoice2 && !string.IsNullOrEmpty(list[j].choice1Result) && list[j].choice1Id != choiceId)
+                        {
+                            bindToChoice2 = true; // choice1 已被占用，自动分配到 choice2
+                        }
+
+                        if (bindToChoice2)
                         {
                             list[j].choice2Result = result;
                             list[j].choice2Id = choiceId;
+                            list[j].choice2JumpTarget = jumpTarget;
+                            list[j].choice2Action = choiceAction;
                         }
                         else
                         {
                             list[j].choice1Result = result;
                             list[j].choice1Id = choiceId;
+                            list[j].choice1JumpTarget = jumpTarget;
+                            list[j].choice1Action = choiceAction;
                         }
                         break;
                     }
@@ -215,7 +274,7 @@ public static class DialogueParser
             string next = rawLines[k].Trim();
             if (string.IsNullOrEmpty(next)) continue;
 
-            if (next.StartsWith("选项") || next.StartsWith("【卡牌") || next.StartsWith("【选项"))
+            if (next.StartsWith("选项") || next.StartsWith("【卡牌") || next.StartsWith("【选项") || next.StartsWith("[block:") || next.StartsWith("[action:"))
                 break;
 
             result += next + "\n";

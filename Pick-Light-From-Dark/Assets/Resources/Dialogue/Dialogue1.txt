@@ -1,10 +1,13 @@
 [bg:light_room]
 [旁白]：(还有十五分钟熄灯。)
 [旁白]：(…… 还没有再整理一遍试卷的错题。)
-[bg:   CheckScores_2]
-陆萤：怎么可能？这是我的分数？
-[bg:   CheckScores_1]（隐藏对话框三秒）
-[bg: light_room]
+[bg:CheckScores_2,fade]
+陆萤：怎么可能？{wait:3s}这是我的分数？
+[bg:CheckScores_1,fade]
+[hide_dialog]
+[wait:3]
+[show_dialog]
+[bg: light_room,fade]
 [旁白]：(最后两分钟…… 趁现在起床还能看几道题。)
 [旁白]：(明明迫切地想要起床，脑海里却飞速闪过各种画面，一会儿是成绩条，一会儿是怎么改都做不对的试卷、永远塞不满的错题本……)
 [旁白]：（父亲、母亲、老师，他们肯定对我很失望……）

@@ -76,6 +76,15 @@ namespace Game.Test
         private DialogueLine currentChoiceLine;
         private bool isFastForwarding;
 
+        // 段落跳转索引：段落名 → lines 中的起始索引
+        private Dictionary<string, int> blockStartIndices = new Dictionary<string, int>();
+
+        /// <summary>剧情结束后的分支类型（供流程控制器读取）</summary>
+        public VNExitType exitType { get; private set; } = VNExitType.None;
+
+        /// <summary>剧情全部结束后的回调（带分支类型）</summary>
+        public System.Action<VNExitType> OnDialogueExit;
+
         // UI 按钮
         private Button ffButton;
         private Button skipButton;
@@ -89,7 +98,12 @@ namespace Game.Test
         private Text placeholderText;
         private HashSet<string> missingAssetLogs = new HashSet<string>();
 
-        /// <summary>剧情全部结束后的回调（供流程控制器订阅）</summary>
+        // 各层正在运行的背景转场协程（避免多重协程冲突）
+        private Coroutine bgTransitionRoutine;
+        private Coroutine mgTransitionRoutine;
+        private Coroutine fgTransitionRoutine;
+
+        /// <summary>剧情全部结束后的回调（供流程控制器订阅，兼容旧代码）</summary>
         public System.Action OnDialogueComplete;
 
         void Awake()
@@ -100,12 +114,41 @@ namespace Game.Test
 
         void Start()
         {
+            RestartDialogue();
+        }
+
+        /// <summary>
+        /// 重新启动对话（供 LevelFlowCoordinator 在切换 opening/ending 文本时调用）
+        /// </summary>
+        public void RestartDialogue()
+        {
             if (dialogueText == null)
             {
                 Debug.LogError("[FungusVNController] dialogueText 未赋值");
                 return;
             }
+
+            // 重置状态
+            hasEnded = false;
+            exitType = VNExitType.None;
+            isProcessing = false;
+            isChoosing = false;
+            currentChoiceLine = null;
+
+            // 保险：清理未使用的中景/前景层，避免旧图残留透显
+            if (midgroundImage != null)  { midgroundImage.sprite = null;  midgroundImage.color = Color.clear; }
+            if (foregroundImage != null) { foregroundImage.sprite = null; foregroundImage.color = Color.clear; }
+            // 停罢所有转场协程
+            if (bgTransitionRoutine != null) { StopCoroutine(bgTransitionRoutine); bgTransitionRoutine = null; }
+            if (mgTransitionRoutine != null) { StopCoroutine(mgTransitionRoutine); mgTransitionRoutine = null; }
+            if (fgTransitionRoutine != null) { StopCoroutine(fgTransitionRoutine); fgTransitionRoutine = null; }
+
             lines = DialogueParser.Parse(dialogueText);
+            BuildBlockIndex();
+
+            // 保险：确保 SetupDialogMask 在 sayDialog 有效后再执行一次
+            if (sayDialog != null)
+                SetupDialogMask();
 
             // 检查是否有 Fungus 存档需要恢复
             if (saveFlowchart != null)
@@ -138,6 +181,20 @@ namespace Game.Test
             }
 
             ShowNextLine();
+        }
+
+        /// <summary>扫描 lines 建立段落名到行号的索引</summary>
+        void BuildBlockIndex()
+        {
+            blockStartIndices.Clear();
+            if (lines == null) return;
+            for (int i = 0; i < lines.Count; i++)
+            {
+                if (lines[i].type == "段落" && !string.IsNullOrEmpty(lines[i].content))
+                {
+                    blockStartIndices[lines[i].content] = i + 1; // 跳到段落标记的下一行
+                }
+            }
         }
 
         /// <summary>切换快进模式（供按钮调用）</summary>
@@ -175,24 +232,20 @@ namespace Game.Test
                 canvasGo.AddComponent<GraphicRaycaster>();
             }
 
-            // 2. SayDialog：优先查找场景中的，没有则实例化 Fungus 预制体
+            // 2. SayDialog：如果 Inspector 未赋值，则实例化新的（不复用场景中已有的，避免遮罩设置到错误的对话框）
             if (sayDialog == null)
             {
-                sayDialog = FindObjectOfType<SayDialog>();
-                if (sayDialog == null)
+                var prefab = Resources.Load<GameObject>("Prefabs/SayDialog");
+                if (prefab != null)
                 {
-                    var prefab = Resources.Load<GameObject>("Prefabs/SayDialog");
-                    if (prefab != null)
-                    {
-                        var go = Instantiate(prefab);
-                        go.name = "SayDialog";
-                        sayDialog = go.GetComponent<SayDialog>();
-                        Debug.Log("[FungusVNController] 已自动实例化 SayDialog");
-                    }
-                    else
-                    {
-                        Debug.LogError("[FungusVNController] 未找到 SayDialog prefab。请确保 Fungus 已正确导入，或在 Inspector 中手动赋值。");
-                    }
+                    var go = Instantiate(prefab);
+                    go.name = $"SayDialog_{gameObject.name}";
+                    sayDialog = go.GetComponent<SayDialog>();
+                    Debug.Log($"[FungusVNController] 已自动实例化 SayDialog: {go.name}");
+                }
+                else
+                {
+                    Debug.LogError("[FungusVNController] 未找到 SayDialog prefab。请确保 Fungus 已正确导入，或在 Inspector 中手动赋值。");
                 }
             }
 
@@ -260,15 +313,33 @@ namespace Game.Test
 
         void SetupDialogMask()
         {
-            if (sayDialog == null || dialogMask == null) return;
+            if (sayDialog == null)
+            {
+                Debug.LogWarning("[SetupDialogMask] sayDialog 为 null，跳过");
+                return;
+            }
+            if (dialogMask == null)
+            {
+                Debug.LogWarning("[SetupDialogMask] dialogMask 未赋值，跳过");
+                return;
+            }
 
             var canvas = sayDialog.GetComponent<Canvas>();
-            if (canvas == null) return;
+            if (canvas == null)
+            {
+                Debug.LogWarning("[SetupDialogMask] sayDialog 上没有 Canvas，跳过");
+                return;
+            }
 
             // 查找是否已存在遮罩层
             var existing = canvas.transform.Find("DialogMask");
-            if (existing != null) return;
+            if (existing != null)
+            {
+                Debug.Log("[SetupDialogMask] DialogMask 已存在，跳过创建");
+                return;
+            }
 
+            // 创建全屏遮罩层
             var maskGo = new GameObject("DialogMask");
             maskGo.transform.SetParent(canvas.transform, false);
             maskGo.transform.SetAsFirstSibling();
@@ -283,17 +354,58 @@ namespace Game.Test
             maskImg.sprite = dialogMask;
             maskImg.color = Color.white;
             maskImg.raycastTarget = false;
+            // 确保使用 Simple 模式，避免 Sliced 模式下 sprite 为 null 时的显示异常
+            maskImg.type = Image.Type.Simple;
 
-            // 将 Panel 原有背景设为透明，避免遮挡遮罩层
-            var panel = canvas.transform.Find("Panel");
-            if (panel != null)
+            Debug.Log("[SetupDialogMask] DialogMask 已创建并设置 sprite");
+
+            // 将 Panel 及其子对象中的所有 Image 背景设为透明
+            bool panelCleared = ClearPanelBackground(canvas.transform);
+            if (!panelCleared)
             {
-                var panelImg = panel.GetComponent<Image>();
-                if (panelImg != null)
+                Debug.LogWarning("[SetupDialogMask] 未找到 Panel，尝试查找其他背景对象...");
+                // 兜底：尝试常见背景对象名
+                string[] fallbackNames = { "Background", "Bg", "BackGround", "Panel" };
+                foreach (var name in fallbackNames)
                 {
-                    panelImg.sprite = null;
-                    panelImg.color = new Color(1, 1, 1, 0);
+                    var bg = canvas.transform.Find(name);
+                    if (bg != null)
+                    {
+                        ClearImageRecursive(bg);
+                        Debug.Log($"[SetupDialogMask] 已清除背景对象 '{name}'");
+                        break;
+                    }
                 }
+            }
+        }
+
+        /// <summary>清除 Panel 及其子对象中的所有 Image 背景</summary>
+        bool ClearPanelBackground(Transform canvasTransform)
+        {
+            var panel = canvasTransform.Find("Panel");
+            if (panel == null) return false;
+
+            ClearImageRecursive(panel);
+            Debug.Log("[SetupDialogMask] Panel 及其子对象的 Image 已设为透明");
+            return true;
+        }
+
+        /// <summary>递归清除指定 Transform 及其子对象中的 Image 颜色</summary>
+        void ClearImageRecursive(Transform target)
+        {
+            if (target == null) return;
+
+            var img = target.GetComponent<Image>();
+            if (img != null)
+            {
+                img.sprite = null;
+                img.color = new Color(1, 1, 1, 0);
+                img.type = Image.Type.Simple;
+            }
+
+            foreach (Transform child in target)
+            {
+                ClearImageRecursive(child);
             }
         }
 
@@ -340,6 +452,11 @@ namespace Game.Test
                 rect.anchorMax = Vector2.one;
                 rect.offsetMin = Vector2.zero;
                 rect.offsetMax = Vector2.zero;
+
+                // 保险：显式添加 CanvasRenderer，否则 Image 可能无法渲染
+                var canvasRenderer = go.GetComponent<CanvasRenderer>();
+                if (canvasRenderer == null) canvasRenderer = go.AddComponent<CanvasRenderer>();
+
                 layerImage = go.AddComponent<Image>();
                 layerImage.color = Color.clear;
                 layerImage.raycastTarget = false;
@@ -351,6 +468,30 @@ namespace Game.Test
             }
         }
 
+        /// <summary>停罢指定层的转场协程</summary>
+        void StopLayerTransition(Image layerImage)
+        {
+            if (layerImage == midgroundImage && mgTransitionRoutine != null) { StopCoroutine(mgTransitionRoutine); mgTransitionRoutine = null; }
+            else if (layerImage == foregroundImage && fgTransitionRoutine != null) { StopCoroutine(fgTransitionRoutine); fgTransitionRoutine = null; }
+            else if (layerImage == backgroundImage && bgTransitionRoutine != null) { StopCoroutine(bgTransitionRoutine); bgTransitionRoutine = null; }
+        }
+
+        /// <summary>启动指定层的转场协程</summary>
+        void StartLayerTransition(Image layerImage, Coroutine cr)
+        {
+            if (layerImage == midgroundImage) mgTransitionRoutine = cr;
+            else if (layerImage == foregroundImage) fgTransitionRoutine = cr;
+            else bgTransitionRoutine = cr;
+        }
+
+        /// <summary>获取指定层是否有正在运行的协程</summary>
+        bool IsLayerTransitioning(Image layerImage)
+        {
+            if (layerImage == midgroundImage) return mgTransitionRoutine != null;
+            if (layerImage == foregroundImage) return fgTransitionRoutine != null;
+            return bgTransitionRoutine != null;
+        }
+
         /// <summary>设置某一层背景图（空值=清空）</summary>
         void SetLayerBackground(Image layerImage, string spriteName, string transition = null, float transitionHold = 0f)
         {
@@ -358,6 +499,7 @@ namespace Game.Test
 
             if (string.IsNullOrEmpty(spriteName))
             {
+                StopLayerTransition(layerImage);
                 layerImage.sprite = null;
                 layerImage.color = Color.clear;
                 return;
@@ -380,22 +522,38 @@ namespace Game.Test
                 return;
             }
 
+            Debug.Log($"[SetLayerBackground] 准备设置背景。层={(layerImage == backgroundImage ? "bg" : layerImage == midgroundImage ? "mg" : "fg")}, spriteName={spriteName}, transition={transition}, 当前sprite={(layerImage.sprite != null ? layerImage.sprite.name : "null")}, 当前color={layerImage.color}");
+
+            // 若目标图与当前图相同，且非转场中，则跳过
+            if (layerImage.sprite == targetSprite && !IsLayerTransitioning(layerImage))
+            {
+                Debug.Log($"[SetLayerBackground] 目标图与当前图相同且非转场中，跳过: {spriteName}");
+                return;
+            }
+
+            // 停罢该层旧协程，避免多协程并改同一 Image
+            StopLayerTransition(layerImage);
+
             switch (transition)
             {
                 case "fade":
-                    StartCoroutine(BackgroundFadeTransition(layerImage, targetSprite, transitionHold));
+                    Debug.Log($"[SetLayerBackground] 启动 Fade 协程: {spriteName}");
+                    StartLayerTransition(layerImage, StartCoroutine(BackgroundFadeTransition(layerImage, targetSprite, transitionHold)));
                     break;
                 case "slide":
-                    StartCoroutine(BackgroundSlideTransition(layerImage, targetSprite));
+                    Debug.Log($"[SetLayerBackground] 启动 Slide 协程: {spriteName}");
+                    StartLayerTransition(layerImage, StartCoroutine(BackgroundSlideTransition(layerImage, targetSprite)));
                     break;
                 case "crossfade":
-                    StartCoroutine(BackgroundCrossfadeTransition(layerImage, targetSprite));
+                    Debug.Log($"[SetLayerBackground] 启动 Crossfade 协程: {spriteName}");
+                    StartLayerTransition(layerImage, StartCoroutine(BackgroundCrossfadeTransition(layerImage, targetSprite)));
                     break;
                 default:
                     if (!string.IsNullOrEmpty(transition))
                     {
-                        Debug.Log($"[VNTransitionTest] 转场 '{transition}' 尚未实现，使用直切。");
+                        Debug.Log($"[FungusVNController] 转场 '{transition}' 尚未实现，使用直切。");
                     }
+                    Debug.Log($"[SetLayerBackground] 直切设置 sprite: {spriteName}");
                     layerImage.sprite = targetSprite;
                     layerImage.color = Color.white;
                     break;
@@ -407,15 +565,30 @@ namespace Game.Test
             float duration = 0.5f;
             Color startColor = layerImage.color;
 
-            // 淡出到透明（底层黑色 Backdrop 透出）
+            Debug.Log($"[BackgroundFadeTransition] 开始 fade。GameObject.active={layerImage.gameObject.activeSelf}, Image.enabled={layerImage.enabled}, startColor={startColor}, oldSprite={(layerImage.sprite != null ? layerImage.sprite.name : "null")}, newSprite={newSprite.name}");
+
+            // 保险：确保目标对象处于活跃状态
+            if (!layerImage.gameObject.activeSelf)
+            {
+                Debug.LogWarning("[BackgroundFadeTransition] layerImage GameObject 被禁用，强制启用");
+                layerImage.gameObject.SetActive(true);
+            }
+            if (!layerImage.enabled)
+            {
+                Debug.LogWarning("[BackgroundFadeTransition] Image 组件被禁用，强制启用");
+                layerImage.enabled = true;
+            }
+
+            // 淡出到黑色（而非透明）
             for (float t = 0; t < duration; t += Time.unscaledDeltaTime)
             {
-                layerImage.color = Color.Lerp(startColor, Color.clear, t / duration);
+                layerImage.color = Color.Lerp(startColor, Color.black, t / duration);
                 yield return null;
             }
 
+            Debug.Log($"[BackgroundFadeTransition] 淡出到黑完成，切换 sprite → {newSprite.name}");
             layerImage.sprite = newSprite;
-            layerImage.color = Color.clear;
+            layerImage.color = Color.black;
 
             // 黑屏停留（fadehold 模式）
             if (holdDuration > 0f)
@@ -423,14 +596,20 @@ namespace Game.Test
                 yield return new WaitForSecondsRealtime(holdDuration);
             }
 
-            // 淡入到白色
+            // 从黑色淡入到白色
             for (float t = 0; t < duration; t += Time.unscaledDeltaTime)
             {
-                layerImage.color = Color.Lerp(Color.clear, Color.white, t / duration);
+                layerImage.color = Color.Lerp(Color.black, Color.white, t / duration);
                 yield return null;
             }
 
             layerImage.color = Color.white;
+            Debug.Log($"[BackgroundFadeTransition] fade 完成。最终 color={layerImage.color}");
+
+            // 协程结束，清理引用
+            if (layerImage == backgroundImage) bgTransitionRoutine = null;
+            else if (layerImage == midgroundImage) mgTransitionRoutine = null;
+            else if (layerImage == foregroundImage) fgTransitionRoutine = null;
         }
 
         IEnumerator BackgroundSlideTransition(Image layerImage, Sprite newSprite)
@@ -459,6 +638,11 @@ namespace Game.Test
             }
 
             rt.anchoredPosition = centerPos;
+
+            // 协程结束，清理引用
+            if (layerImage == backgroundImage) bgTransitionRoutine = null;
+            else if (layerImage == midgroundImage) mgTransitionRoutine = null;
+            else if (layerImage == foregroundImage) fgTransitionRoutine = null;
         }
 
         IEnumerator BackgroundCrossfadeTransition(Image layerImage, Sprite newSprite)
@@ -499,16 +683,64 @@ namespace Game.Test
             layerImage.sprite = newSprite;
             layerImage.color = Color.white;
             Destroy(tempGO);
+
+            // 协程结束，清理引用
+            if (layerImage == backgroundImage) bgTransitionRoutine = null;
+            else if (layerImage == midgroundImage) mgTransitionRoutine = null;
+            else if (layerImage == foregroundImage) fgTransitionRoutine = null;
         }
 
         Sprite LoadBgSprite(string name)
         {
-            if (string.IsNullOrEmpty(name)) return null;
+            if (string.IsNullOrEmpty(name))
+            {
+                Debug.Log("[LoadBgSprite] name 为空，返回 null");
+                return null;
+            }
 
             Sprite s = Resources.Load<Sprite>("CG/" + name);
-            if (s == null) s = Resources.Load<Sprite>("Backgrounds/" + name);
-            if (s == null) s = Resources.Load<Sprite>("UI/Dialogue/Backgrounds/" + name);
+            if (s != null) { Debug.Log($"[LoadBgSprite] 从 Resources/CG 找到: {name}"); return s; }
 
+            s = Resources.Load<Sprite>("Backgrounds/" + name);
+            if (s != null) { Debug.Log($"[LoadBgSprite] 从 Resources/Backgrounds 找到: {name}"); return s; }
+
+            s = Resources.Load<Sprite>("UI/Dialogue/Backgrounds/" + name);
+            if (s != null) { Debug.Log($"[LoadBgSprite] 从 Resources/UI/Dialogue/Backgrounds 找到: {name}"); return s; }
+
+#if UNITY_EDITOR
+            if (s == null)
+            {
+                string[] artPaths = new string[]
+                {
+                    $"Assets/Art/Characters/cg/{name}.png",
+                    $"Assets/Art/DialogueTestArt/{name}.png",
+                    $"Assets/Art/Scene/{name}.png",
+                    $"Assets/Art/{name}.png"
+                };
+                foreach (var path in artPaths)
+                {
+                    s = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(path);
+                    if (s != null)
+                    {
+                        Debug.Log($"[LoadBgSprite] 从 Art 路径找到 Sprite: {path}");
+                        return s;
+                    }
+
+                    // 兜底：尝试加载为 Texture2D 再创建 Sprite（兼容导入设置非 Sprite 的情况）
+                    Texture2D tex = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+                    if (tex != null)
+                    {
+                        Debug.LogWarning($"[LoadBgSprite] {path} 是 Texture2D，非 Sprite。尝试动态创建 Sprite。");
+                        s = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
+                        return s;
+                    }
+
+                    Debug.Log($"[LoadBgSprite] 未找到: {path}");
+                }
+            }
+#endif
+
+            Debug.LogError($"[LoadBgSprite] 最终未找到任何匹配资源: {name}");
             return s;
         }
 
@@ -716,6 +948,15 @@ namespace Game.Test
             txt.alignment = TextAnchor.MiddleCenter;
             txt.font = Resources.Load<Font>("Font/LXGWWenKaiScreen") ?? Resources.Load<Font>("Font/文软雅黑");
 
+            var chineseFont = Resources.Load<Font>("Font/文软雅黑");
+            if (chineseFont == null) chineseFont = Resources.Load<Font>("Fonts/文软雅黑");
+            if (chineseFont == null && sayDialog != null)
+            {
+                var existingText = sayDialog.GetComponentInChildren<Text>(true);
+                if (existingText != null) chineseFont = existingText.font;
+            }
+            if (chineseFont != null) txt.font = chineseFont;
+
             return btn;
         }
 
@@ -829,7 +1070,23 @@ namespace Game.Test
             isProcessing = true;
 
             var line = lines[lineIndex++];
+
+            // 段落标记行直接跳过
+            if (line.type == "段落")
+            {
+                isProcessing = false;
+                ShowNextLine();
+                return;
+            }
+
             UpdateSaveVars(); // 每行切换后更新 Flowchart 存档变量
+
+            // ========== 分支动作指令（最高优先级）==========
+            if (!string.IsNullOrEmpty(line.action))
+            {
+                ExecuteAction(line.action);
+                return;
+            }
 
             // ========== 分层背景处理 ==========
             if (line.isLayerCommand)
@@ -874,6 +1131,16 @@ namespace Game.Test
                 {
                     ShowPlaceholder("BGM", line.bgm);
                 }
+            }
+
+            // ========== 对话框显隐控制 ==========
+            if (line.dialogAction == "hide" && sayDialog != null)
+            {
+                sayDialog.gameObject.SetActive(false);
+            }
+            else if (line.dialogAction == "show" && sayDialog != null)
+            {
+                sayDialog.gameObject.SetActive(true);
             }
 
             // ========== 等待指令 ==========
@@ -981,6 +1248,25 @@ namespace Game.Test
                 EventCenter.Instance.EventTrigger(E_EventType.StoryChoiceMade, choiceId);
             }
 
+            string jumpTarget = choice == 1 ? currentChoiceLine.choice1JumpTarget : currentChoiceLine.choice2JumpTarget;
+            string action = choice == 1 ? currentChoiceLine.choice1Action : currentChoiceLine.choice2Action;
+
+            // 优先处理跳转目标
+            if (!string.IsNullOrEmpty(jumpTarget))
+            {
+                if (blockStartIndices.TryGetValue(jumpTarget, out int targetIndex))
+                {
+                    lineIndex = targetIndex;
+                    isProcessing = false;
+                    ShowNextLine();
+                    return;
+                }
+                else
+                {
+                    Debug.LogWarning($"[FungusVNController] 未找到跳转段落: {jumpTarget}");
+                }
+            }
+
             string result = choice == 1 ? currentChoiceLine.choice1Result : currentChoiceLine.choice2Result;
 
             if (!string.IsNullOrEmpty(result))
@@ -989,23 +1275,48 @@ namespace Game.Test
                 sayDialog.NameText = "";
                 sayDialog.gameObject.SetActive(true);
 
+                System.Action onResultDone = () =>
+                {
+                    if (!string.IsNullOrEmpty(action))
+                        ExecuteAction(action);
+                    else
+                        EndDialogue();
+                };
+
                 if (isFastForwarding)
                 {
                     sayDialog.Say(result, true, false, false, true, false, null, null);
-                    StartCoroutine(FastForwardSkipRoutine());
+                    StartCoroutine(FastForwardChoiceRoutine(action));
                 }
                 else
                 {
                     sayDialog.Say(result, true, true, false, true, false, null, () =>
                     {
-                        EndDialogue();
+                        onResultDone?.Invoke();
                     });
                 }
             }
             else
             {
-                EndDialogue();
+                if (!string.IsNullOrEmpty(action))
+                    ExecuteAction(action);
+                else
+                    EndDialogue();
             }
+        }
+
+        IEnumerator FastForwardChoiceRoutine(string action)
+        {
+            yield return new WaitForSeconds(0.02f);
+            var writer = sayDialog.GetComponent<Writer>();
+            if (writer != null && writer.IsWriting)
+                writer.Stop();
+            yield return new WaitForSeconds(fastForwardInterval);
+            isProcessing = false;
+            if (!string.IsNullOrEmpty(action))
+                ExecuteAction(action);
+            else
+                ShowNextLine();
         }
 
         IEnumerator FastForwardSkipRoutine()
@@ -1031,6 +1342,31 @@ namespace Game.Test
             ShowNextLine();
         }
 
+        /// <summary>执行分支动作指令</summary>
+        void ExecuteAction(string action)
+        {
+            switch (action)
+            {
+                case "ending":
+                    exitType = VNExitType.Ending;
+                    EndDialogue();
+                    break;
+                case "gameplay":
+                    exitType = VNExitType.Gameplay;
+                    EndDialogue();
+                    break;
+                case "nextlevel":
+                    exitType = VNExitType.NextLevel;
+                    EndDialogue();
+                    break;
+                default:
+                    Debug.LogWarning($"[FungusVNController] 未知动作指令: {action}");
+                    isProcessing = false;
+                    ShowNextLine();
+                    break;
+            }
+        }
+
         private bool hasEnded = false;
 
         void EndDialogue()
@@ -1044,7 +1380,8 @@ namespace Game.Test
                 sayDialog.gameObject.SetActive(false);
             if (skipButton != null)
                 skipButton.gameObject.SetActive(false);
-            Debug.Log("[FungusVNController] 对话结束");
+            Debug.Log($"[FungusVNController] 对话结束，分支类型: {exitType}");
+            OnDialogueExit?.Invoke(exitType);
             OnDialogueComplete?.Invoke();
         }
     }

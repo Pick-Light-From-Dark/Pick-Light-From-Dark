@@ -35,7 +35,7 @@ MonoBehaviour:
     targetCount: 1
     currentCount: 0
     state: 1
-  preDialogueFile: Dialogue1-1_pre
-  postDialogueFile: Dialogue1-1_post_eat
-  isChoiceLevel: 1
-  choice2EndingDialogueFile: Dialogue1-1_post_noeat
+  preDialogueFile: Dialogue1
+  postDialogueFile:
+  isChoiceLevel: 0
+  choice2EndingDialogueFile:

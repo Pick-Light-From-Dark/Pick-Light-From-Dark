@@ -23,6 +23,9 @@ namespace Game.Flow
         public string nextLevelSceneName = "";
         public string currentLevelSceneName = "";
 
+        [Header("下一关预制体（NextLevel 分支时实例化）")]
+        public GameObject nextLevelPrefab;
+
         private bool isGameOver = false;
         private Game.AI.TeacherAI teacherAI;
 
@@ -61,9 +64,35 @@ namespace Game.Flow
 
             Debug.Log("[LevelFlowCoordinator] === 阶段1：开场剧情 ===");
             vnController.dialogueText = openingStory;
+            vnController.OnDialogueExit = OnOpeningStoryExit;
             vnController.OnDialogueComplete = OnOpeningStoryEnd;
             vnController.ClearPlaceholder();
             vnController.SetSkipButtonVisible(true);
+            vnController.RestartDialogue();
+        }
+
+        /// <summary>开场剧情分支结束回调（带分支类型）</summary>
+        void OnOpeningStoryExit(VNExitType exitType)
+        {
+            Debug.Log($"[LevelFlowCoordinator] 开场剧情分支结束: {exitType}");
+
+            switch (exitType)
+            {
+                case VNExitType.Ending:
+                    // 直接进入结局流程（跳过游玩）
+                    StartEndingStory();
+                    break;
+                case VNExitType.NextLevel:
+                    // 接下一个预制体
+                    LoadNextPrefab();
+                    break;
+                case VNExitType.Gameplay:
+                case VNExitType.None:
+                default:
+                    // 默认进入游玩
+                    OnOpeningStoryEnd();
+                    break;
+            }
         }
 
         void OnOpeningStoryEnd()
@@ -134,14 +163,52 @@ namespace Game.Flow
 
             Debug.Log("[LevelFlowCoordinator] === 阶段3：结尾剧情 ===");
             vnController.dialogueText = endingStory;
+            vnController.OnDialogueExit = OnEndingStoryExit;
             vnController.OnDialogueComplete = OnEndingStoryEnd;
             vnController.ClearPlaceholder();
             vnController.SetSkipButtonVisible(false);
+            vnController.RestartDialogue();
+        }
+
+        /// <summary>结尾剧情分支结束回调（带分支类型）</summary>
+        void OnEndingStoryExit(VNExitType exitType)
+        {
+            Debug.Log($"[LevelFlowCoordinator] 结尾剧情分支结束: {exitType}");
+
+            switch (exitType)
+            {
+                case VNExitType.NextLevel:
+                    LoadNextPrefab();
+                    break;
+                case VNExitType.Ending:
+                case VNExitType.Gameplay:
+                case VNExitType.None:
+                default:
+                    OnEndingStoryEnd();
+                    break;
+            }
         }
 
         void OnEndingStoryEnd()
         {
             ShowVictoryPanel();
+        }
+
+
+        /// <summary>加载下一关预制体</summary>
+        void LoadNextPrefab()
+        {
+            if (nextLevelPrefab != null)
+            {
+                Debug.Log($"[LevelFlowCoordinator] 实例化下一关预制体: {nextLevelPrefab.name}");
+                Instantiate(nextLevelPrefab);
+                Destroy(gameObject);
+            }
+            else
+            {
+                Debug.LogWarning("[LevelFlowCoordinator] nextLevelPrefab 未赋值，无法进入下一关");
+                ShowVictoryPanel();
+            }
         }
 
         void ShowVictoryPanel()
