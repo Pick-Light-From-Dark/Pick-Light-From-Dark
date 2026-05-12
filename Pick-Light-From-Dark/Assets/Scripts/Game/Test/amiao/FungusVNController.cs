@@ -1036,6 +1036,35 @@ namespace Game.Test
             }
         }
 
+        /// <summary>动态加载音频剪辑（优先 Resources，Editor 下回退 AssetDatabase）</summary>
+        AudioClip LoadAudioClip(string name, bool isBgm)
+        {
+            if (string.IsNullOrEmpty(name)) return null;
+
+            string[] resPaths = isBgm
+                ? new string[] { "Sound/BkMusic/" + name, "Audio/Music/" + name }
+                : new string[] { "Sound/sound/" + name, "Sound/sound/DXH_SOUND/" + name, "Audio/SFX/" + name, "Audio/SFX/DXH_SOUND/" + name };
+
+            foreach (var path in resPaths)
+            {
+                var clip = Resources.Load<AudioClip>(path);
+                if (clip != null) return clip;
+            }
+
+#if UNITY_EDITOR
+            string[] editorPaths = isBgm
+                ? new string[] { $"Assets/Audio/Music/{name}.wav", $"Assets/Audio/Music/{name}.mp3", $"Assets/Resources/Sound/BkMusic/{name}.wav", $"Assets/Resources/Sound/BkMusic/{name}.mp3" }
+                : new string[] { $"Assets/Audio/SFX/{name}.wav", $"Assets/Audio/SFX/{name}.mp3", $"Assets/Audio/SFX/DXH_SOUND/{name}.wav", $"Assets/Audio/SFX/DXH_SOUND/{name}.mp3", $"Assets/Resources/Sound/sound/{name}.wav", $"Assets/Resources/Sound/sound/{name}.mp3" };
+
+            foreach (var path in editorPaths)
+            {
+                var clip = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>(path);
+                if (clip != null) return clip;
+            }
+#endif
+            return null;
+        }
+
         /// <summary>手动保存当前剧情进度（使用 Fungus SaveManager）</summary>
         public void SaveProgress()
         {
@@ -1189,8 +1218,12 @@ namespace Game.Test
             if (!string.IsNullOrEmpty(line.se))
             {
                 var se = soundEffects.Find(s => s.name == line.se);
-                if (se != null && se.clip != null && sfxSource != null)
-                    sfxSource.PlayOneShot(se.clip);
+                AudioClip clip = se?.clip;
+                if (clip == null)
+                    clip = LoadAudioClip(line.se, false);
+
+                if (clip != null && sfxSource != null)
+                    sfxSource.PlayOneShot(clip);
                 else
                     ShowPlaceholder("SFX", line.se);
             }
@@ -1198,9 +1231,13 @@ namespace Game.Test
             if (!string.IsNullOrEmpty(line.bgm))
             {
                 var bgm = bgmTracks.Find(b => b.name == line.bgm);
-                if (bgm != null && bgm.clip != null && bgmSource != null)
+                AudioClip clip = bgm?.clip;
+                if (clip == null)
+                    clip = LoadAudioClip(line.bgm, true);
+
+                if (clip != null && bgmSource != null)
                 {
-                    bgmSource.clip = bgm.clip;
+                    bgmSource.clip = clip;
                     bgmSource.Play();
                 }
                 else

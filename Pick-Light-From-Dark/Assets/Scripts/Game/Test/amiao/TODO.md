@@ -20,9 +20,9 @@
 - [x] 修复并验证
 
 ## 5. 音效未加载排查
-- [ ] `Assets/Scenes/Amiao_Test` 中音效未加载
-- [ ] 类似图片未加载问题，检查 Resources 路径
-- [ ] 排查并修复
+- [x] `Assets/Scenes/Amiao_Test` 中音效未加载
+- [x] 类似图片未加载问题，检查 Resources 路径
+- [x] 排查并修复
 
 ## 6. 演出效果增强
 - [ ] 不修改对话内容

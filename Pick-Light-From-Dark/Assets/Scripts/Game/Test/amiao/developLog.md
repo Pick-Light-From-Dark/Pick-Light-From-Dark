@@ -37,6 +37,27 @@
 - 测试：`Assets/Scripts/Game/Test/amiao/SaveSystemTestRunner.cs`
 - 存档管理：`Assets/Scripts/Game/Backend/PlayerDataStore.cs`
 
+## 2026-05-13 音效未加载修复
+
+**问题**：`FungusVNController` 中 `[se:xxx]` / `[bgm:xxx]` 指令只能播放 Inspector 预配置的音频，若映射列表为空则显示占位符，无法动态加载 Resources 下的音效。
+
+**修复**：
+- `FungusVNController`：SE/BGM 播放增加 Resources 动态加载回退
+  - SE 回退路径：`Sound/sound/{name}` → `Sound/sound/DXH_SOUND/{name}` → `Audio/SFX/{name}` → `Audio/SFX/DXH_SOUND/{name}`
+  - BGM 回退路径：`Sound/BkMusic/{name}` → `Audio/Music/{name}`
+  - Editor 额外回退 `AssetDatabase.LoadAssetAtPath` 从 `Assets/Audio/` 和 `Assets/Resources/` 加载
+- 新增 `SoundTestRunner`：支持按键 1/2/3/4 测试直接播放、MusicMgr、VN 动态加载
+
+**测试方式**：
+1. 挂载 `SoundTestRunner` 到场景任意 GameObject
+2. 运行后观察 Console 自动测试输出
+3. 或按键 1~4 分别测试不同加载路径
+
+**重要路径**：
+- 修复代码：`Assets/Scripts/Game/Test/amiao/FungusVNController.cs`（`LoadAudioClip` 方法 + SE/BGM 播放逻辑）
+- 测试脚本：`Assets/Scripts/Game/Test/amiao/SoundTestRunner.cs`
+- 音效资源：`Assets/Resources/Sound/sound/`、`Assets/Audio/SFX/`
+
 ## 2026-05-13 Skip Button 不可见修复
 
 **问题**：`FungusVNController` 中跳过按钮（SkipBtn）在 VN 剧情中不显示，只有存档按钮可见。
