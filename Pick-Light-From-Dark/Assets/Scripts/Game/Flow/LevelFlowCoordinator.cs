@@ -38,8 +38,6 @@ namespace Game.Flow
 
         void Start()
         {
-            UIMgr.Instance.HideAllPanels();
-
             if (vnController == null)
             {
                 vnController = FindObjectOfType<FungusVNController>();

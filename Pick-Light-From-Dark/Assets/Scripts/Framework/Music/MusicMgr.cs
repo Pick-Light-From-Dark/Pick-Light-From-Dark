@@ -45,6 +45,11 @@ public class MusicMgr : BaseManager<MusicMgr>
         //为了避免被对象池移除 我们不做处理
         for (int i = soundList.Count - 1; i >= 0; --i)
         {
+            if (soundList[i] == null)
+            {
+                soundList.RemoveAt(i);
+                continue;
+            }
             if(!soundList[i].isPlaying)
             {
                 //音效播放完毕 如果当前没有使用 我们就把音效片段置空
