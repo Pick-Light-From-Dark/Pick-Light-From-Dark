@@ -45,6 +45,7 @@ namespace Game.Test
         public Image backgroundImage;   // 后景（向后兼容）
         public Image midgroundImage;    // 中景
         public Image foregroundImage;   // 前景
+        private Image backdropImage;    // 黑色兜底层（转场时提供黑色背景）
 
         [Header("音频源（为空则运行时自动添加）")]
         public AudioSource sfxSource;
@@ -199,6 +200,14 @@ namespace Game.Test
             EnsureLayerImage(ref midgroundImage, "VNMidground", -1);
             EnsureLayerImage(ref foregroundImage, "VNForeground", 0);
 
+            // 3.5 黑色兜底层：放在所有背景层之下，转场时透出黑色而非透明
+            EnsureLayerImage(ref backdropImage, "VNBackdrop", -3);
+            if (backdropImage != null)
+            {
+                backdropImage.color = Color.black;
+                backdropImage.raycastTarget = false;
+            }
+
             // 4. AudioSource
             if (sfxSource == null)
             {
@@ -220,6 +229,9 @@ namespace Game.Test
 
             // 7. 人名居中
             SetupNameTextAlignment();
+
+            // 8. 对话文字位置下调
+            SetupStoryTextPosition();
         }
 
         void SetupFont()
@@ -316,8 +328,40 @@ namespace Game.Test
                 nameRect.anchorMin = new Vector2(0.5f, 1f);
                 nameRect.anchorMax = new Vector2(0.5f, 1f);
                 nameRect.pivot = new Vector2(0.5f, 1f);
-                nameRect.anchoredPosition = new Vector2(0f, -20f);
+                nameRect.anchoredPosition = new Vector2(0f, -5f);
             }
+        }
+
+        /// <summary>调整对话文字位置，使其更靠下</summary>
+        void SetupStoryTextPosition()
+        {
+            if (sayDialog == null) return;
+
+            var storyTextObj = sayDialog.gameObject.transform.Find("Panel/StoryText");
+            if (storyTextObj == null)
+            {
+                // 兜底遍历查找
+                var allTexts = sayDialog.GetComponentsInChildren<Text>(true);
+                foreach (var t in allTexts)
+                {
+                    if (t.gameObject.name == "StoryText")
+                    {
+                        storyTextObj = t.gameObject.transform;
+                        break;
+                    }
+                }
+            }
+
+            if (storyTextObj == null) return;
+
+            var storyRect = storyTextObj.GetComponent<RectTransform>();
+            if (storyRect == null) return;
+
+            // 在当前位置基础上向下偏移（y 值减小 = 更靠下）
+            storyRect.anchoredPosition = new Vector2(
+                storyRect.anchoredPosition.x,
+                storyRect.anchoredPosition.y - 60f
+            );
         }
 
         /// <summary>查找或创建某一层背景 Image</summary>
@@ -351,7 +395,7 @@ namespace Game.Test
         }
 
         /// <summary>设置某一层背景图（空值=清空）</summary>
-        void SetLayerBackground(Image layerImage, string spriteName, string transition = null)
+        void SetLayerBackground(Image layerImage, string spriteName, string transition = null, float transitionHold = 0f)
         {
             if (layerImage == null) return;
 
@@ -379,23 +423,34 @@ namespace Game.Test
                 return;
             }
 
-            if (transition == "fade")
+            switch (transition)
             {
-                StartCoroutine(BackgroundFadeTransition(layerImage, targetSprite));
-            }
-            else
-            {
-                layerImage.sprite = targetSprite;
-                layerImage.color = Color.white;
+                case "fade":
+                    StartCoroutine(BackgroundFadeTransition(layerImage, targetSprite, transitionHold));
+                    break;
+                case "slide":
+                    StartCoroutine(BackgroundSlideTransition(layerImage, targetSprite));
+                    break;
+                case "crossfade":
+                    StartCoroutine(BackgroundCrossfadeTransition(layerImage, targetSprite));
+                    break;
+                default:
+                    if (!string.IsNullOrEmpty(transition))
+                    {
+                        Debug.Log($"[VNTransitionTest] 转场 '{transition}' 尚未实现，使用直切。");
+                    }
+                    layerImage.sprite = targetSprite;
+                    layerImage.color = Color.white;
+                    break;
             }
         }
 
-        IEnumerator BackgroundFadeTransition(Image layerImage, Sprite newSprite)
+        IEnumerator BackgroundFadeTransition(Image layerImage, Sprite newSprite, float holdDuration = 0f)
         {
             float duration = 0.5f;
             Color startColor = layerImage.color;
 
-            // 淡出到透明
+            // 淡出到透明（底层黑色 Backdrop 透出）
             for (float t = 0; t < duration; t += Time.unscaledDeltaTime)
             {
                 layerImage.color = Color.Lerp(startColor, Color.clear, t / duration);
@@ -405,6 +460,12 @@ namespace Game.Test
             layerImage.sprite = newSprite;
             layerImage.color = Color.clear;
 
+            // 黑屏停留（fadehold 模式）
+            if (holdDuration > 0f)
+            {
+                yield return new WaitForSecondsRealtime(holdDuration);
+            }
+
             // 淡入到白色
             for (float t = 0; t < duration; t += Time.unscaledDeltaTime)
             {
@@ -413,6 +474,74 @@ namespace Game.Test
             }
 
             layerImage.color = Color.white;
+        }
+
+        IEnumerator BackgroundSlideTransition(Image layerImage, Sprite newSprite)
+        {
+            float duration = 0.5f;
+            RectTransform rt = layerImage.rectTransform;
+            Vector2 centerPos = Vector2.zero;
+            float screenW = Screen.width;
+
+            // 划出旧背景（向左）
+            for (float t = 0; t < duration; t += Time.unscaledDeltaTime)
+            {
+                rt.anchoredPosition = Vector2.Lerp(centerPos, centerPos + Vector2.left * screenW, t / duration);
+                yield return null;
+            }
+
+            // 切换图片并放到右侧外
+            layerImage.sprite = newSprite;
+            rt.anchoredPosition = centerPos + Vector2.right * screenW;
+
+            // 划入新背景（从右到左回到中心）
+            for (float t = 0; t < duration; t += Time.unscaledDeltaTime)
+            {
+                rt.anchoredPosition = Vector2.Lerp(centerPos + Vector2.right * screenW, centerPos, t / duration);
+                yield return null;
+            }
+
+            rt.anchoredPosition = centerPos;
+        }
+
+        IEnumerator BackgroundCrossfadeTransition(Image layerImage, Sprite newSprite)
+        {
+            float duration = 0.5f;
+
+            // 创建临时全屏 Image 放新图，放在当前层之上
+            GameObject tempGO = new GameObject("TempCrossfade");
+            tempGO.transform.SetParent(layerImage.transform.parent, false);
+            RectTransform tempRect = tempGO.AddComponent<RectTransform>();
+            tempRect.anchorMin = Vector2.zero;
+            tempRect.anchorMax = Vector2.one;
+            tempRect.offsetMin = Vector2.zero;
+            tempRect.offsetMax = Vector2.zero;
+            Image tempImg = tempGO.AddComponent<Image>();
+            tempImg.sprite = newSprite;
+            tempImg.color = Color.clear;
+            tempImg.raycastTarget = false;
+
+            // 设置临时层 sorting order 略高于当前层
+            Canvas tempCanvas = tempGO.GetComponent<Canvas>();
+            if (tempCanvas == null) tempCanvas = tempGO.AddComponent<Canvas>();
+            tempCanvas.overrideSorting = true;
+            Canvas layerCanvas = layerImage.GetComponent<Canvas>();
+            tempCanvas.sortingOrder = (layerCanvas != null) ? layerCanvas.sortingOrder + 1 : 1;
+
+            // 交叉溶解：旧图淡出同时新图淡入
+            Color oldStart = layerImage.color;
+            for (float t = 0; t < duration; t += Time.unscaledDeltaTime)
+            {
+                float p = t / duration;
+                layerImage.color = Color.Lerp(oldStart, Color.clear, p);
+                tempImg.color = Color.Lerp(Color.clear, Color.white, p);
+                yield return null;
+            }
+
+            // 结束：将新图切回正式层，清理临时对象
+            layerImage.sprite = newSprite;
+            layerImage.color = Color.white;
+            Destroy(tempGO);
         }
 
         Sprite LoadBgSprite(string name)
@@ -458,7 +587,7 @@ namespace Game.Test
         }
 
         /// <summary>应用纯色背景：清空所有图片层，后景设为指定颜色</summary>
-        void ApplySolidBackground(string colorStr, string transition)
+        void ApplySolidBackground(string colorStr, string transition, float transitionHold = 0f)
         {
             Color c = ParseSolidColor(colorStr);
 
@@ -471,7 +600,7 @@ namespace Game.Test
             {
                 if (transition == "fade")
                 {
-                    StartCoroutine(FadeToSolidBackground(c));
+                    StartCoroutine(FadeToSolidBackground(c, transitionHold));
                 }
                 else
                 {
@@ -482,7 +611,7 @@ namespace Game.Test
             }
         }
 
-        IEnumerator FadeToSolidBackground(Color targetColor)
+        IEnumerator FadeToSolidBackground(Color targetColor, float holdDuration = 0f)
         {
             float duration = 0.5f;
             float elapsed = 0f;
@@ -510,6 +639,12 @@ namespace Game.Test
                 }
 
                 yield return null;
+            }
+
+            // 黑屏停留（fadehold 模式）
+            if (holdDuration > 0f)
+            {
+                yield return new WaitForSecondsRealtime(holdDuration);
             }
 
             if (backgroundImage != null) backgroundImage.color = targetColor;
@@ -742,22 +877,22 @@ namespace Game.Test
             if (line.isLayerCommand)
             {
                 // [layer:...] 全换指令：显式指定的层才更新（null=未指定，保持原样；空字符串=清空）
-                if (line.bg != null) SetLayerBackground(backgroundImage, line.bg, line.transition);
-                if (line.mg != null) SetLayerBackground(midgroundImage, line.mg, line.transition);
-                if (line.fg != null) SetLayerBackground(foregroundImage, line.fg, line.transition);
+                if (line.bg != null) SetLayerBackground(backgroundImage, line.bg, line.transition, line.transitionHold);
+                if (line.mg != null) SetLayerBackground(midgroundImage, line.mg, line.transition, line.transitionHold);
+                if (line.fg != null) SetLayerBackground(foregroundImage, line.fg, line.transition, line.transitionHold);
             }
             else
             {
                 // 单换指令：有值才更新
-                if (!string.IsNullOrEmpty(line.bg)) SetLayerBackground(backgroundImage, line.bg, line.transition);
-                if (!string.IsNullOrEmpty(line.mg)) SetLayerBackground(midgroundImage, line.mg, line.transition);
-                if (!string.IsNullOrEmpty(line.fg)) SetLayerBackground(foregroundImage, line.fg, line.transition);
+                if (!string.IsNullOrEmpty(line.bg)) SetLayerBackground(backgroundImage, line.bg, line.transition, line.transitionHold);
+                if (!string.IsNullOrEmpty(line.mg)) SetLayerBackground(midgroundImage, line.mg, line.transition, line.transitionHold);
+                if (!string.IsNullOrEmpty(line.fg)) SetLayerBackground(foregroundImage, line.fg, line.transition, line.transitionHold);
             }
 
             // ========== 纯色背景处理 ==========
             if (!string.IsNullOrEmpty(line.solid))
             {
-                ApplySolidBackground(line.solid, line.transition);
+                ApplySolidBackground(line.solid, line.transition, line.transitionHold);
             }
 
             if (!string.IsNullOrEmpty(line.se))

@@ -23,16 +23,10 @@ public static class DialogueParser
             {
                 d.type = "指令";
                 string bgContent = s.Substring(4).TrimEnd(']');
-                if (bgContent.Contains(","))
-                {
-                    string[] parts = bgContent.Split(',');
-                    d.bg = parts[0].Trim();
-                    d.transition = parts[1].Trim();
-                }
-                else
-                {
-                    d.bg = bgContent.Trim();
-                }
+                string[] parts = bgContent.Split(',');
+                d.bg = parts[0].Trim();
+                if (parts.Length > 1)
+                    ParseTransition(bgContent.Substring(bgContent.IndexOf(',') + 1), d);
             }
             else if (s.StartsWith("[se:"))
             {
@@ -48,31 +42,19 @@ public static class DialogueParser
             {
                 d.type = "指令";
                 string fgContent = s.Substring(4).TrimEnd(']');
-                if (fgContent.Contains(","))
-                {
-                    string[] parts = fgContent.Split(',');
-                    d.fg = parts[0].Trim();
-                    d.transition = parts[1].Trim();
-                }
-                else
-                {
-                    d.fg = fgContent.Trim();
-                }
+                string[] parts = fgContent.Split(',');
+                d.fg = parts[0].Trim();
+                if (parts.Length > 1)
+                    ParseTransition(fgContent.Substring(fgContent.IndexOf(',') + 1), d);
             }
             else if (s.StartsWith("[mg:"))
             {
                 d.type = "指令";
                 string mgContent = s.Substring(4).TrimEnd(']');
-                if (mgContent.Contains(","))
-                {
-                    string[] parts = mgContent.Split(',');
-                    d.mg = parts[0].Trim();
-                    d.transition = parts[1].Trim();
-                }
-                else
-                {
-                    d.mg = mgContent.Trim();
-                }
+                string[] parts = mgContent.Split(',');
+                d.mg = parts[0].Trim();
+                if (parts.Length > 1)
+                    ParseTransition(mgContent.Substring(mgContent.IndexOf(',') + 1), d);
             }
             else if (s.StartsWith("[layer:"))
             {
@@ -102,7 +84,7 @@ public static class DialogueParser
                         else
                         {
                             // 最后一个非键值对参数作为转场类型
-                            d.transition = p;
+                            ParseTransition(p, d);
                         }
                     }
                 }
@@ -111,16 +93,10 @@ public static class DialogueParser
             {
                 d.type = "指令";
                 string solidContent = s.Substring(7).TrimEnd(']');
-                if (solidContent.Contains(","))
-                {
-                    string[] parts = solidContent.Split(',');
-                    d.solid = parts[0].Trim();
-                    d.transition = parts[1].Trim();
-                }
-                else
-                {
-                    d.solid = solidContent.Trim();
-                }
+                string[] parts = solidContent.Split(',');
+                d.solid = parts[0].Trim();
+                if (parts.Length > 1)
+                    ParseTransition(solidContent.Substring(solidContent.IndexOf(',') + 1), d);
             }
             else if (s.StartsWith("[wait:"))
             {
@@ -214,6 +190,18 @@ public static class DialogueParser
         }
 
         return list;
+    }
+
+    /// <summary>
+    /// 解析转场指令，支持 fade,slide,crossfade 以及带停留时间的 fade,1.5
+    /// </summary>
+    private static void ParseTransition(string rawTransition, DialogueLine line)
+    {
+        if (string.IsNullOrEmpty(rawTransition)) return;
+        string[] parts = rawTransition.Split(',');
+        line.transition = parts[0].Trim().ToLower();
+        if (parts.Length > 1 && float.TryParse(parts[1].Trim(), out float hold))
+            line.transitionHold = hold;
     }
 
     /// <summary>

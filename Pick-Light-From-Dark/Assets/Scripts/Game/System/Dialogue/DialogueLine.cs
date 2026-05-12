@@ -14,7 +14,8 @@ public class DialogueLine
     public string bg;             // [bg:xxx] 或 [bg:xxx,fade] — 后景（向后兼容）
     public string mg;             // [mg:xxx] — 中景
     public string fg;             // [fg:xxx] — 前景
-    public string transition;     // 转场类型（fade / slide 等）
+    public string transition;     // 转场类型（fade / slide / crossfade 等）
+    public float transitionHold;  // fadehold 停留时间（秒），如 [bg:xxx,fade,1.5]
     public bool isLayerCommand;   // true = [layer:...] 全换指令，仅显式指定的层更新
     public string solid;          // [solid:#000000] 或 [solid:black,fade] — 纯色背景
     public string se;             // [se:xxx]
