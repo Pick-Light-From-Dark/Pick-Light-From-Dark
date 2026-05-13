@@ -884,22 +884,22 @@ namespace Game.Test
 
             // === 存档按钮（右上角）===
             var saveBtn = CreateButton("SaveBtn", vnCanvas.transform,
-                new Vector2(-30, -30), new Vector2(100, 45), "存档",
+                new Vector2(-80, -30), new Vector2(100, 45), "存档",
                 () => SaveProgress());
             saveBtn.GetComponent<RectTransform>().anchorMin = new Vector2(1, 1);
             saveBtn.GetComponent<RectTransform>().anchorMax = new Vector2(1, 1);
             saveBtn.GetComponent<RectTransform>().pivot = new Vector2(1, 1);
-            saveBtn.GetComponent<RectTransform>().anchoredPosition = new Vector2(-30, -30);
+            saveBtn.GetComponent<RectTransform>().anchoredPosition = new Vector2(-80, -30);
             EnsureButtonOnTop(saveBtn);
 
             // === 跳过按钮（存档按钮左侧，开场剧情时显示）===
             skipButton = CreateButton("SkipBtn", vnCanvas.transform,
-                new Vector2(-140, -30), new Vector2(100, 45), "跳过",
+                new Vector2(-190, -30), new Vector2(100, 45), "跳过",
                 () => OnSkipStory());
             skipButton.GetComponent<RectTransform>().anchorMin = new Vector2(1, 1);
             skipButton.GetComponent<RectTransform>().anchorMax = new Vector2(1, 1);
             skipButton.GetComponent<RectTransform>().pivot = new Vector2(1, 1);
-            skipButton.GetComponent<RectTransform>().anchoredPosition = new Vector2(-140, -30);
+            skipButton.GetComponent<RectTransform>().anchoredPosition = new Vector2(-190, -30);
             skipButton.gameObject.SetActive(false);
             EnsureButtonOnTop(skipButton);
 
