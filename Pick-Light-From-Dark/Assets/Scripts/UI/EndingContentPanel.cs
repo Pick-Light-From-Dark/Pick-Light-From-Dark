@@ -115,8 +115,6 @@ public class EndingContentPanel : BasePanel
         go.AddComponent<CanvasRenderer>();
 
         var img = go.AddComponent<Image>();
-        img.sprite = Resources.GetBuiltinResource<Sprite>("UI/Skin/Background.psd");
-        img.type = Image.Type.Sliced;
         img.color = new Color(0.9f, 0.9f, 0.9f, 1f);
 
         var btn = go.AddComponent<Button>();
