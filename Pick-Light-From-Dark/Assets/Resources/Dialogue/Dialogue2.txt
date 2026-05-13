@@ -1,5 +1,5 @@
 [bg:phone_connect_1]
-[se:DXH_SOUND/07.对话声]
+#[se:DXH_SOUND/07.对话声]
 
 妈妈：萤萤，你有在听我说话吗？
 
