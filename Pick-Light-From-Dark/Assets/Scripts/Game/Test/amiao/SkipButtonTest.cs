@@ -22,13 +22,14 @@ namespace Game.Test
                 vnController = FindObjectOfType<FungusVNController>();
                 if (vnController == null)
                 {
-                    Debug.LogError("[SkipButtonTest] 未找到 FungusVNController");
-                    return;
+                    Debug.LogWarning("[SkipButtonTest] 未找到 FungusVNController，自动创建...");
+                    var go = new GameObject("FungusVNController");
+                    vnController = go.AddComponent<FungusVNController>();
                 }
             }
 
             // 延迟显示跳过按钮，确保 UI 已创建
-            Invoke(nameof(ShowSkipButton), 1f);
+            Invoke(nameof(ShowSkipButton), 2f);
         }
 
         void Update()
