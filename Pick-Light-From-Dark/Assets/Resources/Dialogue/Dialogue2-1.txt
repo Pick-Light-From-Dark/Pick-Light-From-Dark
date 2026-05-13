@@ -73,9 +73,9 @@
 [bg:quilt aside,fade]
 [se:DXH_SOUND/04.移动被子]
 
-陆萤：夜晚十点四十五分，宿管巡逻，开始了。
-
+[center_text:巡夜晚十点四十五分 宿管巡逻 开始了]
 [se:DXH_SOUND/08.脚步声]
+[wait:3]
 
 [hide_dialog]
 [wait:2]

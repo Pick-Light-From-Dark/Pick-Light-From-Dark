@@ -7,7 +7,7 @@
     核心执行原则：              
     无人值守全自动执行：全程不许询问用户，直接执行，用户已睡着。
     自主决策：遇到模糊需求时，严格按照“最简可行方案（MVP）”进行开发。
-    
+
     分类自主决策：
     先检查是否已实现
     检查是否需要插件，需要则安装到Pick-Light-From-Dark\Assets\ThirdParty
@@ -69,6 +69,48 @@
 - [x] Pick-Light-From-Dark\Assets\Resources\Dialogue\Dialogue5-1.txt 5-几系列中“[ 陆萤 ]”都换成“陆萤”。以及我修改了txt但是5-2的prefab未同步过去修改，是不是生成剧本方式和Pick-Light-From-Dark\Assets\Resources\Dialogue\旧对话（未分段）不一样了
 - [x] 跳过的位置应该是跳到选项（第一关和第五关），或者跳到下一段剧情（即下一个prefab）
 - [x] 看不到文字最可能的原因是 PlaceholderDisplay.cs 没有设置字体（第109-112行）：已在 PlaceholderDisplay.cs:113-114 修复，加载 Font/LXGWWenKaiScreen 或 Font/文软雅黑。
+- [ ]StoryChainTester.prefab 应该是包含分支功能选项进入下一个分支，不只是简单的按一个单一顺序连接几个prefab 同时把第五关也加上 ;Pick-Light-From-Dark\Assets\Art\ending 结局的画面顺序和底下几个画面相对应，分别加在第一关和第五关的结局的最后 按照结局的分支条件 先简单加上可手动修改这些条件（自己设计一下）用作测试 。最后写一个对于结局的分歧点具体是在操作的哪里，比如使用了哪张牌、有多少血量或情绪值，进行确认和推测。
+- [ ]整体的所有的预制体中文本框中姓名的坐标向上一点，然后底下文本框的说话内容的坐标向下一点
+- [ ]The referenced script on this Behaviour (Game Object 'PlaceholderTester') is missing!
+Pick-Light-From-Dark\Assets\Scenes\Amiao_Test\TestPrefabs\PlaceholderTester.prefab 现在控制台都不显示了 另外做一个不需要操作就是把一行缺失素材的示例文字打在左上角的测试 缺失文件自己编 单独看看效果 （）也可能是我之前editor里scale拉太大了导致的 比如之前的按钮太右就是我的Scaled的问题
+- [ ]增加个快进键 开发中模式使用功能是？嗯，可以快速的推动剧情吗？把所有的那些文字一短短对话的加速，不用点击就通过，只要松开按键 fungus有类似功能吗 没有就自己实现下。可以建一个开发者功能父类，之后还有需要就添加进去，最后可以一次性取消这些操作，但是不会影响游戏其他部分，完全独立。
+- [ ]居中字体有点太大了 然后给每关的第一段剧情结尾都加上
+- [ ]存档任务 先优化 再编写测试prefab 只要看一下数据是否被记录
+```
+统一为 JSON 单轨制（推荐）
+
+  改动点：
+  1. 弃用 Fungus SaveManager，剧情进度也存入 player_data.json
+  2. 扩展 PlayerDataFile：
+
+  public class PlayerDataFile
+  {
+      public List<JsonLevelRecord> records;
+      public StoryProgress storyProgress; // 新增：当前剧情进度
+  }
+
+  public class StoryProgress
+  {
+      public string currentStoryFile;
+      public int currentLineIndex;
+      public bool isOpeningDone;
+      // 可扩展：Flowchart 变量字典
+  }
+
+  3. 读档时不重载场景，直接恢复状态
+
+  优点：
+  - 一个文件、一个入口、一份真相
+  - 可随时保存"中途进度"（无需等关卡结束）
+  - 读档时不重载场景，内存状态不丢失
+  - 易于扩展（后续加情绪值、闭眼状态等都很自然）
+
+  缺点：
+  - 需要一次性替换 Fungus 存档的调用点（约 3~4 处）
+  - 需要手写状态恢复逻辑（替代 Fungus 的场景重载）
+```
+- [ ]继续编写一个完整的存档读档的prefab 包含简单ui
+
 
 ## 结局数据配置
 
