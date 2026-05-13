@@ -25,6 +25,8 @@
     一边开发一边进行push，同时写下开发日志Pick-Light-From-Dark\Assets\Scripts\Game\Tes
     t\amiao\developLog.md 要求简短重点体现功能、如何测试和重要代码的路径 
 
+    每完成一个阶段则push一次
+
     若所有待办已完成 执行 stop loop
 ```
 
@@ -61,6 +63,28 @@
 - [x] 站位符的功能应该是文字显示在画面的左上角，而不只是在控制台上，画面上并没有看到在预zhi体里面
 - [x] fungus是否支持？第支持就是隐藏对话框的图片，然后把文字放大字号中间显示.那个”巡逻开始 第二夜”类似的描述在每个剧情的最后面出现，这样的描述代表着是即将进入游玩的部分，这部分将它就是隐去对话框居中大字
 - [x] 第一关最后选项那里，”陆萤”应该显示出来
+
+- [] Pick-Light-From-Dark\Assets\Scenes\Amiao_Test\旧剧情prefab（路径改了不能直接跑）和这个不一样Pick-Light-From-Dark\Assets\Scenes\Amiao_Test 分段后的prefab里的字体 按照旧的prefab的字体移植过来
+- [] Pick-Light-From-Dark\Assets\Scenes\Amiao_Test\TestPrefabs\StoryChainTester.prefab day1-1.prefab中的选项点不了 不能进入分支剧情
+- [] Pick-Light-From-Dark\Assets\Resources\Dialogue\Dialogue5-1.txt 5-几系列中“[ 陆萤 ]”都换成“陆萤”。以及我修改了txt但是5-2的prefab未同步过去修改，是不是生成剧本方式和Pick-Light-From-Dark\Assets\Resources\Dialogue\旧对话（未分段）不一样了
+- [] 跳过的位置应该是跳到选项（第一关和第五关），或者跳到下一段剧情（即下一个prefab）
+- [] 看不到文字最可能的原因是 PlaceholderDisplay.cs 没有设置字体（第
+   109-112 行）：                                                                  
+  displayText = textGo.AddComponent<Text>();
+  displayText.fontSize = fontSize;
+  displayText.color = textColor;
+
+  代码里只设置了 fontSize 和 color，没有赋值
+  displayText.font。Unity
+  默认字体在中文环境下常导致文字不可见（透明或方块），这和之前
+  SimpleSkipButton 的字体缺失问题是同一类原因。
+
+  修复方式：在 EnsureText() 中像 FungusVNController
+  一样加一行字体加载：
+
+  displayText.font =
+  Resources.Load<Font>("Font/LXGWWenKaiScreen")
+      ?? Resources.Load<Font>("Font/文软雅黑");
 
 ## 结局数据配置
 

@@ -1,4 +1,4 @@
-﻿%YAML 1.1
+%YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!1 &1000000000000000000
 GameObject:
@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 1000000000000000001}
   - component: {fileID: 1000000000000000002}
   m_Layer: 0
-  m_Name: FungusVN_day5-2c
+  m_Name: day5-2c
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -42,8 +42,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3ccf659d409546deafce9a033b3bded4, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   dialogueText: {fileID: 4900000, guid: 42836fc790344211a2c608e9dd120164, type: 3}
   sayDialog: {fileID: 0}
   vnCanvas: {fileID: 0}
