@@ -14,11 +14,7 @@ public class SceneMgr : BaseManager<SceneMgr>
     //同步切换场景的方法
     public void LoadScene(string name, UnityAction callBack = null)
     {
-        //切换前标记音效即将被销毁
-        MusicMgr.Instance.PrepareSceneChange();
-        //切换场景
         SceneManager.LoadScene(name);
-        //回调
         callBack?.Invoke();
         callBack = null;
     }
@@ -26,8 +22,6 @@ public class SceneMgr : BaseManager<SceneMgr>
     //异步切换场景的方法
     public void LoadSceneAsyn(string name, UnityAction callBack = null)
     {
-        //切换前标记音效即将被销毁
-        MusicMgr.Instance.PrepareSceneChange();
         MonoMgr.Instance.StartCoroutine(ReallyLoadSceneAsyn(name, callBack));
     }
 
