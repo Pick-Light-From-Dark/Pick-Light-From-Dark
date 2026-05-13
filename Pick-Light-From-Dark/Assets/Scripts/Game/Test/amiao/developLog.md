@@ -89,6 +89,34 @@
 **重要路径**：
 - 剧本：`Assets/Resources/Dialogue/Dialogue2.txt`、`Dialogue3.txt`、`Dialogue4.txt`
 
+## 2026-05-13 Dialogue5 格式规范化 + 剧情分支测试 Prefab
+
+**功能**：Dialogue5.txt 文本格式规范化，新增结局分支测试 Prefab。
+
+**Dialogue5.txt 修改**：
+- `(隐藏对话框3秒)` → `[hide_dialog]` / `[wait:3]` / `[show_dialog]`
+- `[bg:black_sence](隐藏对话框3秒)` → 拆分为 `[bg:black_sence]` + `[hide_dialog]` / `[wait:3]` / `[show_dialog]`
+- `[bg:]：夜晚十点四十五分...` → `[场景]：...` + `[bg:]`
+- 四个分支剧情前添加 `[block:xxx]` 段落标记
+
+**新增 EndingBranchTestRunner**：
+- 运行时左上角显示 IMGUI 菜单窗口（F2 切换显隐）
+- 支持一键触发 6002~6005 四个结局分支
+- 支持「从头播放」「快进模式」快捷操作
+- 自动初始化 EndingManager + 内置5个结局数据
+
+**新增 SimpleSkipButton**：
+- 不依赖 FungusVNController，独立创建 Canvas + Button
+- 运行时自动显示跳过按钮，点击仅打印日志（无实际功能）
+- 用于验证按钮在场景中是否可见
+
+**重要路径**：
+- 剧本：`Assets/Resources/Dialogue/Dialogue5.txt`
+- 分支测试：`Assets/Scripts/Game/Test/amiao/EndingBranchTestRunner.cs`
+- 分支 Prefab：`Assets/Scenes/Amiao_Test/TestPrefabs/EndingBranchTester.prefab`
+- 简易按钮：`Assets/Scripts/Game/Test/amiao/SimpleSkipButton.cs`
+- 按钮 Prefab：`Assets/Scenes/Amiao_Test/TestPrefabs/SimpleSkipButton.prefab`
+
 ## 2026-05-13 Skip Button 不可见修复
 
 **问题**：`FungusVNController` 中跳过按钮（SkipBtn）在 VN 剧情中不显示，只有存档按钮可见。
