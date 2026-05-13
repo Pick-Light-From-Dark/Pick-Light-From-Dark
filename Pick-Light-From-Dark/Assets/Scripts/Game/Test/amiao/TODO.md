@@ -7,7 +7,9 @@
     读取Pick-Light-From-Dark\Assets\Scripts\Game\Test\amiao\TODO.md
     文件，检索并定位第一个未勾选的任务项 [- ]。                         
                                                                       
-    分类自主决策：                                                              
+    分类自主决策：
+    先检查是否已实现
+    检查是否需要插件，需要则安装到Pick-Light-From-Dark\Assets\ThirdParty
     若为“排查bug/修复代码”类：直接读取相关代码文件，定位问题并完成修复。              
     若为“生成Prefab/测试脚本”类：直接创建相关文件并生成对应的 Prefab。          
     若为“设计数据结构”类：直接创建 ScriptableObject 或 Manager 框架代码。
@@ -65,6 +67,11 @@
 - [x] SimpleSkipButton按钮为巨大白色且字体未显示 为方块 SkipButtonTest可以加载出ui字体正确的按钮但是要延迟加载 尝试中和两种问题
 - [x] 修改Pick-Light-From-Dark\Assets\Resources\Dialogue\Dialogue5.txt 旁白、场景改为陆萤， 为这类对话加上（），表示心里话
 - [x] 做一个占位文字功能的prefab测试 ，在需要展示图片、展示音效音乐的时候，素材缺失则在画面最前左上角显示占位文字”img missing”例如。
+
+##
+- [] Pick-Light-From-Dark\Assets\Resources\Dialogue下如果Dialogue1~5都是一关的剧情，可以分成两部分，比如说是上段~游玩~下段，1~5正确的文本。首先搜索整个游戏5个关卡连起来的逻辑在整个项目里是如何实现，按需对这5个文本进行分段，待到形如1-1的那些 TXT 文本上，得到分成两段的两个txt。
+- [] 把Pick-Light-From-Dark\Assets\Scripts\Game\Test\amiao\SimpleSkipButton.cs的实现复刻到Pick-Light-From-Dark\Assets\Scenes\Amiao_Test\FungusVN_1.prefab 1~4prefab上，使按钮可见。
+- [] 做个 FungusVN_5.prefab ，测试后可以的话可以再和结局分支合并起来。
 
 ## 结局数据配置
 
