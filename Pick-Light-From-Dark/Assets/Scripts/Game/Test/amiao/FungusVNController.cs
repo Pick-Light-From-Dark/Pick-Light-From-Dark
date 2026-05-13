@@ -926,31 +926,6 @@ namespace Game.Test
 
             choiceText1 = choiceBtn1.GetComponentInChildren<Text>();
             choiceText2 = choiceBtn2.GetComponentInChildren<Text>();
-
-            // === 素材缺失占位符（左上角）===
-            var phGo = new GameObject("PlaceholderText");
-            phGo.transform.SetParent(vnCanvas.transform, false);
-            var phRect = phGo.AddComponent<RectTransform>();
-            phRect.anchorMin = new Vector2(0, 1);
-            phRect.anchorMax = new Vector2(0, 1);
-            phRect.pivot = new Vector2(0, 1);
-            phRect.anchoredPosition = new Vector2(10, -10);
-            phRect.sizeDelta = new Vector2(600, 200);
-            placeholderText = phGo.AddComponent<Text>();
-            placeholderText.fontSize = 18;
-            placeholderText.color = Color.yellow;
-            placeholderText.alignment = TextAnchor.UpperLeft;
-            placeholderText.raycastTarget = false;
-
-            // 描边：黑色描边，避免与背景撞色
-            var outline = phGo.AddComponent<Outline>();
-            outline.effectColor = Color.black;
-            outline.effectDistance = new Vector2(1.5f, -1.5f);
-
-            var phCanvas = phGo.AddComponent<Canvas>();
-            phCanvas.overrideSorting = true;
-            phCanvas.sortingOrder = 999;
-            phGo.SetActive(false);
         }
 
         Button CreateButton(string name, Transform parent, Vector2 anchoredPos, Vector2 size, string label, UnityEngine.Events.UnityAction onClick)
@@ -1015,12 +990,14 @@ namespace Game.Test
             }
         }
 
-        /// <summary>显示素材缺失占位符（左上角）</summary>
+        /// <summary>显示素材缺失占位符（左上角独立 Canvas，确保最前显示）</summary>
         void ShowPlaceholder(string assetType, string assetName)
         {
             string key = $"{assetType}:{assetName}";
             if (missingAssetLogs.Contains(key)) return;
             missingAssetLogs.Add(key);
+
+            EnsurePlaceholderCanvas();
 
             if (placeholderText != null)
             {
@@ -1030,11 +1007,56 @@ namespace Game.Test
             Debug.LogWarning($"[FungusVNController] {assetType} not found: {assetName}");
         }
 
+        /// <summary>确保占位文字有独立的 ScreenSpaceOverlay Canvas</summary>
+        void EnsurePlaceholderCanvas()
+        {
+            if (placeholderText != null && placeholderText.gameObject != null) return;
+
+            // 查找已有的独立占位 Canvas
+            var existingCanvas = GameObject.Find("PlaceholderCanvas");
+            Canvas canvas;
+            if (existingCanvas != null)
+            {
+                canvas = existingCanvas.GetComponent<Canvas>();
+            }
+            else
+            {
+                var go = new GameObject("PlaceholderCanvas");
+                canvas = go.AddComponent<Canvas>();
+                canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+                canvas.sortingOrder = 999;
+                go.AddComponent<CanvasScaler>().uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+                go.AddComponent<GraphicRaycaster>();
+            }
+
+            var textGo = new GameObject("PlaceholderText");
+            textGo.transform.SetParent(canvas.transform, false);
+            var rect = textGo.AddComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0, 1);
+            rect.anchorMax = new Vector2(0, 1);
+            rect.pivot = new Vector2(0, 1);
+            rect.anchoredPosition = new Vector2(10, -10);
+            rect.sizeDelta = new Vector2(600, 200);
+
+            textGo.AddComponent<CanvasRenderer>();
+            placeholderText = textGo.AddComponent<Text>();
+            placeholderText.fontSize = 18;
+            placeholderText.color = Color.yellow;
+            placeholderText.alignment = TextAnchor.UpperLeft;
+            placeholderText.raycastTarget = false;
+
+            var outline = textGo.AddComponent<Outline>();
+            outline.effectColor = Color.black;
+            outline.effectDistance = new Vector2(1.5f, -1.5f);
+
+            textGo.SetActive(false);
+        }
+
         /// <summary>清除素材缺失占位符</summary>
         public void ClearPlaceholder()
         {
             missingAssetLogs.Clear();
-            if (placeholderText != null)
+            if (placeholderText != null && placeholderText.gameObject != null)
             {
                 placeholderText.text = "";
                 placeholderText.gameObject.SetActive(false);
