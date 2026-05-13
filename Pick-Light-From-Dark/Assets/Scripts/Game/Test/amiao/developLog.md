@@ -273,6 +273,29 @@
 **重要路径**：
 - 核心组件：`Assets/Scripts/Game/Test/amiao/PlaceholderDisplay.cs`
 
+## 2026-05-13 居中大字演出 + 选项说话人显示
+
+**功能**：
+- `[center_text:xxx]` 指令：隐藏对话框，在画面中央显示 72 号白色大字，3 秒后自动继续
+- 选项行继承上一行说话人：第一关选项面板现在显示"陆萤"
+
+**修改内容**：
+- `DialogueLine.cs`：新增 `centerText` 字段
+- `DialogueParser.cs`：解析 `[center_text:xxx]`，选项行继承上一行 speaker
+- `FungusVNController.cs`：`ShowCenterText` / `HideCenterText` 方法，`ShowChoice` 显示 speaker
+- `Dialogue1-1.txt`：选项前 `[旁白]` 改为 `陆萤：`
+
+**测试方式**：
+1. 在剧情文本末尾添加 `[center_text:巡逻开始 第二夜]`
+2. 运行后观察对话框隐藏、居中大字显示
+3. 第一关选项处确认 NameText 显示"陆萤"
+
+**重要路径**：
+- 数据结构：`Assets/Scripts/Game/System/Dialogue/DialogueLine.cs`
+- 解析器：`Assets/Scripts/Game/System/Dialogue/DialogueParser.cs`
+- 控制器：`Assets/Scripts/Game/Test/amiao/FungusVNController.cs`
+- 剧本：`Assets/Resources/Dialogue/Dialogue1-1.txt`
+
 ## 2026-05-13 Dialogue5 结局分支分段文本 + Prefab
 
 **功能**：将 Dialogue5.txt 的4个结局分支提取为独立文本和 Prefab，方便单独测试。
