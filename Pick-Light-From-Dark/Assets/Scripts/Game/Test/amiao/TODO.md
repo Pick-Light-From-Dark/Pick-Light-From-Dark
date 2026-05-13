@@ -69,9 +69,9 @@
 - [x] 做一个占位文字功能的prefab测试 ，在需要展示图片、展示音效音乐的时候，素材缺失则在画面最前左上角显示占位文字”img missing”例如。
 
 ##
-- [] Pick-Light-From-Dark\Assets\Resources\Dialogue下如果Dialogue1~5都是一关的剧情，可以分成两部分，比如说是上段~游玩~下段，1~5正确的文本。首先搜索整个游戏5个关卡连起来的逻辑在整个项目里是如何实现，按需对这5个文本进行分段，待到形如1-1的那些 TXT 文本上，得到分成两段的两个txt。
-- [] 把Pick-Light-From-Dark\Assets\Scripts\Game\Test\amiao\SimpleSkipButton.cs的实现复刻到Pick-Light-From-Dark\Assets\Scenes\Amiao_Test\FungusVN_1.prefab 1~4prefab上，使按钮可见。
-- [] 做个 FungusVN_5.prefab ，测试后可以的话可以再和结局分支合并起来。
+- [x] Pick-Light-From-Dark\Assets\Resources\Dialogue下如果Dialogue1~5都是一关的剧情，可以分成两部分，比如说是上段~游玩~下段，1~5正确的文本。首先搜索整个游戏5个关卡连起来的逻辑在整个项目里是如何实现，按需对这5个文本进行分段，待到形如1-1的那些 TXT 文本上，得到分成两段的两个txt。
+- [x] 把Pick-Light-From-Dark\Assets\Scripts\Game\Test\amiao\SimpleSkipButton.cs的实现复刻到Pick-Light-From-Dark\Assets\Scenes\Amiao_Test\FungusVN_1.prefab 1~4prefab上，使按钮可见。
+- [x] 做个 FungusVN_5.prefab ，测试后可以的话可以再和结局分支合并起来。
 
 ## 结局数据配置
 

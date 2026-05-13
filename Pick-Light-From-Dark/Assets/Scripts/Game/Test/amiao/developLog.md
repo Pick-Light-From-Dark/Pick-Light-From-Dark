@@ -175,6 +175,52 @@
 - 剧本：Assets/Resources/Dialogue/Dialogue5.txt
 
 
+## 2026-05-13 Dialogue2~5 剧情文本分段
+
+**功能**：按关卡流程（上段-游玩-下段）对 Dialogue2~5 进行分段，更新 LevelConfig 引用。
+
+**分段结果**：
+- Dialogue2-1.txt：上段（电话~熄灯前），Dialogue2-2.txt：下段（结尾剧情）
+- Dialogue3-1.txt：上段（宿舍闲聊~巡逻开始），Dialogue3-2.txt：下段（深夜孤独~入睡）
+- Dialogue4-1.txt：上段（放假聊天~巡逻开始），Dialogue4-2.txt：下段（次日期待）
+- Dialogue5-1.txt：上段（周一回校~巡逻开始），下段为四个分支结局保留在原 Dialogue5.txt
+
+**LevelConfig 更新**：
+- LevelConfig_2：pre→Dialogue2-1，post→Dialogue2-2
+- LevelConfig_3：pre→Dialogue3-1，post→Dialogue3-2
+- LevelConfig_5：pre→Dialogue5-1，isChoiceLevel=1
+
+**重要路径**：
+- 分段文本：`Assets/Resources/Dialogue/Dialogue2-1.txt` ~ `Dialogue5-1.txt`
+- 配置：`Assets/Resources/Config/LevelConfig_2.asset`、`LevelConfig_3.asset`、`LevelConfig_5.asset`
+
+## 2026-05-13 FungusVN_1~4.prefab 跳过按钮默认可见
+
+**功能**：复刻 SimpleSkipButton 可见性逻辑到 FungusVN_1~4.prefab。
+
+**实现**：
+- `FungusVNController` 新增 `showSkipButtonOnStart` bool 字段
+- `Start()` 中若启用则自动调用 `SetSkipButtonVisible(true)`
+- FungusVN_1~4.prefab 全部启用该字段，运行时跳过按钮自动显示
+
+**重要路径**：
+- 代码：`Assets/Scripts/Game/Test/amiao/FungusVNController.cs`
+- Prefab：`Assets/Scenes/Amiao_Test/FungusVN_1.prefab` ~ `FungusVN_4.prefab`
+
+## 2026-05-13 FungusVN_5.prefab
+
+**功能**：新增第五关剧情演出 Prefab，用于测试 Dialogue5 剧情流程。
+
+**实现**：
+- 复制 FungusVN_4.prefab 并修改
+- 名称改为 FungusVN_5
+- dialogueText 引用 Dialogue5.txt（完整剧情含四个分支结局）
+- 启用 showSkipButtonOnStart，运行时跳过按钮自动显示
+
+**重要路径**：
+- Prefab：`Assets/Scenes/Amiao_Test/FungusVN_5.prefab`
+- 剧本：`Assets/Resources/Dialogue/Dialogue5.txt`
+
 ## 2026-05-13 占位文字 Prefab 测试
 
 **功能**：独立素材缺失占位文字显示器 + 测试套件
