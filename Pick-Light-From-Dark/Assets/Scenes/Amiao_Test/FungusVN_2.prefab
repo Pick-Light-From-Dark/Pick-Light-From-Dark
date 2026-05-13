@@ -69,6 +69,7 @@ MonoBehaviour:
   fastForwardInterval: 0.1
   saveFlowchart: {fileID: 0}
   skipToChoiceIfAvailable: 0
+  showSkipButtonOnStart: 1
 --- !u!1 &5274418569081674621
 GameObject:
   m_ObjectHideFlags: 0

@@ -85,6 +85,9 @@ namespace Game.Test
         /// <summary>第一关跳过按钮是否跳到选项（否则直接结束剧情）</summary>
         public bool skipToChoiceIfAvailable = false;
 
+        /// <summary>剧情开始时自动显示跳过按钮（供测试 Prefab 使用）</summary>
+        public bool showSkipButtonOnStart = false;
+
         /// <summary>剧情全部结束后的回调（带分支类型）</summary>
         public System.Action<VNExitType> OnDialogueExit;
 
@@ -118,6 +121,8 @@ namespace Game.Test
         void Start()
         {
             RestartDialogue();
+            if (showSkipButtonOnStart)
+                SetSkipButtonVisible(true);
         }
 
         /// <summary>

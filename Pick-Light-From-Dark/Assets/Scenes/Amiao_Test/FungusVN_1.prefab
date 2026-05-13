@@ -73,6 +73,7 @@ MonoBehaviour:
   bgmTracks: []
   fastForwardInterval: 0.1
   saveFlowchart: {fileID: 0}
+  showSkipButtonOnStart: 1
 --- !u!1 &6433908778032422013
 GameObject:
   m_ObjectHideFlags: 0

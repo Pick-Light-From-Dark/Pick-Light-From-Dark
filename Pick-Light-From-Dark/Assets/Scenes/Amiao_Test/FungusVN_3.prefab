@@ -62,3 +62,4 @@ MonoBehaviour:
   fastForwardInterval: 0.1
   saveFlowchart: {fileID: 0}
   skipToChoiceIfAvailable: 0
+  showSkipButtonOnStart: 1
