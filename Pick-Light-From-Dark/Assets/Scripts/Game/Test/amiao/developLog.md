@@ -316,3 +316,8 @@
 - 分支 Prefab：`Assets/Scenes/Amiao_Test/day5-2a.prefab` ~ `day5-2e.prefab`
 - 测试脚本：`Assets/Scripts/Game/Test/amiao/PlaceholderTestRunner.cs`
 - Prefab：`Assets/Scenes/Amiao_Test/TestPrefabs/PlaceholderTester.prefab`
+
+## 2026-05-13 [auto] 修复 PlaceholderDisplay 字
+
+**功能**：[auto] 修复 PlaceholderDisplay 字体缺失
+

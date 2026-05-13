@@ -64,8 +64,8 @@
 - [x] fungus是否支持？第支持就是隐藏对话框的图片，然后把文字放大字号中间显示.那个”巡逻开始 第二夜”类似的描述在每个剧情的最后面出现，这样的描述代表着是即将进入游玩的部分，这部分将它就是隐去对话框居中大字
 - [x] 第一关最后选项那里，”陆萤”应该显示出来
 
-- [] Pick-Light-From-Dark\Assets\Scenes\Amiao_Test\旧剧情prefab（路径改了不能直接跑）和这个不一样Pick-Light-From-Dark\Assets\Scenes\Amiao_Test 分段后的prefab里的字体 按照旧的prefab的字体移植过来
-- [] Pick-Light-From-Dark\Assets\Scenes\Amiao_Test\TestPrefabs\StoryChainTester.prefab day1-1.prefab中的选项点不了 不能进入分支剧情
+- [x] Pick-Light-From-Dark\Assets\Scenes\Amiao_Test\旧剧情prefab（路径改了不能直接跑）和这个不一样Pick-Light-From-Dark\Assets\Scenes\Amiao_Test 分段后的prefab里的字体 按照旧的prefab的字体移植过来
+- [x] Pick-Light-From-Dark\Assets\Scenes\Amiao_Test\TestPrefabs\StoryChainTester.prefab day1-1.prefab中的选项点不了 不能进入分支剧情
 - [] Pick-Light-From-Dark\Assets\Resources\Dialogue\Dialogue5-1.txt 5-几系列中“[ 陆萤 ]”都换成“陆萤”。以及我修改了txt但是5-2的prefab未同步过去修改，是不是生成剧本方式和Pick-Light-From-Dark\Assets\Resources\Dialogue\旧对话（未分段）不一样了
 - [] 跳过的位置应该是跳到选项（第一关和第五关），或者跳到下一段剧情（即下一个prefab）
 - [] 看不到文字最可能的原因是 PlaceholderDisplay.cs 没有设置字体（第
