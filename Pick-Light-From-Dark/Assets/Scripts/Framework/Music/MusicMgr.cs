@@ -17,6 +17,8 @@ public class MusicMgr : BaseManager<MusicMgr>
 
     //用于存在正在播放的音效
     private List<AudioSource> soundList = new List<AudioSource>();
+    //被标记为"即将被场景切换销毁"的音效，不回收池
+    private HashSet<AudioSource> markedDestroyed = new HashSet<AudioSource>();
     //音效大小
     private float soundValue = 0.5f;
     public float SoundValue => soundValue;
@@ -41,8 +43,6 @@ public class MusicMgr : BaseManager<MusicMgr>
         if (!soundIsPlay)
             return;
 
-        //暂停的不处理 对象池那边 如果没有音效正在播放 就会回收到对象池中
-        //为了避免被对象池移除 我们不做处理
         for (int i = soundList.Count - 1; i >= 0; --i)
         {
             if (soundList[i] == null)
@@ -51,13 +51,32 @@ public class MusicMgr : BaseManager<MusicMgr>
                 continue;
             }
             var source = soundList[i];
+
+            // 场景切换前被标记的，直接从列表移除，不回池（对象即将被Unity销毁）
+            if (markedDestroyed.Contains(source))
+            {
+                markedDestroyed.Remove(source);
+                soundList.RemoveAt(i);
+                continue;
+            }
+
             if (!source.isPlaying)
             {
                 source.clip = null;
                 soundList.RemoveAt(i);
-                if (source != null && source.gameObject != null)
-                    PoolMgr.Instance.PushObj(source.gameObject);
+                PoolMgr.Instance.PushObj(source.gameObject);
             }
+        }
+    }
+
+    /// <summary>
+    /// 场景切换前调用，标记所有正在播放的音效为"即将销毁"
+    /// </summary>
+    public void PrepareSceneChange()
+    {
+        for (int i = 0; i < soundList.Count; i++)
+        {
+            markedDestroyed.Add(soundList[i]);
         }
     }
 

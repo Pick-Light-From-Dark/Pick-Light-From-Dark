@@ -212,15 +212,15 @@ public class EndingContentPanel : BasePanel
         UIMgr.Instance.HideAllPanels();
         var coordinator = LevelFlowCoordinator.Instance;
         if (coordinator != null && !string.IsNullOrEmpty(coordinator.NextLevelSceneName))
-            SceneManager.LoadScene(coordinator.NextLevelSceneName);
+            SceneMgr.Instance.LoadScene(coordinator.NextLevelSceneName);
         else
-            SceneManager.LoadScene("GameScene");
+            SceneMgr.Instance.LoadScene("GameScene");
     }
 
     private void BackToMenu()
     {
         UIMgr.Instance.HideAllPanels();
-        SceneManager.LoadScene("GameScene");
+        SceneMgr.Instance.LoadScene("GameScene");
     }
 
     private void ReturnToMainMenu()

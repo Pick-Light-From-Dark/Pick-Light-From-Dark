@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class BeginPanel : BasePanel
 {
@@ -14,7 +13,7 @@ public class BeginPanel : BasePanel
             case "StartBtn":
                 MusicMgr.Instance.PlaySound("按钮点击音效");
                 UIMgr.Instance.HidePanel<BeginPanel>(true);
-                SceneManager.LoadScene("Level1");
+                SceneMgr.Instance.LoadScene("Level1");
                 break;
 
             case "SaveBtn":
