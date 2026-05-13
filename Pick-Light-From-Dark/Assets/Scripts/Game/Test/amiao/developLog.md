@@ -173,3 +173,31 @@
 
 **重要路径**：
 - 剧本：Assets/Resources/Dialogue/Dialogue5.txt
+
+
+## 2026-05-13 占位文字 Prefab 测试
+
+**功能**：独立素材缺失占位文字显示器 + 测试套件
+
+**新增 PlaceholderDisplay**：
+- 独立组件，不依赖 FungusVNController
+- 运行时自动创建 Canvas（ScreenSpaceOverlay, sortingOrder=999）
+- 左上角显示缺失素材列表（Image / SFX / BGM）
+- Show(type, name) 方法，自动去重
+- Clear() 方法清除所有占位文字
+- 黄色文字 + 黑色描边，避免与背景撞色
+
+**新增 PlaceholderTestRunner**：
+- 测试脚本，挂载后按 I/S/B/C 分别测试图片/音效/BGM缺失/清除
+- 支持 Inspector ContextMenu 测试
+- 自动创建 PlaceholderDisplay（若场景中不存在）
+
+**测试方式**：
+1. 将 PlaceholderTester.prefab 拖入场景
+2. 运行后按 I/S/B 触发占位文字
+3. 按 C 清除
+
+**重要路径**：
+- 核心组件：`Assets/Scripts/Game/Test/amiao/PlaceholderDisplay.cs`
+- 测试脚本：`Assets/Scripts/Game/Test/amiao/PlaceholderTestRunner.cs`
+- Prefab：`Assets/Scenes/Amiao_Test/TestPrefabs/PlaceholderTester.prefab`
