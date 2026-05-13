@@ -207,6 +207,33 @@
 - 代码：`Assets/Scripts/Game/Test/amiao/FungusVNController.cs`
 - Prefab：`Assets/Scenes/Amiao_Test/FungusVN_1.prefab` ~ `FungusVN_4.prefab`
 
+## 2026-05-13 Dialogue1 分段文本更新 + 全关分段 Prefab
+
+**功能**：按 Dialogue1.txt 最新演出效果改写旧分段文本，并为全关创建分段 Prefab。
+
+**Dialogue1 文本更新**：
+- `Dialogue1-1.txt`：上段（light_room → 选项提示），含 fade/hide_dialog/solid:black 等演出指令
+- `Dialogue1-2eat.txt`：'吃'分支（心情变好 → 新手关卡结束）
+- `Dialogue1-2noeat.txt`：'不吃'分支（塞进课桌 → 结局一）
+
+**新增分段 Prefab（10个）**：
+| 关卡 | Prefab | 引用文本 |
+|---|---|---|
+| 1 | FungusVN_1-1 | Dialogue1-1.txt |
+| 1 | FungusVN_1-2a | Dialogue1-2eat.txt |
+| 1 | FungusVN_1-2b | Dialogue1-2noeat.txt |
+| 2 | FungusVN_2-1 | Dialogue2-1.txt |
+| 2 | FungusVN_2-2 | Dialogue2-2.txt |
+| 3 | FungusVN_3-1 | Dialogue3-1.txt |
+| 3 | FungusVN_3-2 | Dialogue3-2.txt |
+| 4 | FungusVN_4-1 | Dialogue4-1.txt |
+| 4 | FungusVN_4-2 | Dialogue4-2.txt |
+| 5 | FungusVN_5-2 | Dialogue5.txt（含四个结局分支） |
+
+**重要路径**：
+- 文本：`Assets/Resources/Dialogue/Dialogue1-1.txt` ~ `Dialogue1-2noeat.txt`
+- Prefab：`Assets/Scenes/Amiao_Test/FungusVN_*-*.prefab`
+
 ## 2026-05-13 FungusVN_5.prefab
 
 **功能**：新增第五关剧情演出 Prefab，用于测试 Dialogue5 剧情流程。
