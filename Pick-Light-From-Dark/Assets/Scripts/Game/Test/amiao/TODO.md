@@ -63,7 +63,7 @@
 
 ## 
 - [x] SimpleSkipButton按钮为巨大白色且字体未显示 为方块 SkipButtonTest可以加载出ui字体正确的按钮但是要延迟加载 尝试中和两种问题
-- [] 修改Pick-Light-From-Dark\Assets\Resources\Dialogue\Dialogue5.txt 旁白、场景改为陆萤， 为这类对话加上（），表示心里话
+- [x] 修改Pick-Light-From-Dark\Assets\Resources\Dialogue\Dialogue5.txt 旁白、场景改为陆萤， 为这类对话加上（），表示心里话
 - [] 做一个占位文字功能的prefab测试 ，在需要展示图片、展示音效音乐的时候，素材缺失则在画面最前左上角显示占位文字“img missing”例如。
 
 ## 结局数据配置
