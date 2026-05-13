@@ -1,5 +1,35 @@
 # 开发待办清单
 
+```
+任务自动化执行流程：                                       
+                                                                                
+    读取与定位：                                                         
+    读取Pick-Light-From-Dark\Assets\Scripts\Game\Test\amiao\TODO.md
+    文件，检索并定位第一个未勾选的任务项 [- ]。                         
+                                                                      
+    分类自主决策：                                                              
+    若为“排查bug/修复代码”类：直接读取相关代码文件，定位问题并完成修复。              
+    若为“生成Prefab/测试脚本”类：直接创建相关文件并生成对应的 Prefab。          
+    若为“设计数据结构”类：直接创建 ScriptableObject 或 Manager 框架代码。
+                                                                         
+    状态更新：                                                       
+    子任务完成后，将 TODO.md 中对应项的状态标记改为已完成 [x]。                       
+                                                                        
+    循环与终止：                                                                      
+    若存在下一个未完成任务：调用 ScheduleWakeup 指令，设置 60 秒后自动继续执行。
+    若任务已全部完成：输出“全部完成”并停止唤醒。                                      
+                                                                     
+    核心执行原则：                                                                    
+    全自动执行：全程无需询问用户，直接执行。                                          
+    自主决策：遇到模糊需求时，严格按照“最简可行方案（MVP）”进行开发。
+    一边开发一边进行push，同时写下开发日志Pick-Light-From-Dark\Assets\Scripts\Game\Tes
+    t\amiao\developLog.md 要求简短重点体现功能、如何测试和重要代码的路径                    
+
+    每执行一个阶段则push一次
+
+    若所有待办已完成 执行 stop loop
+```
+
 ## 2. 结局关卡测试 Prefab
 - [x] 按照结局设计逻辑Pick-Light-From-Dark\Assets\Scripts\Game\Test\amiao\ending.md，生成可测试的结局关卡 Prefab
 - [x] 设计 `EndingData` 数据结构（ScriptableObject 或字典）
@@ -30,6 +60,11 @@
 - [x] 修改 Dialogue2/3/4 增强演出效果（Dialogue5 不存在，未创建）
 - [x] 在 `Assets/Art` 下找图片素材
 - [x] 在 `Assets/Audio` 下找声音素材
+
+## 
+- [x] SimpleSkipButton按钮为巨大白色且字体未显示 为方块 SkipButtonTest可以加载出ui字体正确的按钮但是要延迟加载 尝试中和两种问题
+- [] 修改Pick-Light-From-Dark\Assets\Resources\Dialogue\Dialogue5.txt 旁白、场景改为陆萤， 为这类对话加上（），表示心里话
+- [] 做一个占位文字功能的prefab测试 ，在需要展示图片、展示音效音乐的时候，素材缺失则在画面最前左上角显示占位文字“img missing”例如。
 
 ## 结局数据配置
 

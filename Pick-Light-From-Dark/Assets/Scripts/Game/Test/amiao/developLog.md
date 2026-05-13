@@ -133,3 +133,17 @@
 **重要路径**：
 - 修复代码：`Assets/Scripts/Game/Test/amiao/FungusVNController.cs`
 - 测试脚本：`Assets/Scripts/Game/Test/amiao/SkipButtonTest.cs`
+
+## 2026-05-13 SimpleSkipButton UI 修复
+
+**功能**：修复 SimpleSkipButton 巨大白色方块 + 字体缺失问题
+
+**修复内容**：
+- TMPro.TextMeshProUGUI → Legacy Text（避免字体材质缺失导致的方块字）
+- Resources.GetBuiltinResource Sprite → 纯色背景（避免内置资源不存在导致纯白巨块）
+- 增加 delayCreate 字段，支持延迟创建（中和 SkipButtonTest 的延迟加载优点）
+- 字体加载逻辑与 FungusVNController.CreateButton 一致（Resources/Font/LXGWWenKaiScreen 或 文软雅黑）
+
+**测试**：挂载 SimpleSkipButton 到空 GameObject，运行场景，右上角应显示正确中文字体的跳过按钮
+
+**代码路径**：`Assets/Scripts/Game/Test/amiao/SimpleSkipButton.cs`
