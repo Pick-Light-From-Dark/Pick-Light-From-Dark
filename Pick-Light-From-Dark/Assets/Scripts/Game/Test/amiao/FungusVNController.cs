@@ -104,6 +104,9 @@ namespace Game.Test
         private Text placeholderText;
         private HashSet<string> missingAssetLogs = new HashSet<string>();
 
+        // 居中大字显示
+        private Text centerTextDisplay;
+
         // 各层正在运行的背景转场协程（避免多重协程冲突）
         private Coroutine bgTransitionRoutine;
         private Coroutine mgTransitionRoutine;
@@ -1283,6 +1286,14 @@ namespace Game.Test
                 sayDialog.gameObject.SetActive(true);
             }
 
+            // ========== 居中大字显示 ==========
+            if (!string.IsNullOrEmpty(line.centerText))
+            {
+                ShowCenterText(line.centerText);
+                StartCoroutine(WaitAndContinue(3f));
+                return;
+            }
+
             // ========== 等待指令 ==========
             if (line.wait > 0)
             {
@@ -1356,8 +1367,15 @@ namespace Game.Test
             currentChoiceLine = line;
             isProcessing = false;
 
-            sayDialog.SetCharacter(null);
-            sayDialog.NameText = "";
+            if (!string.IsNullOrEmpty(line.speaker))
+            {
+                sayDialog.SetCharacterName(line.speaker, Color.white);
+            }
+            else
+            {
+                sayDialog.SetCharacter(null);
+                sayDialog.NameText = "";
+            }
             sayDialog.gameObject.SetActive(true);
             // 保留之前的文本，不清空 StoryText，使选项与旁白同时显示
 
@@ -1476,8 +1494,62 @@ namespace Game.Test
         IEnumerator WaitAndContinue(float seconds)
         {
             yield return new WaitForSecondsRealtime(seconds);
+            HideCenterText();
             isProcessing = false;
             ShowNextLine();
+        }
+
+        /// <summary>显示居中大字（隐藏对话框，独立 Canvas 最前显示）</summary>
+        void ShowCenterText(string text)
+        {
+            if (sayDialog != null)
+                sayDialog.gameObject.SetActive(false);
+
+            if (centerTextDisplay == null || centerTextDisplay.gameObject == null)
+            {
+                var go = new GameObject("CenterTextCanvas");
+                var canvas = go.AddComponent<Canvas>();
+                canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+                canvas.sortingOrder = 1000;
+                go.AddComponent<CanvasScaler>().uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+                go.AddComponent<GraphicRaycaster>();
+
+                var textGo = new GameObject("CenterText");
+                textGo.transform.SetParent(go.transform, false);
+                var rect = textGo.AddComponent<RectTransform>();
+                rect.anchorMin = new Vector2(0.5f, 0.5f);
+                rect.anchorMax = new Vector2(0.5f, 0.5f);
+                rect.pivot = new Vector2(0.5f, 0.5f);
+                rect.anchoredPosition = Vector2.zero;
+                rect.sizeDelta = new Vector2(1200, 300);
+
+                textGo.AddComponent<CanvasRenderer>();
+                centerTextDisplay = textGo.AddComponent<Text>();
+                centerTextDisplay.fontSize = 72;
+                centerTextDisplay.color = Color.white;
+                centerTextDisplay.alignment = TextAnchor.MiddleCenter;
+                centerTextDisplay.raycastTarget = false;
+
+                var outline = textGo.AddComponent<Outline>();
+                outline.effectColor = Color.black;
+                outline.effectDistance = new Vector2(2f, -2f);
+
+                // 加载中文字体
+                var chineseFont = Resources.Load<Font>("Font/LXGWWenKaiScreen");
+                if (chineseFont == null) chineseFont = Resources.Load<Font>("Font/文软雅黑");
+                if (chineseFont != null) centerTextDisplay.font = chineseFont;
+            }
+
+            centerTextDisplay.text = text;
+            centerTextDisplay.gameObject.SetActive(true);
+            centerTextDisplay.transform.parent.gameObject.SetActive(true);
+        }
+
+        /// <summary>隐藏居中大字</summary>
+        void HideCenterText()
+        {
+            if (centerTextDisplay != null && centerTextDisplay.gameObject != null)
+                centerTextDisplay.gameObject.SetActive(false);
         }
 
         /// <summary>执行分支动作指令</summary>
