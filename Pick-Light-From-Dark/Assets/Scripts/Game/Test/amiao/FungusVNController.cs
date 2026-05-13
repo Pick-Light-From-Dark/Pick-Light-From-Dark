@@ -1135,34 +1135,32 @@ namespace Game.Test
             saveFlowchart.SetStringVariable("VN_StoryFile", dialogueText != null ? dialogueText.name : "");
         }
 
-        /// <summary>跳过当前剧情：第一关跳到选项，其他直接结束</summary>
+        /// <summary>跳过当前剧情：优先跳到后续选项，无选项则结束并触发下一个 prefab</summary>
         void OnSkipStory()
         {
             Debug.Log("[FungusVNController] 用户跳过剧情");
 
-            if (skipToChoiceIfAvailable)
+            int choiceIndex = -1;
+            for (int i = lineIndex; i < lines.Count; i++)
             {
-                int choiceIndex = -1;
-                for (int i = lineIndex; i < lines.Count; i++)
+                if (lines[i].type == "选项")
                 {
-                    if (lines[i].type == "选项")
-                    {
-                        choiceIndex = i;
-                        break;
-                    }
-                }
-
-                if (choiceIndex != -1)
-                {
-                    StopAllCoroutines();
-                    isProcessing = false;
-                    isFastForwarding = false;
-                    lineIndex = choiceIndex;
-                    ShowNextLine();
-                    return;
+                    choiceIndex = i;
+                    break;
                 }
             }
 
+            if (choiceIndex != -1)
+            {
+                StopAllCoroutines();
+                isProcessing = false;
+                isFastForwarding = false;
+                lineIndex = choiceIndex;
+                ShowNextLine();
+                return;
+            }
+
+            // 无选项：结束当前剧情，由外部流程控制器接下一个 prefab
             EndDialogue();
         }
 

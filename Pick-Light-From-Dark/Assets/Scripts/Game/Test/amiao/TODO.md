@@ -4,7 +4,10 @@
 任务自动化执行流程：  
     读取与定位：
     读取Pick-Light-From-Dark\Assets\Scripts\Game\Test\amiao\TODO.md，检索并定位第一个未勾选的任务项 [- ]。
-
+    核心执行原则：              
+    无人值守全自动执行：全程不许询问用户，直接执行，用户已睡着。
+    自主决策：遇到模糊需求时，严格按照“最简可行方案（MVP）”进行开发。
+    
     分类自主决策：
     先检查是否已实现
     检查是否需要插件，需要则安装到Pick-Light-From-Dark\Assets\ThirdParty
@@ -17,11 +20,8 @@
                                                                         
     循环与终止：             
     若存在下一个未完成任务：调用 ScheduleWakeup 指令，设置 60 秒后自动继续执行。
-    若任务已全部完成：输出“全部完成”并停止唤醒。                                      
-                                                                     
-    核心执行原则：              
-    无人值守全自动执行：全程不许询问用户，直接执行，用户已睡着。
-    自主决策：遇到模糊需求时，严格按照“最简可行方案（MVP）”进行开发。
+    若任务已全部完成：输出“全部完成”并停止唤醒。
+                                                            
     一边开发一边进行push，同时写下开发日志Pick-Light-From-Dark\Assets\Scripts\Game\Tes
     t\amiao\developLog.md 要求简短重点体现功能、如何测试和重要代码的路径 
 
@@ -66,25 +66,9 @@
 
 - [x] Pick-Light-From-Dark\Assets\Scenes\Amiao_Test\旧剧情prefab（路径改了不能直接跑）和这个不一样Pick-Light-From-Dark\Assets\Scenes\Amiao_Test 分段后的prefab里的字体 按照旧的prefab的字体移植过来
 - [x] Pick-Light-From-Dark\Assets\Scenes\Amiao_Test\TestPrefabs\StoryChainTester.prefab day1-1.prefab中的选项点不了 不能进入分支剧情
-- [] Pick-Light-From-Dark\Assets\Resources\Dialogue\Dialogue5-1.txt 5-几系列中“[ 陆萤 ]”都换成“陆萤”。以及我修改了txt但是5-2的prefab未同步过去修改，是不是生成剧本方式和Pick-Light-From-Dark\Assets\Resources\Dialogue\旧对话（未分段）不一样了
-- [] 跳过的位置应该是跳到选项（第一关和第五关），或者跳到下一段剧情（即下一个prefab）
-- [] 看不到文字最可能的原因是 PlaceholderDisplay.cs 没有设置字体（第
-   109-112 行）：                                                                  
-  displayText = textGo.AddComponent<Text>();
-  displayText.fontSize = fontSize;
-  displayText.color = textColor;
-
-  代码里只设置了 fontSize 和 color，没有赋值
-  displayText.font。Unity
-  默认字体在中文环境下常导致文字不可见（透明或方块），这和之前
-  SimpleSkipButton 的字体缺失问题是同一类原因。
-
-  修复方式：在 EnsureText() 中像 FungusVNController
-  一样加一行字体加载：
-
-  displayText.font =
-  Resources.Load<Font>("Font/LXGWWenKaiScreen")
-      ?? Resources.Load<Font>("Font/文软雅黑");
+- [x] Pick-Light-From-Dark\Assets\Resources\Dialogue\Dialogue5-1.txt 5-几系列中“[ 陆萤 ]”都换成“陆萤”。以及我修改了txt但是5-2的prefab未同步过去修改，是不是生成剧本方式和Pick-Light-From-Dark\Assets\Resources\Dialogue\旧对话（未分段）不一样了
+- [x] 跳过的位置应该是跳到选项（第一关和第五关），或者跳到下一段剧情（即下一个prefab）
+- [x] 看不到文字最可能的原因是 PlaceholderDisplay.cs 没有设置字体（第109-112行）：已在 PlaceholderDisplay.cs:113-114 修复，加载 Font/LXGWWenKaiScreen 或 Font/文软雅黑。
 
 ## 结局数据配置
 

@@ -321,3 +321,30 @@
 
 **功能**：[auto] 修复 PlaceholderDisplay 字体缺失
 
+
+## 2026-05-13 [auto] 批量替换: [陆萤] -> 陆萤
+
+**功能**：[auto] 批量替换: [陆萤] -> 陆萤
+
+## 2026-05-13 跳过逻辑统一：优先跳到选项，无选项则结束并接下一个 prefab
+
+**功能**：统一 `FungusVNController` 跳过按钮行为，使第一关、第五关及所有含选项的剧情段都能正确跳到选项，无选项段则结束并进入下一个 prefab。
+
+**问题**：
+- `skipToChoiceIfAvailable` 默认 false，所有 prefab 均未开启（除测试 Prefab 外）
+- `LevelFlowCoordinator` 仅在第一关运行时开启，第五关及剧情链测试中的 prefab 点击跳过直接结束，无法跳到选项
+
+**修复**：
+- `FungusVNController.OnSkipStory()`：移除对 `skipToChoiceIfAvailable` 的依赖，默认总是从当前行向后扫描第一个 `"选项"` 类型行并跳转
+- 若未找到选项，则调用 `EndDialogue()`，由外部 `StoryChainTestRunner` / `LevelFlowCoordinator` 自动接下一个 prefab
+- `LevelFlowCoordinator.StartOpeningStory()`：删除 `vnController.skipToChoiceIfAvailable = (levelId == 1)` 运行时设置，逻辑已内聚到控制器
+
+**测试方式**：
+1. 将 day1-1.prefab 拖入场景，运行后点击"跳过"，应直接跳到"吃/不吃"选项
+2. 将 day5-2.prefab 拖入场景，运行后点击"跳过"，应跳到结局分支选项
+3. 将 day2-1.prefab（无选项）拖入场景，运行后点击"跳过"，应结束剧情
+
+**重要路径**：
+- 修复代码：`Assets/Scripts/Game/Test/amiao/FungusVNController.cs`（`OnSkipStory` 方法）
+- 流程协调器：`Assets/Scripts/Game/Flow/LevelFlowCoordinator.cs`
+
