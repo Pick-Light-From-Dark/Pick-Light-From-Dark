@@ -272,5 +272,24 @@
 
 **重要路径**：
 - 核心组件：`Assets/Scripts/Game/Test/amiao/PlaceholderDisplay.cs`
+
+## 2026-05-13 Dialogue5 结局分支分段文本 + Prefab
+
+**功能**：将 Dialogue5.txt 的4个结局分支提取为独立文本和 Prefab，方便单独测试。
+
+**分段结果**：
+- `Dialogue5-2a.txt` / `day5-2a.prefab`：迷茫结局（结局二：莫比乌斯环）
+- `Dialogue5-2b.txt` / `day5-2b.prefab`：网吧结局（结局三：人心不足蛇吞象）
+- `Dialogue5-2c.txt` / `day5-2c.prefab`：天台结局（结局四：星垂之夜）
+- `Dialogue5-2d.txt` / `day5-2d.prefab`：可选结局-独自前去（结局四：星垂之夜）
+- `Dialogue5-2e.txt` / `day5-2e.prefab`：可选结局-邀友同行（结局五：北极星）
+
+**测试方式**：
+1. 将对应 Prefab 拖入场景
+2. 运行后直接播放该分支剧情
+
+**重要路径**：
+- 分支文本：`Assets/Resources/Dialogue/Dialogue5-2a.txt` ~ `Dialogue5-2e.txt`
+- 分支 Prefab：`Assets/Scenes/Amiao_Test/day5-2a.prefab` ~ `day5-2e.prefab`
 - 测试脚本：`Assets/Scripts/Game/Test/amiao/PlaceholderTestRunner.cs`
 - Prefab：`Assets/Scenes/Amiao_Test/TestPrefabs/PlaceholderTester.prefab`

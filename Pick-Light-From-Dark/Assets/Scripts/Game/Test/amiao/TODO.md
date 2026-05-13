@@ -1,12 +1,10 @@
 # 开发待办清单
 
 ```
-任务自动化执行流程：                                       
-                                                                                
-    读取与定位：                                                         
-    读取Pick-Light-From-Dark\Assets\Scripts\Game\Test\amiao\TODO.md
-    文件，检索并定位第一个未勾选的任务项 [- ]。                         
-                                                                      
+任务自动化执行流程：  
+    读取与定位：
+    读取Pick-Light-From-Dark\Assets\Scripts\Game\Test\amiao\TODO.md，检索并定位第一个未勾选的任务项 [- ]。
+
     分类自主决策：
     先检查是否已实现
     检查是否需要插件，需要则安装到Pick-Light-From-Dark\Assets\ThirdParty
@@ -14,18 +12,18 @@
     若为“生成Prefab/测试脚本”类：直接创建相关文件并生成对应的 Prefab。          
     若为“设计数据结构”类：直接创建 ScriptableObject 或 Manager 框架代码。
                                                                          
-    状态更新：                                                       
+    状态更新：
     子任务完成后，将 TODO.md 中对应项的状态标记改为已完成 [x]。                       
                                                                         
-    循环与终止：                                                                      
+    循环与终止：             
     若存在下一个未完成任务：调用 ScheduleWakeup 指令，设置 60 秒后自动继续执行。
     若任务已全部完成：输出“全部完成”并停止唤醒。                                      
                                                                      
-    核心执行原则：                                                                    
-    全自动执行：全程无需询问用户，直接执行。                                          
+    核心执行原则：              
+    全自动执行：全程不许询问用户，直接执行。        
     自主决策：遇到模糊需求时，严格按照“最简可行方案（MVP）”进行开发。
     一边开发一边进行push，同时写下开发日志Pick-Light-From-Dark\Assets\Scripts\Game\Tes
-    t\amiao\developLog.md 要求简短重点体现功能、如何测试和重要代码的路径                    
+    t\amiao\developLog.md 要求简短重点体现功能、如何测试和重要代码的路径 
 
     每执行一个阶段则push一次
 
@@ -46,22 +44,6 @@
 - [x] 生成测试 Prefab 验证存档/读档功能
 - [x] 显示重要存档数据
 
-## 4. Skip Button 不可见排查
-- [x] 在 `BgFadeTest.cs` 中只看到存档按钮
-- [x] 排查 `FungusVNController` 中跳过按钮未显示的原因
-- [x] 修复并验证
-
-## 5. 音效未加载排查
-- [x] `Assets/Scenes/Amiao_Test` 中音效未加载
-- [x] 类似图片未加载问题，检查 Resources 路径
-- [x] 排查并修复
-
-## 6. 演出效果增强
-- [x] 不修改对话内容
-- [x] 参考 `Dialogue1.txt` 的演出方式
-- [x] 修改 Dialogue2/3/4 增强演出效果（Dialogue5 不存在，未创建）
-- [x] 在 `Assets/Art` 下找图片素材
-- [x] 在 `Assets/Audio` 下找声音素材
 
 ## 
 - [x] SimpleSkipButton按钮为巨大白色且字体未显示 为方块 SkipButtonTest可以加载出ui字体正确的按钮但是要延迟加载 尝试中和两种问题
@@ -72,6 +54,15 @@
 - [x] Pick-Light-From-Dark\Assets\Resources\Dialogue下如果Dialogue1~5都是一关的剧情，可以分成两部分，比如说是上段~游玩~下段，1~5正确的文本。首先搜索整个游戏5个关卡连起来的逻辑在整个项目里是如何实现，按需对这5个文本进行分段，待到形如1-1的那些 TXT 文本上，得到分成两段的两个txt。
 - [x] 把Pick-Light-From-Dark\Assets\Scripts\Game\Test\amiao\SimpleSkipButton.cs的实现复刻到Pick-Light-From-Dark\Assets\Scenes\Amiao_Test\FungusVN_1.prefab 1~4prefab上，使按钮可见。
 - [x] 做个 FungusVN_5.prefab ，测试后可以的话可以再和结局分支合并起来。
+
+##
+- [x] Pick-Light-From-Dark\Pick-Light-From-Dark\As   sets\Resources\Dialogue\旧对话（未分段）\Dialogue5.txt   
+  根据5的结局以及天台的结局 每段剧情分成各个prefab 
+- []prefab存档和跳过的按钮位置偏右，存档两按钮已经超出了屏幕外，是分析是画幅出了问题还是什么问题？如果只是修改坐标就可以的话，那就修改坐标是往左一点，两个按钮
+- []把1~4的prefab连在一起形成一个大的预制体，可不可以的话，我要测试一下剧情之间的变化，特别是要让第一关的按钮进入两个分支生效，先不管游玩的部分，就让剧情之间可以连在一起测试,形成一个完整的剧情demo
+- [] 站位符的功能应该是文字显示在画面的左上角，而不只是在控制台上，画面上并没有看到在预zhi体里面
+- [] fungus是否支持？第支持就是隐藏对话框的图片，然后把文字放大字号中间显示.那个"巡逻开始 第二夜"类似的描述在每个剧情的最后面出现，这样的描述代表着是即将进入游玩的部分，这部分将它就是隐去对话框居中大字
+- [] 第一关最后选项那里，“陆萤”应该显示出来
 
 ## 结局数据配置
 
