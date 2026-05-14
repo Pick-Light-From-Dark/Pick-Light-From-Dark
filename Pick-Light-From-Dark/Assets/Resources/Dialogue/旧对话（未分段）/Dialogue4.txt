@@ -1,5 +1,5 @@
 [bg:light_room,fade]
-[se:DXH_SOUND/07.对话声]
+#[se:DXH_SOUND/07.对话声]
 
 陆萤：真没想到明天竟然会放假！
 

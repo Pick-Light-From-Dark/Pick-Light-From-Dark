@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 1000000000000000001}
   - component: {fileID: 1000000000000000002}
   m_Layer: 0
-  m_Name: FungusVN_1
+  m_Name: FungusVN_1-1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -46,7 +46,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3ccf659d409546deafce9a033b3bded4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  dialogueText: {fileID: 4900000, guid: b6b22040b2a39bd43b19c3a58d8401f8, type: 3}
+  dialogueText: {fileID: 4900000, guid: ef31f84e501c30a4292d89fe06952242, type: 3}
   sayDialog: {fileID: 0}
   vnCanvas: {fileID: 4285289454526169464}
   backgroundImage: {fileID: 0}
@@ -73,6 +73,7 @@ MonoBehaviour:
   bgmTracks: []
   fastForwardInterval: 0.1
   saveFlowchart: {fileID: 0}
+  showSkipButtonOnStart: 1
 --- !u!1 &6433908778032422013
 GameObject:
   m_ObjectHideFlags: 0
