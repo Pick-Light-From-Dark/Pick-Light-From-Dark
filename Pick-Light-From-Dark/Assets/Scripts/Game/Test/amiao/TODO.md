@@ -96,7 +96,7 @@
   - [x] 做一个结局画面的功能prefab 主要是包含重新开始和返回主界面 其中死亡结局的重新开始是从本关的游玩部分开始 其他结局是从头开始 预留接口为后续的存档系统使用。Pick-Light-From-Dark\Assets\Scripts\Game\Test\amiao\需求\结局画面.log  结局文字在todo.md最底下  针对Pick-Light-From-Dark\Assets\Scenes\GameScene.unity 的结局部分进行优化 出一个prefab
   - [x] Pick-Light-From-Dark\Assets\Scripts\Game\Test\amiao\ending.md 按照这个设计一套结局分支系统 结合具体的游玩过程Pick-Light-From-Dark\Assets\Scenes\GameScene.unity 仅设计 还有设计留给后端调用的接口
   - [x] Pick-Light-From-Dark\Assets\Scenes\GameScene.unity游戏开始的时候 剧情到游玩部分 这些切换的时候会没有画面出现透明 而且会看到开始画面（还没消失）可以使用loading画面吗
-  - [ ] 做一个跳过功能的prefab 用以检查跳过的内容，跳过的时候跳到选项边，是不是显示的是选项之前的那个对话   同时这个跳过功能不应该能跳过选项
+  - [x] 做一个跳过功能的prefab 用以检查跳过的内容，跳过的时候跳到选项边，是不是显示的是选项之前的那个对话   同时这个跳过功能不应该能跳过选项
   - [ ] 优化存档系统 在全局（视觉小说+游玩+结局） 分成两路存储 关卡数和其他数据 每次读档 按照关卡数回到对应的关卡的时间 而其他数据和结局相关Pick-Light-From-Dark\Logs\player_data.json 分析这个方案的可行性和优化方向  还是说原来的更好？ 然后做一个有剧情的prefab可以存档 Dialogue1~2 在2存档 再读档就是2剧情开始处；然后做一个Pick-Light-From-Dark\Assets\Scenes\GameScene.unity类似的prefab Dialogue1+level1+Dialogue1-1+Dialogue2 测试能不能读档到第二个
   - [ ] Pick-Light-From-Dark\Logs\05150420快进bug.log Assets/Scripts/Game/Test/amiao/FastForwardDevMode.cs   快进时遇到
   ```txt

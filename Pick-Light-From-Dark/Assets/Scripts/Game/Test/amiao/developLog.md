@@ -619,3 +619,27 @@
 - 代码：`Assets/Scripts/Game/Test/amiao/LoadingScreenController.cs`
 - Prefab：`Assets/Scenes/Amiao_Test/TestPrefabs/LoadingScreen.prefab`
 
+## 2026-05-15 跳过功能测试 Prefab
+
+**任务**：验证跳过行为——跳到选项时是否显示选项前对话，且跳过不应越过选项。
+
+**实现**：
+- `SkipTestRunner.cs`：运行时 IMGUI 测试窗口
+  - 自动查找场景中的 `FungusVNController` 和 `SayDialog`
+  - 显示 VN 状态：总行数、当前行、下一选项位置
+  - 显示对话框当前文本（姓名 + 内容）
+  - 「执行跳过测试」按钮：记录跳过前/后的 NameText 和 StoryText
+  - 自动计算预期选项前对话（向前扫描最近一句对话/旁白/场景）
+  - 验证结果：绿色=停在选项处 + 文本正确，红色=失败
+  - 测试日志窗口，保留最近 50 条记录
+- `SkipTester.prefab`：挂载 `SkipTestRunner` 的预制体
+
+**测试方式**：
+1. 将 `SkipTester.prefab` 拖入含 VN 剧情的场景
+2. 运行后按 F4 显示/隐藏测试窗口
+3. 点击「执行跳过测试」，观察跳过后是否停在选项且对话框显示正确内容
+
+**重要路径**：
+- 代码：`Assets/Scripts/Game/Test/amiao/SkipTestRunner.cs`
+- Prefab：`Assets/Scenes/Amiao_Test/TestPrefabs/SkipTester.prefab`
+
