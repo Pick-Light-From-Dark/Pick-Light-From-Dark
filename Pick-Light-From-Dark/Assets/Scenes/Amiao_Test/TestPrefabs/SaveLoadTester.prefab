@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 400000}
   - component: {fileID: 11400000}
   m_Layer: 0
-  m_Name: PlaceholderTester
+  m_Name: SaveLoadTester
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -27,6 +27,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
@@ -40,11 +41,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 100000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3d00e60daf661bc4887171364efff953, type: 3}
+  m_Script: {fileID: 11500000, guid: 5afc9395a7ce426e9e1177c5f551787e, type: 3}
   m_Name:
   m_EditorClassIdentifier:
-  placeholderDisplay: {fileID: 0}
-  testImageKey: 105
-  testSfxKey: 115
-  testBgmKey: 98
-  clearKey: 99
+  autoInitOnStart: 1
+  testLevelId: 1
+  testEndingBranch: eat
+  testEndingId: 6001
+  testCardIds:
+  - 101
+  - 102

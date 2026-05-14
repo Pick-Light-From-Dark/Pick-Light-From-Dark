@@ -20,7 +20,10 @@
 
 [bg:night_room,fade]
 
-[bg:]
-陆萤：夜晚十点四十五分，宿管巡逻，开始了。
+[bg:black_sence]
+[hide_dialog]
+[wait:3]
+[show_dialog]
+[center_text:夜晚十点四十五分 宿管巡逻 开始了]
 
 [se:DXH_SOUND/08.脚步声]

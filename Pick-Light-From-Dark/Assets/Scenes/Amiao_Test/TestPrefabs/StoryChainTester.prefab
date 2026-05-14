@@ -53,5 +53,18 @@ MonoBehaviour:
   day3_2: {fileID: 1000000000000000000, guid: 8c8d0cb9584241dbace3a37fb613ee19, type: 3}
   day4_1: {fileID: 1000000000000000000, guid: 518c9ced01d34c4b965725705f3eeea4, type: 3}
   day4_2: {fileID: 1000000000000000000, guid: f5e7ced7fd32430b984dd95049503633, type: 3}
+  day5_1: {fileID: 0}
+  day5_2: {fileID: 1000000000000000000, guid: b7022360ea87421da2ab235934d5963f, type: 3}
+  day5_2a: {fileID: 1000000000000000000, guid: 2d9d7c17959c4e6a99b406056dec8c23, type: 3}
+  day5_2b: {fileID: 1000000000000000000, guid: efb46882f40148599597207670ce1728, type: 3}
+  day5_2c: {fileID: 1000000000000000000, guid: a8aa0efa00114b6e8cc03dc2ab0a5f27, type: 3}
+  day5_2d: {fileID: 1000000000000000000, guid: e6ab4d4bacf040e1b3375c4df79380dd, type: 3}
+  day5_2e: {fileID: 1000000000000000000, guid: 6be736adb1414befb0e8a11c63209ee2, type: 3}
   forceEatBranch: 0
   forceNotEatBranch: 0
+  forceDay5Branch: 0
+  endingData: {fileID: 0}
+  endingConditions: []
+  testLives: 3
+  testEmotion: 50
+  testUsedCards: []
