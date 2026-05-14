@@ -39,7 +39,7 @@ MonoBehaviour:
     targetCount: 1
     currentCount: 0
     state: 1
-  preDialogueFile: Dialogue2_pre
-  postDialogueFile: Dialogue2_post
+  preDialogueFile: Dialogue2-1
+  postDialogueFile: Dialogue2-2
   isChoiceLevel: 0
   choice2EndingDialogueFile: 

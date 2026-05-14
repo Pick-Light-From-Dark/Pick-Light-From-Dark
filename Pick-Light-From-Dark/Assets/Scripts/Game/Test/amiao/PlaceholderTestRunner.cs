@@ -11,6 +11,12 @@ namespace Game.Test
         [Header("目标占位显示器")]
         public PlaceholderDisplay placeholderDisplay;
 
+        [Header("自动测试")]
+        [Tooltip("运行时自动显示一行缺失素材示例文字（无需按键）")]
+        public bool autoShowOnStart = true;
+        [Tooltip("自动显示延迟（秒）")]
+        public float autoShowDelay = 0.5f;
+
         [Header("测试按键")]
         public KeyCode testImageKey = KeyCode.I;
         public KeyCode testSfxKey = KeyCode.S;
@@ -31,6 +37,17 @@ namespace Game.Test
             }
 
             Debug.Log($"[PlaceholderTestRunner] 测试按键: I=图片缺失, S=音效缺失, B=BGM缺失, C=清除");
+
+            if (autoShowOnStart)
+            {
+                Invoke(nameof(AutoShowExample), autoShowDelay);
+            }
+        }
+
+        void AutoShowExample()
+        {
+            placeholderDisplay?.Show("Image", "Example_Missing_Asset");
+            Debug.Log("[PlaceholderTestRunner] 自动显示缺失素材示例文字");
         }
 
         void Update()

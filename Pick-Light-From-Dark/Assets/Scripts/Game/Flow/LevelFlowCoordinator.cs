@@ -66,7 +66,6 @@ namespace Game.Flow
             vnController.dialogueText = openingStory;
             vnController.OnDialogueExit = OnOpeningStoryExit;
             vnController.OnDialogueComplete = OnOpeningStoryEnd;
-            vnController.skipToChoiceIfAvailable = (levelId == 1);
             // 重置并启动 VN 控制器
             vnController.ClearPlaceholder();
             vnController.SetSkipButtonVisible(true);
@@ -115,6 +114,8 @@ namespace Game.Flow
         {
             Debug.Log("[LevelFlowCoordinator] === 阶段2：游玩 ===");
 
+            // 清理跨场景单例可能残留的脏状态
+            Time.timeScale = 1f;
             // 先初始化 GameFlowController，避免 GamePanel.Awake 用 TestLevelConfig 自初始化
             GameFlowController.Instance.Initialize(levelConfig);
 

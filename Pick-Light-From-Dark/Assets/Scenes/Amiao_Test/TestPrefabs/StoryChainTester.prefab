@@ -1,0 +1,70 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1000000000000000000
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1000000000000000001}
+  - component: {fileID: 1000000000000000002}
+  m_Layer: 0
+  m_Name: StoryChainTester
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1000000000000000001
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1000000000000000000}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1000000000000000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1000000000000000000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c3b171624ec49a39f134ead0d119d4d, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  day1_1: {fileID: 1000000000000000000, guid: 9928ced128e84620a55fb24e0f5a5eca, type: 3}
+  day1_2a: {fileID: 1000000000000000000, guid: 84ce2f94aced40fca1f8acb65ecac47d, type: 3}
+  day1_2b: {fileID: 1000000000000000000, guid: 73a3ca683b13415f907accf90113a336, type: 3}
+  day2_1: {fileID: 1000000000000000000, guid: 8979f52a5afa49e58e30b4c0ed12f6f7, type: 3}
+  day2_2: {fileID: 1000000000000000000, guid: 51fda26b8acf42ef8ebc550acf9b32a1, type: 3}
+  day3_1: {fileID: 1000000000000000000, guid: 658b821c8be34437a01f0da043605517, type: 3}
+  day3_2: {fileID: 1000000000000000000, guid: 8c8d0cb9584241dbace3a37fb613ee19, type: 3}
+  day4_1: {fileID: 1000000000000000000, guid: 518c9ced01d34c4b965725705f3eeea4, type: 3}
+  day4_2: {fileID: 1000000000000000000, guid: f5e7ced7fd32430b984dd95049503633, type: 3}
+  day5_1: {fileID: 0}
+  day5_2: {fileID: 1000000000000000000, guid: b7022360ea87421da2ab235934d5963f, type: 3}
+  day5_2a: {fileID: 1000000000000000000, guid: 2d9d7c17959c4e6a99b406056dec8c23, type: 3}
+  day5_2b: {fileID: 1000000000000000000, guid: efb46882f40148599597207670ce1728, type: 3}
+  day5_2c: {fileID: 1000000000000000000, guid: a8aa0efa00114b6e8cc03dc2ab0a5f27, type: 3}
+  day5_2d: {fileID: 1000000000000000000, guid: e6ab4d4bacf040e1b3375c4df79380dd, type: 3}
+  day5_2e: {fileID: 1000000000000000000, guid: 6be736adb1414befb0e8a11c63209ee2, type: 3}
+  forceEatBranch: 0
+  forceNotEatBranch: 0
+  forceDay5Branch: 0
+  endingData: {fileID: 0}
+  endingConditions: []
+  testLives: 3
+  testEmotion: 50
+  testUsedCards: []

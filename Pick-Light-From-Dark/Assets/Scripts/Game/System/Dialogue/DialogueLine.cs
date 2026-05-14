@@ -28,4 +28,5 @@ public class DialogueLine
     public float wait;            // [wait:6] — 暂停秒数
     public string action;         // [action:ending/gameplay/nextlevel] — 分支动作指令
     public string dialogAction;   // [hide_dialog] / [show_dialog] — 对话框显隐控制
+    public string centerText;     // [center_text:xxx] — 居中大字显示
 }

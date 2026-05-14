@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 1000000000000000001}
   - component: {fileID: 1000000000000000002}
   m_Layer: 0
-  m_Name: FungusVN_2
+  m_Name: FungusVN_1-2a
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -30,7 +30,8 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 7857535201127499887}
+  - {fileID: 4231798025906711037}
+  - {fileID: 402853971835954373}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1000000000000000002
@@ -45,9 +46,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3ccf659d409546deafce9a033b3bded4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  dialogueText: {fileID: 4900000, guid: 81972cedc95f0db4a9b28f0eab1a51d5, type: 3}
+  dialogueText: {fileID: 4900000, guid: a814f1b879a52664f8dcea0d41d89ce8, type: 3}
   sayDialog: {fileID: 0}
-  vnCanvas: {fileID: 8864149261641604090}
+  vnCanvas: {fileID: 4285289454526169464}
   backgroundImage: {fileID: 0}
   midgroundImage: {fileID: 0}
   foregroundImage: {fileID: 0}
@@ -56,19 +57,24 @@ MonoBehaviour:
   dialogMask: {fileID: 21300000, guid: 86ab75dabd5999448b1e383361a298ef, type: 3}
   characters: []
   backgrounds:
-  - name: phone_connect_1
-    sprite: {fileID: 21300000, guid: 15a45b0d6ed92914083eebad02e50fe2, type: 3}
-  - name: phone_connect_2
-    sprite: {fileID: 21300000, guid: e5982d9f345de1344b1e98288bb8e9c2, type: 3}
-  - name: light_room
-    sprite: {fileID: 21300000, guid: 4a23c23cc5b62ee43bf8f9e67591e415, type: 3}
-  - name: black
-    sprite: {fileID: 21300000, guid: 4d6324da1509399469b3e4538fc93d52, type: 3}
+  - name: the spread quilt
+    sprite: {fileID: 21300000, guid: f25abdbb2a8dad245858044f015bd57e, type: 3}
+  - name: quilt aside
+    sprite: {fileID: 21300000, guid: f86443a70e338d0499b74c4bdaa1c3f1, type: 3}
+  - name: Song_talk_1
+    sprite: {fileID: 21300000, guid: 0982a93caa5319d4b9b7bad8e3027786, type: 3}
+  - name: Song_talk_2
+    sprite: {fileID: 21300000, guid: 6d59395021a892d4fae0a8a69a38a1b9, type: 3}
+  - name: Song_talk_3
+    sprite: {fileID: 21300000, guid: 2d27dbbcd81e75d45b256d2851eb1801, type: 3}
+  - name: Song_talk_4
+    sprite: {fileID: 21300000, guid: 0ed270a370501a948ac14f6fb144bf8f, type: 3}
   soundEffects: []
   bgmTracks: []
   fastForwardInterval: 0.1
   saveFlowchart: {fileID: 0}
---- !u!1 &5274418569081674621
+  showSkipButtonOnStart: 1
+--- !u!1 &6433908778032422013
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -76,9 +82,9 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 7857535201127499887}
-  - component: {fileID: 8864149261641604090}
-  - component: {fileID: 5597403020509203820}
+  - component: {fileID: 402853971835954373}
+  - component: {fileID: 4285289454526169464}
+  - component: {fileID: 7661261192151161947}
   m_Layer: 0
   m_Name: VNCanvas
   m_TagString: Untagged
@@ -86,13 +92,13 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!224 &7857535201127499887
+--- !u!224 &402853971835954373
 RectTransform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5274418569081674621}
+  m_GameObject: {fileID: 6433908778032422013}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 0, y: 0, z: 0}
@@ -105,13 +111,13 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
---- !u!223 &8864149261641604090
+--- !u!223 &4285289454526169464
 Canvas:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5274418569081674621}
+  m_GameObject: {fileID: 6433908778032422013}
   m_Enabled: 1
   serializedVersion: 3
   m_RenderMode: 0
@@ -128,13 +134,13 @@ Canvas:
   m_SortingLayerID: 0
   m_SortingOrder: -1
   m_TargetDisplay: 0
---- !u!114 &5597403020509203820
+--- !u!114 &7661261192151161947
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5274418569081674621}
+  m_GameObject: {fileID: 6433908778032422013}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
@@ -151,3 +157,34 @@ MonoBehaviour:
   m_DefaultSpriteDPI: 96
   m_DynamicPixelsPerUnit: 1
   m_PresetInfoIsWorld: 0
+--- !u!1 &7851031888041584212
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4231798025906711037}
+  m_Layer: 0
+  m_Name: FungusVN
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4231798025906711037
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7851031888041584212}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1000000000000000001}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}

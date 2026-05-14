@@ -124,6 +124,11 @@ public static class DialogueParser
                 d.type = "指令";
                 d.dialogAction = "show";
             }
+            else if (s.StartsWith("[center_text:"))
+            {
+                d.type = "指令";
+                d.centerText = s.Substring(13).TrimEnd(']').Trim();
+            }
             else if (s.StartsWith("[旁白]："))
             {
                 d.type = "旁白";
@@ -151,7 +156,15 @@ public static class DialogueParser
             else if (s.StartsWith("选项"))
             {
                 d.type = "选项";
-                d.speaker = "";
+                // 继承上一行对话的说话人（若上一行是对话/旁白/场景）
+                string prevSpeaker = "";
+                if (list.Count > 0)
+                {
+                    var prev = list[list.Count - 1];
+                    if (prev.type == "对话" || prev.type == "旁白" || prev.type == "场景")
+                        prevSpeaker = prev.speaker;
+                }
+                d.speaker = prevSpeaker;
 
                 // 兼容格式：选项 -A or -B。 / 选项 - A or - B。 / 选项 -A or B。
                 int start = s.IndexOf('-');

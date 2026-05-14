@@ -85,6 +85,9 @@ namespace Game.Test
         /// <summary>第一关跳过按钮是否跳到选项（否则直接结束剧情）</summary>
         public bool skipToChoiceIfAvailable = false;
 
+        /// <summary>剧情开始时自动显示跳过按钮（供测试 Prefab 使用）</summary>
+        public bool showSkipButtonOnStart = false;
+
         /// <summary>剧情全部结束后的回调（带分支类型）</summary>
         public System.Action<VNExitType> OnDialogueExit;
 
@@ -100,6 +103,13 @@ namespace Game.Test
         // 素材缺失占位符
         private Text placeholderText;
         private HashSet<string> missingAssetLogs = new HashSet<string>();
+
+        // 居中大字显示
+        private Text centerTextDisplay;
+
+        // 文本位置调整标志（避免重复偏移）
+        private bool namePositionAdjusted = false;
+        private bool storyPositionAdjusted = false;
 
         // 各层正在运行的背景转场协程（避免多重协程冲突）
         private Coroutine bgTransitionRoutine;
@@ -118,6 +128,8 @@ namespace Game.Test
         void Start()
         {
             RestartDialogue();
+            if (showSkipButtonOnStart)
+                SetSkipButtonVisible(true);
         }
 
         /// <summary>
@@ -417,31 +429,36 @@ namespace Game.Test
 
         void SetupNameTextAlignment()
         {
-            if (sayDialog == null) return;
+            if (sayDialog == null || namePositionAdjusted) return;
 
             var nameTextObj = sayDialog.gameObject.transform.Find("Panel/NameText");
             if (nameTextObj == null) return;
 
-            // 只设居中对齐，位置由预制体决定
+            var nameRect = nameTextObj.GetComponent<RectTransform>();
+            if (nameRect != null)
+            {
+                nameRect.anchoredPosition += new Vector2(0f, 20f);
+                namePositionAdjusted = true;
+            }
+
             var tmp = nameTextObj.GetComponent<TMPro.TextMeshProUGUI>();
             if (tmp != null)
                 tmp.alignment = TMPro.TextAlignmentOptions.Center;
-            else
-            {
-                var nameRect = nameTextObj.GetComponent<RectTransform>();
-                if (nameRect != null)
-                {
-                    nameRect.anchorMin = new Vector2(0.5f, 1f);
-                    nameRect.anchorMax = new Vector2(0.5f, 1f);
-                    nameRect.pivot = new Vector2(0.5f, 1f);
-                    nameRect.anchoredPosition = new Vector2(-20f, 0f);
-                }
-            }
         }
 
         void SetupStoryTextPosition()
         {
-            // 位置由预制体决定，不再运行时覆盖
+            if (sayDialog == null || storyPositionAdjusted) return;
+
+            var storyTextObj = sayDialog.gameObject.transform.Find("Panel/StoryText");
+            if (storyTextObj == null) return;
+
+            var storyRect = storyTextObj.GetComponent<RectTransform>();
+            if (storyRect != null)
+            {
+                storyRect.anchoredPosition += new Vector2(0f, -20f);
+                storyPositionAdjusted = true;
+            }
         }
 
         /// <summary>查找或创建某一层背景 Image</summary>
@@ -879,22 +896,22 @@ namespace Game.Test
 
             // === 存档按钮（右上角）===
             var saveBtn = CreateButton("SaveBtn", vnCanvas.transform,
-                new Vector2(-30, -30), new Vector2(100, 45), "存档",
+                new Vector2(-80, -30), new Vector2(100, 45), "存档",
                 () => SaveProgress());
             saveBtn.GetComponent<RectTransform>().anchorMin = new Vector2(1, 1);
             saveBtn.GetComponent<RectTransform>().anchorMax = new Vector2(1, 1);
             saveBtn.GetComponent<RectTransform>().pivot = new Vector2(1, 1);
-            saveBtn.GetComponent<RectTransform>().anchoredPosition = new Vector2(-30, -30);
+            saveBtn.GetComponent<RectTransform>().anchoredPosition = new Vector2(-80, -30);
             EnsureButtonOnTop(saveBtn);
 
             // === 跳过按钮（存档按钮左侧，开场剧情时显示）===
             skipButton = CreateButton("SkipBtn", vnCanvas.transform,
-                new Vector2(-140, -30), new Vector2(100, 45), "跳过",
+                new Vector2(-190, -30), new Vector2(100, 45), "跳过",
                 () => OnSkipStory());
             skipButton.GetComponent<RectTransform>().anchorMin = new Vector2(1, 1);
             skipButton.GetComponent<RectTransform>().anchorMax = new Vector2(1, 1);
             skipButton.GetComponent<RectTransform>().pivot = new Vector2(1, 1);
-            skipButton.GetComponent<RectTransform>().anchoredPosition = new Vector2(-140, -30);
+            skipButton.GetComponent<RectTransform>().anchoredPosition = new Vector2(-190, -30);
             skipButton.gameObject.SetActive(false);
             EnsureButtonOnTop(skipButton);
 
@@ -921,31 +938,6 @@ namespace Game.Test
 
             choiceText1 = choiceBtn1.GetComponentInChildren<Text>();
             choiceText2 = choiceBtn2.GetComponentInChildren<Text>();
-
-            // === 素材缺失占位符（左上角）===
-            var phGo = new GameObject("PlaceholderText");
-            phGo.transform.SetParent(vnCanvas.transform, false);
-            var phRect = phGo.AddComponent<RectTransform>();
-            phRect.anchorMin = new Vector2(0, 1);
-            phRect.anchorMax = new Vector2(0, 1);
-            phRect.pivot = new Vector2(0, 1);
-            phRect.anchoredPosition = new Vector2(10, -10);
-            phRect.sizeDelta = new Vector2(600, 200);
-            placeholderText = phGo.AddComponent<Text>();
-            placeholderText.fontSize = 18;
-            placeholderText.color = Color.yellow;
-            placeholderText.alignment = TextAnchor.UpperLeft;
-            placeholderText.raycastTarget = false;
-
-            // 描边：黑色描边，避免与背景撞色
-            var outline = phGo.AddComponent<Outline>();
-            outline.effectColor = Color.black;
-            outline.effectDistance = new Vector2(1.5f, -1.5f);
-
-            var phCanvas = phGo.AddComponent<Canvas>();
-            phCanvas.overrideSorting = true;
-            phCanvas.sortingOrder = 999;
-            phGo.SetActive(false);
         }
 
         Button CreateButton(string name, Transform parent, Vector2 anchoredPos, Vector2 size, string label, UnityEngine.Events.UnityAction onClick)
@@ -965,6 +957,7 @@ namespace Game.Test
 
             var btn = go.AddComponent<Button>();
             btn.onClick.AddListener(onClick);
+            go.AddComponent<Game.UI.ChoiceButtonEffect>();
 
             // 文字子对象
             var textGo = new GameObject("Text");
@@ -1010,12 +1003,14 @@ namespace Game.Test
             }
         }
 
-        /// <summary>显示素材缺失占位符（左上角）</summary>
+        /// <summary>显示素材缺失占位符（左上角独立 Canvas，确保最前显示）</summary>
         void ShowPlaceholder(string assetType, string assetName)
         {
             string key = $"{assetType}:{assetName}";
             if (missingAssetLogs.Contains(key)) return;
             missingAssetLogs.Add(key);
+
+            EnsurePlaceholderCanvas();
 
             if (placeholderText != null)
             {
@@ -1025,11 +1020,56 @@ namespace Game.Test
             Debug.LogWarning($"[FungusVNController] {assetType} not found: {assetName}");
         }
 
+        /// <summary>确保占位文字有独立的 ScreenSpaceOverlay Canvas</summary>
+        void EnsurePlaceholderCanvas()
+        {
+            if (placeholderText != null && placeholderText.gameObject != null) return;
+
+            // 查找已有的独立占位 Canvas
+            var existingCanvas = GameObject.Find("PlaceholderCanvas");
+            Canvas canvas;
+            if (existingCanvas != null)
+            {
+                canvas = existingCanvas.GetComponent<Canvas>();
+            }
+            else
+            {
+                var go = new GameObject("PlaceholderCanvas");
+                canvas = go.AddComponent<Canvas>();
+                canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+                canvas.sortingOrder = 999;
+                go.AddComponent<CanvasScaler>().uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+                go.AddComponent<GraphicRaycaster>();
+            }
+
+            var textGo = new GameObject("PlaceholderText");
+            textGo.transform.SetParent(canvas.transform, false);
+            var rect = textGo.AddComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0, 1);
+            rect.anchorMax = new Vector2(0, 1);
+            rect.pivot = new Vector2(0, 1);
+            rect.anchoredPosition = new Vector2(10, -10);
+            rect.sizeDelta = new Vector2(600, 200);
+
+            textGo.AddComponent<CanvasRenderer>();
+            placeholderText = textGo.AddComponent<Text>();
+            placeholderText.fontSize = 18;
+            placeholderText.color = Color.yellow;
+            placeholderText.alignment = TextAnchor.UpperLeft;
+            placeholderText.raycastTarget = false;
+
+            var outline = textGo.AddComponent<Outline>();
+            outline.effectColor = Color.black;
+            outline.effectDistance = new Vector2(1.5f, -1.5f);
+
+            textGo.SetActive(false);
+        }
+
         /// <summary>清除素材缺失占位符</summary>
         public void ClearPlaceholder()
         {
             missingAssetLogs.Clear();
-            if (placeholderText != null)
+            if (placeholderText != null && placeholderText.gameObject != null)
             {
                 placeholderText.text = "";
                 placeholderText.gameObject.SetActive(false);
@@ -1105,34 +1145,32 @@ namespace Game.Test
             saveFlowchart.SetStringVariable("VN_StoryFile", dialogueText != null ? dialogueText.name : "");
         }
 
-        /// <summary>跳过当前剧情：第一关跳到选项，其他直接结束</summary>
+        /// <summary>跳过当前剧情：优先跳到后续选项，无选项则结束并触发下一个 prefab</summary>
         void OnSkipStory()
         {
             Debug.Log("[FungusVNController] 用户跳过剧情");
 
-            if (skipToChoiceIfAvailable)
+            int choiceIndex = -1;
+            for (int i = lineIndex; i < lines.Count; i++)
             {
-                int choiceIndex = -1;
-                for (int i = lineIndex; i < lines.Count; i++)
+                if (lines[i].type == "选项")
                 {
-                    if (lines[i].type == "选项")
-                    {
-                        choiceIndex = i;
-                        break;
-                    }
-                }
-
-                if (choiceIndex != -1)
-                {
-                    StopAllCoroutines();
-                    isProcessing = false;
-                    isFastForwarding = false;
-                    lineIndex = choiceIndex;
-                    ShowNextLine();
-                    return;
+                    choiceIndex = i;
+                    break;
                 }
             }
 
+            if (choiceIndex != -1)
+            {
+                StopAllCoroutines();
+                isProcessing = false;
+                isFastForwarding = false;
+                lineIndex = choiceIndex;
+                ShowNextLine();
+                return;
+            }
+
+            // 无选项：结束当前剧情，由外部流程控制器接下一个 prefab
             EndDialogue();
         }
 
@@ -1256,6 +1294,14 @@ namespace Game.Test
                 sayDialog.gameObject.SetActive(true);
             }
 
+            // ========== 居中大字显示 ==========
+            if (!string.IsNullOrEmpty(line.centerText))
+            {
+                ShowCenterText(line.centerText);
+                StartCoroutine(WaitAndContinue(3f));
+                return;
+            }
+
             // ========== 等待指令 ==========
             if (line.wait > 0)
             {
@@ -1329,10 +1375,32 @@ namespace Game.Test
             currentChoiceLine = line;
             isProcessing = false;
 
-            sayDialog.SetCharacter(null);
-            sayDialog.NameText = "";
+            if (!string.IsNullOrEmpty(line.speaker))
+            {
+                sayDialog.SetCharacterName(line.speaker, Color.white);
+            }
+            else
+            {
+                sayDialog.SetCharacter(null);
+                sayDialog.NameText = "";
+            }
             sayDialog.gameObject.SetActive(true);
             // 保留之前的文本，不清空 StoryText，使选项与旁白同时显示
+
+            // 向前查找最近一句对话/旁白/场景文本，确保跳过到达选项时对话框显示正确内容
+            int choiceIdx = lines.IndexOf(line);
+            if (choiceIdx >= 0 && sayDialog != null)
+            {
+                for (int i = choiceIdx - 1; i >= 0; i--)
+                {
+                    var prev = lines[i];
+                    if ((prev.type == "对话" || prev.type == "旁白" || prev.type == "场景") && !string.IsNullOrEmpty(prev.content))
+                    {
+                        sayDialog.StoryText = prev.content;
+                        break;
+                    }
+                }
+            }
 
             // 设置按钮文本并显示
             if (choiceText1 != null)
@@ -1449,8 +1517,62 @@ namespace Game.Test
         IEnumerator WaitAndContinue(float seconds)
         {
             yield return new WaitForSecondsRealtime(seconds);
+            HideCenterText();
             isProcessing = false;
             ShowNextLine();
+        }
+
+        /// <summary>显示居中大字（隐藏对话框，独立 Canvas 最前显示）</summary>
+        void ShowCenterText(string text)
+        {
+            if (sayDialog != null)
+                sayDialog.gameObject.SetActive(false);
+
+            if (centerTextDisplay == null || centerTextDisplay.gameObject == null)
+            {
+                var go = new GameObject("CenterTextCanvas");
+                var canvas = go.AddComponent<Canvas>();
+                canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+                canvas.sortingOrder = 1000;
+                go.AddComponent<CanvasScaler>().uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+                go.AddComponent<GraphicRaycaster>();
+
+                var textGo = new GameObject("CenterText");
+                textGo.transform.SetParent(go.transform, false);
+                var rect = textGo.AddComponent<RectTransform>();
+                rect.anchorMin = new Vector2(0.5f, 0.5f);
+                rect.anchorMax = new Vector2(0.5f, 0.5f);
+                rect.pivot = new Vector2(0.5f, 0.5f);
+                rect.anchoredPosition = Vector2.zero;
+                rect.sizeDelta = new Vector2(1200, 300);
+
+                textGo.AddComponent<CanvasRenderer>();
+                centerTextDisplay = textGo.AddComponent<Text>();
+                centerTextDisplay.fontSize = 48;
+                centerTextDisplay.color = Color.white;
+                centerTextDisplay.alignment = TextAnchor.MiddleCenter;
+                centerTextDisplay.raycastTarget = false;
+
+                var outline = textGo.AddComponent<Outline>();
+                outline.effectColor = Color.black;
+                outline.effectDistance = new Vector2(2f, -2f);
+
+                // 加载中文字体
+                var chineseFont = Resources.Load<Font>("Font/LXGWWenKaiScreen");
+                if (chineseFont == null) chineseFont = Resources.Load<Font>("Font/文软雅黑");
+                if (chineseFont != null) centerTextDisplay.font = chineseFont;
+            }
+
+            centerTextDisplay.text = text;
+            centerTextDisplay.gameObject.SetActive(true);
+            centerTextDisplay.transform.parent.gameObject.SetActive(true);
+        }
+
+        /// <summary>隐藏居中大字</summary>
+        void HideCenterText()
+        {
+            if (centerTextDisplay != null && centerTextDisplay.gameObject != null)
+                centerTextDisplay.gameObject.SetActive(false);
         }
 
         /// <summary>执行分支动作指令</summary>

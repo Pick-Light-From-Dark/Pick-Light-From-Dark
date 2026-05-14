@@ -110,6 +110,8 @@ namespace Game.Test
             if (displayText == null) displayText = textGo.AddComponent<Text>();
             displayText.fontSize = fontSize;
             displayText.color = textColor;
+            displayText.font = Resources.Load<Font>("Font/LXGWWenKaiScreen")
+                ?? Resources.Load<Font>("Font/文软雅黑");
             displayText.alignment = TextAnchor.UpperLeft;
             displayText.raycastTarget = false;
 

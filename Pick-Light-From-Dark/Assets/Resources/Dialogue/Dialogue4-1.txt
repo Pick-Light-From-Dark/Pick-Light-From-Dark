@@ -1,5 +1,5 @@
 [bg:light_room,fade]
-[se:DXH_SOUND/07.对话声]
+#[se:DXH_SOUND/07.对话声]
 
 陆萤：真没想到明天竟然会放假！
 
@@ -20,19 +20,10 @@
 
 [bg:night_room,fade]
 
-[bg:]
-陆萤：夜晚十点四十五分，宿管巡逻，开始了。
+[bg:black_sence]
+[hide_dialog]
+[wait:3]
+[show_dialog]
+[center_text:夜晚十点四十五分 宿管巡逻 开始了]
 
 [se:DXH_SOUND/08.脚步声]
-
-[游玩流程结束]
-
-[bg:light_room,fade]
-
-陆萤：（宿舍里充满了快乐的气息，学校里的夜晚竟然也不是那么难熬了。）
-
-宋明月：太晚了，大家都赶紧睡吧！
-
-陆萤：好期待明天啊。
-
-【第四关结束】
