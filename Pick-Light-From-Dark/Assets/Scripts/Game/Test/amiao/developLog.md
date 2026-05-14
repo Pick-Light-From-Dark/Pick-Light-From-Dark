@@ -1,5 +1,21 @@
 # 开发日志
 
+## 2026-05-14 无人值守编译错误修复
+
+**功能**：自动巡检并修复 Unity 编译错误
+- 读取 `CoplayLogs/last_compile_errors.json` 发现 6 个 CS1022 错误
+- 根因：`/// </summary>` 与 `public class` 声明挤在同一行
+- 修复文件：`DevModeBase.cs`、`SaveLoadTestRunner.cs`、`FastForwardDevMode.cs`
+
+**测试方式**：
+1. 等待 Unity 编译或运行 `tsc` 检查错误列表是否清空
+2. 确认 Coplay 面板不再报错
+
+**重要路径**：
+- 代码：`Assets/Scripts/Game/Test/amiao/DevModeBase.cs`
+- 代码：`Assets/Scripts/Game/Test/amiao/SaveLoadTestRunner.cs`
+- 代码：`Assets/Scripts/Game/Test/amiao/FastForwardDevMode.cs`
+
 ## 2026-05-13 结局系统
 
 **功能**：结局系统核心实现
@@ -325,6 +341,123 @@
 ## 2026-05-13 [auto] 批量替换: [陆萤] -> 陆萤
 
 **功能**：[auto] 批量替换: [陆萤] -> 陆萤
+
+## 2026-05-14 StoryChainTestRunner 重构：多关分支 + 第五关 + 结局判定
+
+**功能**：重构剧情串联测试器，支持全关分支选项与结局画面自动触发。
+
+**实现内容**：
+- `StoryChainTestRunner.cs` 重构：
+  - 新增第五关 Prefab 字段（day5_2, day5_2a~2e）
+  - 新增 `Day5Branch` 枚举 + `forceDay5Branch` 字段（Inspector 可强制指定第五关分支）
+  - 新增 `EndingCondition` 可序列化类（Inspector 可手动配置结局触发条件：生命值/情绪值/卡牌/分支）
+  - 新增 `DetermineEnding()` 方法：优先匹配 Inspector 配置条件，兜底根据当前节点 ID 推断结局
+  - 路由表覆盖全关：day1~day4 线性连接，day5 分支导向不同结局
+  - 结局一（不吃分支）和结局二~五（第五关分支）播放完后自动调用 `EndingManager.TriggerEnding()`
+  - `CreateDefaultEndingData()` 自动加载 `Assets/Art/ending/` 下的5张结局图片（Editor 下有效）
+- `StoryChainTester.prefab` 更新：添加第五关字段引用 + 默认值配置
+
+**测试方式**：
+1. 将 `StoryChainTester.prefab` 拖入场景
+2. Inspector 中配置第五关 Prefab（day5_2, day5_2a~2e）
+3. 运行后自动从第一关开始播放
+4. 第一关选项选择后进入对应分支，第五关结束后自动显示结局画面
+5. 或使用 Inspector 的 `forceDay5Branch` 强制测试指定结局
+
+**重要路径**：
+- 代码：`Assets/Scripts/Game/Test/amiao/StoryChainTestRunner.cs`
+- Prefab：`Assets/Scenes/Amiao_Test/TestPrefabs/StoryChainTester.prefab`
+- 结局图片：`Assets/Art/ending/结局1~5图.png`
+
+## 2026-05-14 文本框坐标调整
+
+**功能**：统一调整所有预制体中姓名文本框向上、对话文本框向下。
+
+**实现**：
+- `FungusVNController` 新增 `namePositionAdjusted` / `storyPositionAdjusted` 标志位
+- `SetupNameTextAlignment()`：姓名文本 `anchoredPosition.y += 20`
+- `SetupStoryTextPosition()`：对话文本 `anchoredPosition.y -= 20`
+- 防止重复累加，仅首次生效
+
+**重要路径**：
+- 代码：`Assets/Scripts/Game/Test/amiao/FungusVNController.cs`
+
+## 2026-05-14 PlaceholderTester 脚本缺失修复 + 自动测试
+
+**功能**：修复 PlaceholderTester.prefab 脚本引用丢失，新增自动显示示例。
+
+**修复**：
+- `PlaceholderTester.prefab`：脚本 GUID 从 `c470d3a41e5f4794bb9404f1e87dd981` 修复为 `3d00e60daf661bc4887171364efff953`（对应 `PlaceholderTestRunner.cs`）
+- `PlaceholderTestRunner.cs`：新增 `autoShowOnStart` 字段，运行后 0.5 秒自动显示一行缺失素材示例文字
+
+**重要路径**：
+- Prefab：`Assets/Scenes/Amiao_Test/TestPrefabs/PlaceholderTester.prefab`
+- 代码：`Assets/Scripts/Game/Test/amiao/PlaceholderTestRunner.cs`
+
+## 2026-05-14 快进开发模式
+
+**功能**：按住空格快进剧情，松手停止。建立开发者功能父类，支持一键禁用。
+
+**实现**：
+- `DevModeBase.cs`：抽象基类，所有开发模式功能继承此类
+  - `DisableAllDevModes()` 静态方法：一键禁用场景中所有开发模式
+  - 运行时自动标记 GameObject 名称为 `[DEV] xxx`
+- `FastForwardDevMode.cs`：按住 `Space` 快进，松开停止
+  - 自动查找场景中的 `FungusVNController`
+  - 调用 `targetVN.ToggleFastForward()` 切换快进状态
+  - 完全独立，不影响游戏其他系统
+
+**测试方式**：
+1. 挂载 `FastForwardDevMode` 到场景任意 GameObject
+2. 运行后按住空格，剧情自动快进；松手即恢复正常速度
+3. Inspector 中点击「禁用所有开发模式」可一键关闭
+
+**重要路径**：
+- 基类：`Assets/Scripts/Game/Test/amiao/DevModeBase.cs`
+- 快进模式：`Assets/Scripts/Game/Test/amiao/FastForwardDevMode.cs`
+
+## 2026-05-14 居中字体调小 + 每关第一段加居中大字
+
+**功能**：调小居中大字字号，为第3/4/5关第一段剧情结尾添加居中大字。
+
+**实现**：
+- `FungusVNController` 居中大字 `fontSize` 从 72 调为 48
+- `Dialogue3-1.txt` 结尾：添加 `[center_text:夜晚十点四十五分 宿管巡逻 开始了]`
+- `Dialogue4-1.txt` 结尾：同上
+- `Dialogue5-1.txt` 结尾：同上（替换原有文本行）
+
+**重要路径**：
+- 代码：`Assets/Scripts/Game/Test/amiao/FungusVNController.cs`
+- 剧本：`Assets/Resources/Dialogue/Dialogue3-1.txt`、`Dialogue4-1.txt`、`Dialogue5-1.txt`
+
+## 2026-05-14 存档读档测试 Prefab
+
+**功能**：简单 UI 验证存档数据是否被正确记录。
+
+**实现**：
+- `SaveLoadTestRunner.cs`：
+  - 运行时左上角显示 IMGUI 窗口（F3 切换显隐）
+  - 「模拟保存」生成一条带结局分支/卡牌使用/任务目标的测试记录
+  - 「读取显示」刷新窗口并打印 Console 日志
+  - 「清除存档」调用 `PlayerDataStore.ClearAllRecords()`
+- `SaveLoadTester.prefab`：预制体挂载 `SaveLoadTestRunner`
+
+**测试方式**：
+1. 将 `SaveLoadTester.prefab` 拖入场景
+2. 运行后按 F3 显示 UI
+3. 点击「模拟保存」→ 再点击「读取显示」，观察存档数据是否正确
+
+**重要路径**：
+- 代码：`Assets/Scripts/Game/Test/amiao/SaveLoadTestRunner.cs`
+- Prefab：`Assets/Scenes/Amiao_Test/TestPrefabs/SaveLoadTester.prefab`
+
+## 2026-05-14 结局分歧点分析文档
+
+**功能**：分析并记录5个结局在游戏操作中的触发位置与推测条件。
+
+**分歧点文档**：见 `Assets/Scripts/Game/Test/amiao/EndingBranchAnalysis.md`
+
+---
 
 ## 2026-05-13 跳过逻辑统一：优先跳到选项，无选项则结束并接下一个 prefab
 
