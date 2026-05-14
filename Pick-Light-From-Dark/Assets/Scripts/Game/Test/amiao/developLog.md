@@ -643,3 +643,56 @@
 - 代码：`Assets/Scripts/Game/Test/amiao/SkipTestRunner.cs`
 - Prefab：`Assets/Scenes/Amiao_Test/TestPrefabs/SkipTester.prefab`
 
+## 2026-05-15 跨关卡存档系统（两路存储）
+
+**任务**：优化存档系统，全局分成两路存储（关卡进度 + 结局相关数据），分析可行性并做跨关卡读档测试。
+
+**现有系统分析**：
+- `PlayerDataStore` / `JsonLevelRecord`：按关卡存储历史记录（通关后才写入），无剧情节点级存档
+- 问题：无法在中途存档/读档，没有"当前进度"概念，结局数据分散在各关记录中
+
+**两路存储方案设计**：
+- `CrossLevelSaveSystem.cs`：全局跨关卡存档系统（独立组件，不修改 Backend 黑名单代码）
+  - 存储方式：PlayerPrefs（JSON 序列化），键名 `CrossLevelSave_v1`
+  - **第一路 `LevelCheckpoint`**：关卡进度定位
+    - `currentLevelId`：当前关卡
+    - `storyFileName`：当前剧情文件名
+    - `storyLineIndex`：剧情行索引
+    - `isInGameplay`：true=游玩中 / false=剧情中
+  - **第二路 `EndingAccumulatedData`**：结局相关累积数据
+    - `branchChoices`：分支选择记录（去重）
+    - `cardsUsed`：卡牌使用记录（去重）
+    - `itemsCollected`：道具收集（去重）
+    - `lastLives` / `lastEmotion`：最终状态
+  - API：`SaveStoryProgress()` / `SaveGameplayProgress()` / `LoadCheckpoint()` / `LoadEndingData()` / `RecordBranchChoice()` / `RecordCardUsed()` / `RecordItemCollected()`
+
+**测试器**：
+- `CrossLevelSaveTestRunner.cs`：运行时 IMGUI 窗口
+  - 模拟存档："存档到 Dialogue2 开始处" / "存档到 Level1 游玩中"
+  - 记录结局数据：分支/卡牌/道具
+  - 读档验证：显示两路数据，验证读档后能否正确恢复关卡和剧情
+  - 完整流程测试：自动模拟 Dialogue1 -> Level1 -> Dialogue1-1 -> Dialogue2 -> 读档回到 Dialogue2
+- `CrossLevelSaveTester.prefab`：挂载测试脚本的预制体
+
+**两路存储 vs 原方案对比**：
+| 维度 | 原方案 (PlayerDataStore) | 新方案 (CrossLevelSaveSystem) |
+|---|---|---|
+| 存档时机 | 关卡结束后 | 任意节点（剧情/游玩中） |
+| 进度定位 | 无 | 关卡ID + 剧情文件 + 行号 |
+| 结局数据 | 分散在各关记录 | 统一累积存储 |
+| 跨关卡读档 | 不支持 | 支持 |
+| 兼容性 | 原 Backend 系统保留 | 新增系统，可并存 |
+
+**建议**：两路存储更适合本项目的 VN+游玩混合流程。原方案保留作为"关卡历史记录"（成就/统计），新方案负责"游戏进度存档"。
+
+**测试方式**：
+1. 将 `CrossLevelSaveTester.prefab` 拖入场景
+2. 按顺序点击按钮 1~5 模拟存档和记录数据
+3. 点击「读档并显示结果」验证数据完整性
+4. 点击「执行完整跨关卡流程测试」观看自动测试
+
+**重要路径**：
+- 存档系统：`Assets/Scripts/Game/Test/amiao/CrossLevelSaveSystem.cs`
+- 测试器：`Assets/Scripts/Game/Test/amiao/CrossLevelSaveTestRunner.cs`
+- Prefab：`Assets/Scenes/Amiao_Test/TestPrefabs/CrossLevelSaveTester.prefab`
+
