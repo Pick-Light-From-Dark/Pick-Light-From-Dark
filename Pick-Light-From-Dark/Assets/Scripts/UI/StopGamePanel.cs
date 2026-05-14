@@ -1,28 +1,30 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
+
 [UIPath("UI/Content")]
 public class StopGamePanel : BasePanel
 {
-    public override void HideMe()
-    {
-       
-    }
+    public override void ShowMe() { }
 
-    public override void ShowMe()
-    {
-        
-    }
+    public override void HideMe() { }
 
-    // Start is called before the first frame update
-    void Start()
+    protected override void ClickBtn(string btnName)
     {
-        
-    }
+        switch (btnName)
+        {
+            case "ContinueGameBtn":
+                Game.Flow.GameFlowController.Instance.ResumeGame();
+                UIMgr.Instance.HidePanel<StopGamePanel>();
+                break;
 
-    // Update is called once per frame
-    void Update()
-    {
-        
+            case "SettingBtn":
+                UIMgr.Instance.ShowPanel<SettingPanel>();
+                break;
+
+            case "QuitGameBtn":
+                Game.Flow.GameFlowController.Instance.ResumeGame();
+                UIMgr.Instance.HideAllPanels();
+                UIMgr.Instance.ShowPanel<BeginPanel>();
+                break;
+        }
     }
 }

@@ -30,8 +30,14 @@ MonoBehaviour:
   cardDataPath: Card
   initialCards: 010000000200000003000000
   maxLives: 2
-  taskGoals: []
-  preDialogueFile: 
-  postDialogueFile: 
+  taskGoals:
+  - taskId: 3001
+    taskName: "吃薯片"
+    targetCardId: 2008
+    targetCount: 0
+    currentCount: 0
+    state: 0
+  preDialogueFile:
+  postDialogueFile:
   isChoiceLevel: 0
-  choice2EndingDialogueFile: 
+  choice2EndingDialogueFile:

@@ -30,6 +30,8 @@ namespace Game.AI
         private Game.Data.PlayerState playerState;
         private float targetDuration;
         private float flashPanicAccumulated;
+        private AudioSource footstepSource;
+        private bool hasUsedCardThisPatrol;
 
         // 死循环安全阀
         private static int safetyUpdateFrame = -1;
@@ -44,7 +46,14 @@ namespace Game.AI
 
         void OnDestroy()
         {
+            StopFootstep();
+            EventCenter.Instance.RemoveEventListener<int>(E_EventType.CardReadComplete, OnCardUsed);
             if (Instance == this) Instance = null;
+        }
+
+        private void OnCardUsed(int cardId)
+        {
+            hasUsedCardThisPatrol = true;
         }
 
         /// <summary>
@@ -61,12 +70,15 @@ namespace Game.AI
             levelConfig = config;
             patrolCount = 0;
             flashPanicAccumulated = 0f;
+            hasUsedCardThisPatrol = false;
             IsPatrolPaused = false;
 
             // 获取系统引用
             emotionSystem = Game.Emotion.EmotionSystem.Instance;
             cardReadingSystem = FindFirstObjectByType<Game.Card.CardReadingSystem>();
             playerState = Game.Data.PlayerState.Instance;
+
+            EventCenter.Instance.AddEventListener<int>(E_EventType.CardReadComplete, OnCardUsed);
 
             EnterState(TeacherState.Idle);
             Debug.Log("[TeacherAI] 初始化完成");
@@ -119,6 +131,18 @@ namespace Game.AI
                     PerformInspectionCheck();
                 }
 
+                // 脚步声根据接近进度调整音量
+                if (footstepSource != null)
+                {
+                    float sv = MusicMgr.Instance.SoundValue;
+                    float targetVol;
+                    if (currentState == TeacherState.Approaching)
+                        targetVol = Mathf.Lerp(0.65f * sv, sv, approachProgress);
+                    else // Leaving
+                        targetVol = approachProgress * sv;
+                    footstepSource.volume = Mathf.Lerp(footstepSource.volume, targetVol, Time.deltaTime * 4f);
+                }
+
                 if (stateTimer <= 0)
                 {
                     OnStateTimerComplete();
@@ -156,6 +180,7 @@ namespace Game.AI
 
         void EnterIdle()
         {
+            StopFootstep();
             stateTimer = Mathf.Max(0.5f, Random.Range(levelConfig.patrolIntervals.x, levelConfig.patrolIntervals.y));
             targetDuration = stateTimer;
             isVisible = false;
@@ -170,17 +195,21 @@ namespace Game.AI
             isVisible = false;
             approachProgress = 0f;
 
-            // 根据巡逻次数增加手电筒概率
-            float flashProb = Mathf.Min(0.6f, 0.3f + patrolCount * 0.05f);
-            currentInspectType = Random.value < flashProb ? InspectType.Flash : InspectType.Eye;
+            // 未使用卡牌 → 目光查寝（无情绪判定，无手电动画）
+            // 使用过卡牌 → 手电筒查寝（判断情绪值 + 手电动画）
+            currentInspectType = hasUsedCardThisPatrol ? InspectType.Flash : InspectType.Eye;
 
             Debug.Log($"[TeacherAI] 开始接近 ({currentInspectType}检查)，预计 {stateTimer:F1}秒到达");
 
             // 触发脚步声事件
             EventCenter.Instance.EventTrigger(E_EventType.TeacherFootstepStart, currentInspectType);
 
-            // 占位：教师接近音效
-            Debug.Log("[AUDIO] ▶️ 播放教师接近脚步声 (placeholder)");
+            // 播放脚步声（循环），音量从25%渐增至100%
+            MusicMgr.Instance.PlaySound("DXH_SOUND/08.脚步声", true, (source) =>
+            {
+                footstepSource = source;
+                footstepSource.volume = 0.65f * MusicMgr.Instance.SoundValue;
+            });
         }
 
         void EnterInspecting()
@@ -199,19 +228,37 @@ namespace Game.AI
 
             Debug.Log($"[TeacherAI] 开始检查 ({currentInspectType})，持续 {stateTimer:F1}秒");
 
+            // 停止脚步声
+            StopFootstep();
+
+            // 手电筒检查时显示老师画面 + 手电动画
+            if (currentInspectType == InspectType.Flash)
+            {
+                GamePanel.Instance?.ShowTeacherImage();
+                GamePanel.Instance?.ShowFlashlightOverlay(2f);
+            }
+
             // 触发检查开始事件
             EventCenter.Instance.EventTrigger(E_EventType.TeacherInspectStart, currentInspectType);
-
-            // 占位：检查开始音效
-            Debug.Log("[AUDIO] ▶️ 播放检查开始音效 (placeholder)");
         }
 
         void EnterLeaving()
         {
-            stateTimer = Random.Range(1.5f, 2.5f);
+            stateTimer = Mathf.Max(0.5f, Random.Range(levelConfig.patrolTime.x, levelConfig.patrolTime.y));
             targetDuration = stateTimer;
             isVisible = false;
             patrolCount++;
+            hasUsedCardThisPatrol = false;
+
+            // 隐藏老师画面
+            GamePanel.Instance?.HideTeacherImage();
+
+            // 重新播放脚步声（循环），音量从满渐减，由Update根据approachProgress调整
+            MusicMgr.Instance.PlaySound("DXH_SOUND/08.脚步声", true, (source) =>
+            {
+                footstepSource = source;
+                footstepSource.volume = MusicMgr.Instance.SoundValue;
+            });
 
             Debug.Log($"[TeacherAI] 离开中，耗时 {stateTimer:F1}秒 (第{patrolCount}次巡逻)");
 
@@ -235,7 +282,10 @@ namespace Game.AI
             {
                 Debug.Log($"[TeacherAI] 玩家被抓！检查类型: {currentInspectType}");
 
-                // 触发被抓音效（占位）
+                // 播放敲门声
+                MusicMgr.Instance.PlaySound("DXH_SOUND/SOUND2/26.敲门声");
+
+                // 触发被抓音效事件
                 EventCenter.Instance.EventTrigger(E_EventType.PlayCaughtSound);
 
                 // 触发被抓事件
@@ -358,6 +408,15 @@ namespace Game.AI
                 case TeacherState.Leaving:
                     EnterState(TeacherState.Idle);
                     break;
+            }
+        }
+
+        void StopFootstep()
+        {
+            if (footstepSource != null)
+            {
+                MusicMgr.Instance.StopSound(footstepSource);
+                footstepSource = null;
             }
         }
 

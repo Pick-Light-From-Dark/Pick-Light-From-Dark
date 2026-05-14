@@ -116,6 +116,8 @@ namespace Game.Flow
 
             // 清理跨场景单例可能残留的脏状态
             Time.timeScale = 1f;
+            // 先初始化 GameFlowController，避免 GamePanel.Awake 用 TestLevelConfig 自初始化
+            GameFlowController.Instance.Initialize(levelConfig);
 
             var teacherObj = new GameObject("TeacherAI");
             teacherAI = teacherObj.AddComponent<Game.AI.TeacherAI>();

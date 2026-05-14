@@ -6,9 +6,6 @@ using UnityEngine;
 
 namespace Game.Task
 {
-    /// <summary>
-    /// 任务管理器 — 管理关卡任务进度与通关判定
-    /// </summary>
     public class TaskManager : SingletonAutoMono<TaskManager>
     {
         private List<TaskGoal> _activeGoals = new List<TaskGoal>();
@@ -28,18 +25,50 @@ namespace Game.Task
             _hasTriggeredLevelComplete = false;
             isInitialized = true;
 
-            if (config.taskGoals != null)
+            if (config.taskGoals != null && config.taskGoals.Count > 0)
             {
                 foreach (var goal in config.taskGoals)
                 {
                     if (goal == null) continue;
-                    var taskGoal = new TaskGoal(goal.targetCardId, goal.targetCount)
+
+                    // 根据卡牌类型自动推导 targetCount
+                    int targetCount = goal.targetCount;
+                    string taskName = goal.taskName;
+                    int taskId = goal.taskId;
+
+                    var cardData = Card.CardManager.Instance.GetCardDataById(goal.targetCardId);
+                    if (cardData != null)
                     {
+                        if (targetCount <= 0)
+                        {
+                            targetCount = cardData.cardType == CardType.Stackable
+                                ? cardData.initialStack
+                                : 1;
+                        }
+                        if (string.IsNullOrEmpty(taskName))
+                            taskName = cardData.cardName;
+                        if (taskId <= 0)
+                            taskId = goal.targetCardId;
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"[TaskManager] 未找到卡牌数据 cardId={goal.targetCardId}，使用配置原始值 targetCount={targetCount}");
+                    }
+
+                    var taskGoal = new TaskGoal(goal.targetCardId, targetCount)
+                    {
+                        taskId = taskId,
+                        taskName = taskName,
                         state = TaskState.InProgress
                     };
                     _activeGoals.Add(taskGoal);
+                    Debug.Log($"[TaskManager] 任务: id={taskGoal.taskId} name={taskGoal.taskName} cardId={taskGoal.targetCardId} count={taskGoal.currentCount}/{taskGoal.targetCount}");
                 }
                 Debug.Log($"[TaskManager] 初始化完成，共 {_activeGoals.Count} 个任务目标");
+            }
+            else
+            {
+                Debug.LogWarning("[TaskManager] 关卡配置中没有任务目标 (taskGoals 为空)");
             }
         }
 
@@ -70,7 +99,6 @@ namespace Game.Task
 
         private void OnCardReadComplete(int cardId)
         {
-            // 防止在初始化前处理事件
             if (!isInitialized)
             {
                 Debug.LogWarning($"[TaskManager] 收到卡牌完成事件但未初始化，cardId={cardId}");
@@ -82,6 +110,7 @@ namespace Game.Task
         public void CheckLevelComplete()
         {
             if (_hasTriggeredLevelComplete) return;
+            if (_activeGoals.Count == 0) return;
 
             foreach (var goal in _activeGoals)
             {

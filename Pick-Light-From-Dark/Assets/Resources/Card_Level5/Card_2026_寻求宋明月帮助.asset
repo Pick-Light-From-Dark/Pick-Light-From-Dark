@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cardData:
     id: 2026
-    cardName: "\u5BFB\u6C42\u5B8B\u660E\u6708\u5E2E\u52A9"
+    cardName: "\u5BFB\u6C42\u5E2E\u52A9"
     description: "\u3010\u4F5C\u7528\u3011\u5411\u5B8B\u660E\u6708\u5BFB\u6C42\u5E2E\u52A9\uFF0C\u83B7\u5F97\u536B\u751F\u7EB8\n\u3010\u63CF\u8FF0\u3011\u5B8B\u660E\u6708\u90A3\u91CC\u5E94\u8BE5\u6709\u536B\u751F\u7EB8,\u95EE\u95EE\u5979\u5427\u2026\u2026"
     iconPath: 
     cardSprite: {fileID: 0}
@@ -36,4 +36,4 @@ MonoBehaviour:
     saveProgressOnInterrupt: 0
     cardBackgroundType: 0
     backgroundJumpId: 0
-    sfxName: 
+    sfxName: "DXH_SOUND/07.\u5BF9\u8BDD\u58F0"

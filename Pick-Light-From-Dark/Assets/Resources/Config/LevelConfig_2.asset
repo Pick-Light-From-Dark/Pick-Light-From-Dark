@@ -32,7 +32,7 @@ MonoBehaviour:
   maxLives: 2
   taskGoals:
   - targetCardId: 2016
-    targetCount: 1
+    targetCount: 0
     currentCount: 0
     state: 1
   - targetCardId: 2017
