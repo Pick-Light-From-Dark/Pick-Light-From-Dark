@@ -219,7 +219,7 @@ namespace Game.Data.Editor
                 0, 2, 0, RelatedType.Persistent, new[] { 2006, 2010, 2030 }, 0,
                 "all", BedStateChange.LeaveBed, false,
                 "本张卡为老师查寝判定条件之一的回到被子中的值的改变卡，当使用这张卡时，离开被子，这个值就会变成FALSE",
-                1, 5005, "");
+                1, 5006, "");
 
             // 2006 前往储物柜
             CreateCard(folder, 2006, "前往储物柜", "前往储物柜，从柜子中可以拿取物品。",
@@ -228,7 +228,7 @@ namespace Game.Data.Editor
                 0, 3, 0, RelatedType.Persistent, new[] { 2010, 2024, 2030 }, 0,
                 "all", BedStateChange.LeaveBed, false,
                 "本张卡为老师查寝判定条件之一的回到被子中的值的改变卡，当使用这张卡时，离开被子，这个值就会变成FALSE",
-                1, 5005, "");
+                1, 5007, "");
 
             // 2009 喝水
             CreateCard(folder, 2009, "喝水", "喝水降低兴奋值和慌乱值",
@@ -294,7 +294,7 @@ namespace Game.Data.Editor
                 new[] { new Segment(2f, true) },
                 0, 2, 1, RelatedType.Persistent, new[] { 2010, 2025, 2026, 2030 }, 0,
                 "1003", BedStateChange.None, false, "无",
-                0, 0, "");
+                0, 5008, "");
 
             // 2025 吃面包
             CreateCard(folder, 2025, "吃面包", "吃掉面包所用时间12秒，使用时每2秒增加一点兴奋值，打断后不会重置使用时间",
@@ -418,17 +418,17 @@ namespace Game.Data.Editor
                 new[] { new Segment(4f, false) },
                 0, 4, 1, RelatedType.NonPersistent, new[] { 2010, 2030, 2040 }, 0,
                 "1005", BedStateChange.None, false,
-                "将卡牌ID为2040的卡牌设置为卡牌ID为2005的关联卡牌。",
+                "将卡牌ID为2038的卡牌设置为卡牌ID为2005的关联卡牌。",
                 0, 5009, "");
 
             // 2026 寻求宋明月帮助
             CreateCard(folder, 2026, "寻求宋明月帮助", "向宋明月寻求帮助，获得卫生纸",
                 "宋明月那里应该有卫生纸,问问她吧……", CardType.NonStackable, 1,
                 new[] { new Segment(6f, true) },
-                0, 4, 3, RelatedType.Persistent, new[] { 2001, 2005, 2010 }, 0,
+                0, 4, 3, RelatedType.Persistent, new[] { 2001, 2003, 2005, 2010 }, 0,
                 "1005", BedStateChange.None, false,
-                "将卡牌ID为2040的卡牌设置为卡牌ID为2005的关联卡牌。",
-                0, 0, "");
+                "将卡牌ID为2038的卡牌设置为卡牌ID为2005的关联卡牌。将画面切换为背景画面ID：5012，触发对话，对话结束后，将画面切换为背景画面ID：5011。",
+                0, 5012, "");
 
             // 2030 返回床上
             CreateCard(folder, 2030, "返回床上", "从宿舍其他位置返回床上，变为安全状态。",

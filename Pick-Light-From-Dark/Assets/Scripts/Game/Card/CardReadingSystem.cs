@@ -174,6 +174,13 @@ namespace Game.Card
             currentCard.isUsed = true;
             currentCard.isUsedSuccess = true;
 
+            // 播放卡牌动作音效
+            if (!string.IsNullOrEmpty(currentCard.data.sfxName))
+                MusicMgr.Instance.PlaySound(currentCard.data.sfxName);
+
+            // 播放读条完成通用音效
+            MusicMgr.Instance.PlaySound("DXH_SOUND/SOUND2/24.读条完成音效");
+
             // 触发完成事件
             EventCenter.Instance.EventTrigger(E_EventType.CardReadComplete, currentCard.data.id);
 
@@ -221,6 +228,19 @@ namespace Game.Card
             readTime = 0f;
             currentSegmentIndex = 0;
             isReading = false;
+        }
+
+        /// <summary>
+        /// 强制清除读条（被抓时使用，跳过 CanInterrupt 检查）
+        /// </summary>
+        public void ForceClearReading()
+        {
+            if (!isReading) return;
+            currentCard = null;
+            readTime = 0f;
+            currentSegmentIndex = 0;
+            isReading = false;
+            Debug.Log("[CardReadingSystem] 强制清除读条");
         }
 
         /// <summary>

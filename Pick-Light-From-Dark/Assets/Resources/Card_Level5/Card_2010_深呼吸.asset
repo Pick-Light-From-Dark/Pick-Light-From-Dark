@@ -17,7 +17,7 @@ MonoBehaviour:
     cardName: "\u6DF1\u547C\u5438"
     description: "\u3010\u4F5C\u7528\u3011\u964D\u4F4E\u614C\u4E71\u503C\u548C\u5174\u594B\u503C\n\u3010\u63CF\u8FF0\u3011\u6DF1\u547C\u5438\uFF0C\u6CA1\u4EC0\u4E48\u597D\u7B11\u7684\uFF0C\u4E5F\u6CA1\u4EC0\u4E48\u597D\u6015\u7684\u2026\u2026"
     iconPath: 
-    cardSprite: {fileID: 0}
+    cardSprite: {fileID: 21300000, guid: 2950db6556e134b4fafb724e0f5f9008, type: 3}
     cardType: 1
     initialStack: 10
     segments:
@@ -36,4 +36,4 @@ MonoBehaviour:
     saveProgressOnInterrupt: 0
     cardBackgroundType: 0
     backgroundJumpId: 0
-    sfxName: DXH_SOUND/06.深呼吸
+    sfxName: "DXH_SOUND/06.\u6DF1\u547C\u5438"
