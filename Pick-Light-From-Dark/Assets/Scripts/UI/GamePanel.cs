@@ -105,8 +105,13 @@ public class GamePanel : BasePanel
     [Header("关卡配置（留空则使用 TestLevelConfig）")]
     [SerializeField] private Game.Config.LevelConfigSO overrideLevelConfig;
 
+    // 防止同一帧内对 GameFlowController 重复初始化（Awake + InitializeWithConfig 双重调用）
+    private static int lastGameFlowInitFrame = -1;
+
     public void InitializeWithConfig(Game.Config.LevelConfigSO config)
     {
+        if (Time.frameCount == lastGameFlowInitFrame) return;
+        lastGameFlowInitFrame = Time.frameCount;
         overrideLevelConfig = config;
         if (config != null)
             Game.Flow.GameFlowController.Instance.Initialize(config);
@@ -123,21 +128,26 @@ public class GamePanel : BasePanel
 
         cardManager = CardManager.Instance;
 
-        if (!Game.Flow.GameFlowController.Instance.IsInitialized)
-        {
-            var config = overrideLevelConfig ?? Resources.Load<Game.Config.LevelConfigSO>("TestData/TestLevelConfig");
-            if (config != null)
-                Game.Flow.GameFlowController.Instance.Initialize(config);
-        }
-
-        // 提前触发 PlayerState 单例初始化，确保其 Update() 开始运行以监听 C 键
-        var ps = PlayerState.Instance;
-
+        // 先订阅事件，确保 CardManager.Initialize 触发 OnSelectionChanged 时
+        // RefreshSelectionArea 已在监听列表中，不会错过首次刷新
+        CardManager.OnSelectionChanged += RefreshSelectionArea;
         CardDropZone.OnCardDropped += OnCardDropped;
         CardSlot.OnCardClicked += OnCardClicked;
         CardSlot.OnCardDragStarted += OnCardDragStarted;
         CardSlot.OnCardDragEnded += OnCardDragEnded;
-        CardManager.OnSelectionChanged += RefreshSelectionArea;
+
+        if (!Game.Flow.GameFlowController.Instance.IsInitialized)
+        {
+            var config = overrideLevelConfig ?? Resources.Load<Game.Config.LevelConfigSO>("TestData/TestLevelConfig");
+            if (config != null && Time.frameCount != lastGameFlowInitFrame)
+            {
+                lastGameFlowInitFrame = Time.frameCount;
+                Game.Flow.GameFlowController.Instance.Initialize(config);
+            }
+        }
+
+        // 提前触发 PlayerState 单例初始化，确保其 Update() 开始运行以监听 C 键
+        var ps = PlayerState.Instance;
 
         if (cardLoadingBarBg != null) cardLoadingBarBg.transform.parent.gameObject.SetActive(false);
         if (LoadingCount != null) LoadingCount.gameObject.SetActive(false);
@@ -898,8 +908,9 @@ public class GamePanel : BasePanel
         if (cardManager != null && cardManager.GetAvailableCardCount() == 0)
         {
             var config = overrideLevelConfig ?? Resources.Load<LevelConfigSO>("TestData/TestLevelConfig");
-            if (config != null)
+            if (config != null && Time.frameCount != lastGameFlowInitFrame)
             {
+                lastGameFlowInitFrame = Time.frameCount;
                 Game.Flow.GameFlowController.Instance.Initialize(config);
                 return; // Initialize 已触发了 RefreshSelectionArea
             }

@@ -114,6 +114,9 @@ namespace Game.Flow
         {
             Debug.Log("[LevelFlowCoordinator] === 阶段2：游玩 ===");
 
+            // 清理跨场景单例可能残留的脏状态
+            Time.timeScale = 1f;
+
             var teacherObj = new GameObject("TeacherAI");
             teacherAI = teacherObj.AddComponent<Game.AI.TeacherAI>();
 

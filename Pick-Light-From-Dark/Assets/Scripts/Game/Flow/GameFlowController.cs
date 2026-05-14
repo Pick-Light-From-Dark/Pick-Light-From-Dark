@@ -26,6 +26,14 @@ namespace Game.Flow
         private static int lastUpdateFrame = -1; // 用于多实例检测：记录上次统计的帧号
         private static int updateCount = 0;      // 当前帧内 Update 被调用的次数
 
+        // 死循环安全阀：同一帧内 Update 被调用次数上限
+        private static int safetyUpdateFrame = -1;
+        private static int safetyUpdateCount = 0;
+        private const int SAFETY_UPDATE_MAX = 100;
+
+        // 防止 Initialize 被递归调用（例如 CardManager.Initialize → OnSelectionChanged → RefreshSelectionArea → Initialize）
+        private static bool isInitializing = false;
+
         /// <summary>
         /// 初始化游戏流程
         /// </summary>
@@ -37,6 +45,25 @@ namespace Game.Flow
                 return;
             }
 
+            if (isInitializing)
+            {
+                Debug.LogWarning($"[GameFlow] InstanceID:{GetInstanceID()} Initialize 被递归调用，已阻断");
+                return;
+            }
+
+            isInitializing = true;
+            try
+            {
+                DoInitialize(config);
+            }
+            finally
+            {
+                isInitializing = false;
+            }
+        }
+
+        private void DoInitialize(LevelConfigSO config)
+        {
             Debug.Log($"[GameFlow] InstanceID:{GetInstanceID()} === Initialize 开始 ===");
             Debug.Log($"[GameFlow] InstanceID:{GetInstanceID()} 当前状态: isInitialized={isInitialized}, isGameOver={isGameOver}, isPaused={isPaused}, hasStartedFirstFrame={hasStartedFirstFrame}, remainingTime={remainingTime:F2}");
 
@@ -108,6 +135,19 @@ namespace Game.Flow
 
         void Update()
         {
+            // 死循环安全阀
+            if (Time.frameCount != safetyUpdateFrame)
+            {
+                safetyUpdateFrame = Time.frameCount;
+                safetyUpdateCount = 0;
+            }
+            safetyUpdateCount++;
+            if (safetyUpdateCount > SAFETY_UPDATE_MAX)
+            {
+                Debug.LogError($"[GameFlowController] Update 同一帧内被调用超过 {SAFETY_UPDATE_MAX} 次，强制返回防止死循环");
+                return;
+            }
+
             // 如果还未初始化，不执行任何逻辑
             if (!isInitialized) return;
 

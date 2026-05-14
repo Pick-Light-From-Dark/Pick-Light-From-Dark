@@ -31,6 +31,11 @@ namespace Game.AI
         private float targetDuration;
         private float flashPanicAccumulated;
 
+        // 死循环安全阀
+        private static int safetyUpdateFrame = -1;
+        private static int safetyUpdateCount = 0;
+        private const int SAFETY_UPDATE_MAX = 100;
+
         void Awake()
         {
             Instance = this;
@@ -72,6 +77,19 @@ namespace Game.AI
 
         void Update()
         {
+            // 死循环安全阀
+            if (Time.frameCount != safetyUpdateFrame)
+            {
+                safetyUpdateFrame = Time.frameCount;
+                safetyUpdateCount = 0;
+            }
+            safetyUpdateCount++;
+            if (safetyUpdateCount > SAFETY_UPDATE_MAX)
+            {
+                Debug.LogError($"[TeacherAI] Update 同一帧内被调用超过 {SAFETY_UPDATE_MAX} 次，强制返回防止死循环");
+                return;
+            }
+
             if (gameFlow != null && (gameFlow.IsPaused() || gameFlow.IsGameOver() || IsPatrolPaused))
                 return;
 

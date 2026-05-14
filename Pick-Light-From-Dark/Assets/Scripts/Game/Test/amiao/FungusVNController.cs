@@ -957,6 +957,7 @@ namespace Game.Test
 
             var btn = go.AddComponent<Button>();
             btn.onClick.AddListener(onClick);
+            go.AddComponent<Game.UI.ChoiceButtonEffect>();
 
             // 文字子对象
             var textGo = new GameObject("Text");
