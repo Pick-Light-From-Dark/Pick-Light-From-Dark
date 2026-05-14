@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -41,6 +42,9 @@ public class GamePanel : BasePanel
     [Header("闭眼系统")]
     [SerializeField] private Button closeEyesBtn;
     [SerializeField] private Image eyeCloseOverlay;
+    private Image closeEyesBtnImage;
+    private Sprite openEyeSprite;
+    private Sprite closeEyeSprite;
     [SerializeField] private GameObject gameplayUIRoot;
 
     [Header("卡牌信息弹窗")]
@@ -53,6 +57,23 @@ public class GamePanel : BasePanel
     [Header("老师巡查状态")]
     [SerializeField] private TextMeshProUGUI teacherStatusText;
 
+    [Header("老师画面")]
+    [SerializeField] private GameObject teacherImg;
+
+    [Header("生命值图片（按顺序 HpImg_0, HpImg_1...）")]
+    [SerializeField] private GameObject[] hpImages;
+
+    [Header("被抓UI — 剩余生命时显示")]
+    [SerializeField] private GameObject caughtOverlay;
+
+    [Header("失败UI — 生命耗尽时显示")]
+    [SerializeField] private GameObject failOverlay;
+
+    [Header("手电筒动画 — Bg5005")]
+    [SerializeField] private GameObject flashlightOverlay;
+
+    public static GamePanel Instance { get; private set; }
+
     private CardGrid cardGrid;
     private CardDropZone cardDropZone;
     private CardManager cardManager;
@@ -64,6 +85,14 @@ public class GamePanel : BasePanel
     private TextMeshProUGUI chaosCountText;
     private TextMeshProUGUI happlyCountText;
 
+    // 剩余时间显示
+    private TextMeshProUGUI timeText;
+
+    // 任务显示
+    private TextMeshProUGUI firstEventText;
+    private TextMeshProUGUI secondEventText;
+    private TextMeshProUGUI thirdEventText;
+
     /// <summary>读条前的备选区卡牌快照（打断时恢复用）</summary>
     private List<CardData> preReadSnapshot;
 
@@ -72,6 +101,7 @@ public class GamePanel : BasePanel
 
     /// <summary>弹窗打开前的 timescale 缓存</summary>
     private float prePopupTimeScale = 1f;
+    private float preDialogueTimeScale = 1f;
 
     // ==================== 自管读条状态 ====================
 
@@ -84,6 +114,10 @@ public class GamePanel : BasePanel
     /// <summary>供PlayerState等外部系统查询当前是否正在读条</summary>
     public static bool IsCardReading { get; private set; }
 
+    /// <summary>卡牌交互是否被锁定（读条中或对话中）</summary>
+    public static bool IsInteractionLocked =>
+        IsCardReading || (Instance != null && Instance.dialogueManager != null && Instance.dialogueManager.IsDialogueActive);
+
     /// <summary>当前读条片段是否不可打断（供TeacherAI查询）</summary>
     public static bool IsInUninterruptibleSegment { get; private set; }
 
@@ -91,10 +125,6 @@ public class GamePanel : BasePanel
 
     // ==================== 闭眼状态 ====================
 
-    private Vector2 closeEyesBtnOriginalPos;
-    private Image closeEyesBtnImage;
-    private Sprite openEyeSprite;
-    private Sprite closeEyeSprite;
 
     [Header("关卡配置（留空则使用 TestLevelConfig）")]
     [SerializeField] private Game.Config.LevelConfigSO overrideLevelConfig;
@@ -109,11 +139,42 @@ public class GamePanel : BasePanel
     protected override void Awake()
     {
         base.Awake();
+        Instance = this;
 
         EnsureCanvasRaycaster();
         EnsureEventSystem();
         EnsureCardGrid();
         EnsureDropZone();
+
+        // 自动查找未在Inspector中指定的UI元素
+        if (teacherImg == null)
+            teacherImg = transform.Find("ImgBk/TeacherImg")?.gameObject;
+        if (hpImages == null || hpImages.Length == 0)
+        {
+            var hpRoot = transform.Find("ImgBk");
+            if (hpRoot != null)
+            {
+                var hps = new System.Collections.Generic.List<GameObject>();
+                foreach (Transform child in hpRoot)
+                {
+                    if (child.name.StartsWith("HpImg"))
+                        hps.Add(child.gameObject);
+                }
+                hpImages = hps.ToArray();
+            }
+        }
+        if (caughtOverlay == null)
+            caughtOverlay = transform.Find("ImgBk/Bg5003")?.gameObject;
+        if (failOverlay == null)
+            failOverlay = transform.Find("ImgBk/Bg5004")?.gameObject;
+        if (flashlightOverlay == null)
+            flashlightOverlay = transform.Find("ImgBk/Bg5005")?.gameObject;
+
+        // 初始隐藏
+        if (teacherImg != null) teacherImg.SetActive(false);
+        if (caughtOverlay != null) caughtOverlay.SetActive(false);
+        if (failOverlay != null) failOverlay.SetActive(false);
+        if (flashlightOverlay != null) flashlightOverlay.SetActive(false);
 
         cardManager = CardManager.Instance;
 
@@ -123,6 +184,9 @@ public class GamePanel : BasePanel
             if (config != null)
                 Game.Flow.GameFlowController.Instance.Initialize(config);
         }
+
+        // 初始化生命值显示
+        UpdateHpDisplay(Game.Flow.GameFlowController.Instance.GetCurrentLives());
 
         // 提前触发 PlayerState 单例初始化，确保其 Update() 开始运行以监听 C 键
         var ps = PlayerState.Instance;
@@ -158,8 +222,14 @@ public class GamePanel : BasePanel
         // 情绪值显示
         SetupEmotionDisplay();
 
+        // 剩余时间显示
+        timeText = transform.Find("ImgBk/StageMessage/Time")?.GetComponent<TextMeshProUGUI>();
+
         // 老师巡查状态
         SetupTeacherStatus();
+
+        // 任务显示
+        SetupTaskDisplay();
 
         // 闭眼按钮 + 遮罩初始化
         SetupEyeClose();
@@ -240,6 +310,45 @@ public class GamePanel : BasePanel
         }
     }
 
+    private void SetupTaskDisplay()
+    {
+        firstEventText = transform.Find("ImgBk/EventImgBk/FirstEvent")?.GetComponent<TextMeshProUGUI>();
+        secondEventText = transform.Find("ImgBk/EventImgBk/SecondEvent")?.GetComponent<TextMeshProUGUI>();
+        thirdEventText = transform.Find("ImgBk/EventImgBk/ThirdEvent")?.GetComponent<TextMeshProUGUI>();
+
+        EventCenter.Instance.AddEventListener<int>(E_EventType.TaskProgressChanged, OnTaskProgressChanged);
+        EventCenter.Instance.AddEventListener<int>(E_EventType.TaskGoalCompleted, OnTaskGoalCompleted);
+
+        RefreshTaskDisplay();
+    }
+
+    private void OnTaskProgressChanged(int cardId) { RefreshTaskDisplay(); }
+    private void OnTaskGoalCompleted(int cardId) { RefreshTaskDisplay(); }
+
+    private void RefreshTaskDisplay()
+    {
+        var eventTexts = new[] { firstEventText, secondEventText, thirdEventText };
+        var goals = Game.Task.TaskManager.Instance.GetActiveGoals();
+
+        for (int i = 0; i < eventTexts.Length; i++)
+        {
+            var tmp = eventTexts[i];
+            if (tmp == null) continue;
+
+            if (goals != null && i < goals.Count)
+            {
+                var goal = goals[i];
+                string stateIcon = goal.state == TaskState.Completed ? "<color=#64DC64>✓ </color>" : "";
+                tmp.text = $"{stateIcon}{goal.taskName}  {goal.currentCount}/{goal.targetCount}";
+                tmp.gameObject.SetActive(true);
+            }
+            else
+            {
+                tmp.gameObject.SetActive(false);
+            }
+        }
+    }
+
     private void SetupEyeClose()
     {
         if (closeEyesBtn == null)
@@ -250,7 +359,6 @@ public class GamePanel : BasePanel
         if (closeEyesBtn != null)
         {
             closeEyesBtn.onClick.AddListener(OnCloseEyesClicked);
-            closeEyesBtnOriginalPos = closeEyesBtn.GetComponent<RectTransform>().anchoredPosition;
             closeEyesBtnImage = closeEyesBtn.GetComponent<Image>();
             openEyeSprite = Resources.Load<Sprite>("UI/Icon/open_eye");
             closeEyeSprite = Resources.Load<Sprite>("UI/Icon/close_eye");
@@ -303,8 +411,12 @@ public class GamePanel : BasePanel
         preDialogueBackgroundId = GetCurrentBackgroundId();
         SetSceneBackground(5004);
 
+        // 暂停游戏：时间停止、老师AI暂停巡逻
+        preDialogueTimeScale = Time.timeScale;
+        Game.Flow.GameFlowController.Instance.PauseGame();
+
         dialogueManager.StartDialogue(resourcePath);
-        Debug.Log("[GamePanel] 局内对话开始，卡牌交互锁定");
+        Debug.Log("[GamePanel] 局内对话开始，游戏暂停");
     }
 
     private void OnGameDialogueEnd()
@@ -313,14 +425,22 @@ public class GamePanel : BasePanel
         if (preDialogueBackgroundId != 0)
             SetSceneBackground(preDialogueBackgroundId);
 
-        Debug.Log("[GamePanel] 局内对话结束，卡牌交互解锁");
+        // 恢复游戏
+        if (!Game.Flow.GameFlowController.Instance.IsGameOver())
+        {
+            Game.Flow.GameFlowController.Instance.ResumeGame();
+            Time.timeScale = preDialogueTimeScale;
+        }
+
+        Debug.Log("[GamePanel] 局内对话结束，游戏恢复");
     }
 
     private int currentBackgroundId = 5001;
     private int GetCurrentBackgroundId() => currentBackgroundId;
-    private void SetSceneBackground(int bgId)
+    private Coroutine backgroundFadeRoutine;
+
+    private void SetSceneBackground(int bgId, float fadeDuration = 0f)
     {
-        currentBackgroundId = bgId;
         if (sceneBackgroundImage == null)
         {
             var imgBk = transform.Find("ImgBk");
@@ -328,23 +448,68 @@ public class GamePanel : BasePanel
                 sceneBackgroundImage = imgBk.GetComponent<Image>();
         }
 
-        if (sceneBackgroundImage != null)
+        if (sceneBackgroundImage == null) return;
+
+        var sprite = Resources.Load<Sprite>($"UI/Background/Bg_{bgId}");
+        if (sprite == null)
         {
-            var sprite = Resources.Load<Sprite>($"UI/Background/Bg_{bgId}");
-            if (sprite != null)
-            {
-                sceneBackgroundImage.sprite = sprite;
-                Debug.Log($"[GamePanel] 背景画面设置: {bgId}");
-            }
-            else
-            {
-                Debug.LogWarning($"[GamePanel] 背景画面资源未找到: UI/Background/Bg_{bgId}");
-            }
+            Debug.LogWarning($"[GamePanel] 背景画面资源未找到: UI/Background/Bg_{bgId}");
+            return;
         }
+
+        if (fadeDuration > 0f && currentBackgroundId != bgId)
+        {
+            if (backgroundFadeRoutine != null) StopCoroutine(backgroundFadeRoutine);
+            backgroundFadeRoutine = StartCoroutine(FadeBackground(bgId, sprite, fadeDuration));
+        }
+        else
+        {
+            currentBackgroundId = bgId;
+            sceneBackgroundImage.sprite = sprite;
+            Debug.Log($"[GamePanel] 背景画面设置: {bgId}");
+        }
+    }
+
+    private IEnumerator FadeBackground(int bgId, Sprite newSprite, float duration)
+    {
+        float half = duration / 2f;
+        float elapsed = 0f;
+        Color color = sceneBackgroundImage.color;
+
+        // 淡出
+        while (elapsed < half)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            color.a = 1f - elapsed / half;
+            sceneBackgroundImage.color = color;
+            yield return null;
+        }
+        color.a = 0f;
+        sceneBackgroundImage.color = color;
+
+        // 切换图片
+        currentBackgroundId = bgId;
+        sceneBackgroundImage.sprite = newSprite;
+        Debug.Log($"[GamePanel] 背景画面设置: {bgId}");
+
+        // 淡入
+        elapsed = 0f;
+        while (elapsed < half)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            color.a = elapsed / half;
+            sceneBackgroundImage.color = color;
+            yield return null;
+        }
+        color.a = 1f;
+        sceneBackgroundImage.color = color;
+
+        backgroundFadeRoutine = null;
     }
 
     private void OnStopBtnClicked()
     {
+        Game.Flow.GameFlowController.Instance.PauseGame();
         UIMgr.Instance.ShowPanel<StopGamePanel>();
     }
 
@@ -375,6 +540,18 @@ public class GamePanel : BasePanel
         }
 
         UpdateTeacherStatusDisplay();
+        UpdateTimeDisplay();
+    }
+
+    private void UpdateTimeDisplay()
+    {
+        if (timeText == null) return;
+        var flow = Game.Flow.GameFlowController.Instance;
+        if (!flow.IsInitialized) return;
+        float remaining = flow.GetRemainingTime();
+        int minutes = Mathf.FloorToInt(remaining / 60f);
+        int seconds = Mathf.FloorToInt(remaining % 60f);
+        timeText.text = $"{minutes}:{seconds:D2}";
     }
 
     /// <summary>根据已读时间定位当前片段，控制 ClearBtn 显隐</summary>
@@ -407,6 +584,7 @@ public class GamePanel : BasePanel
 
     void OnDestroy()
     {
+        CardSlot.IsPopupActive = false;
         CardDropZone.OnCardDropped -= OnCardDropped;
         CardSlot.OnCardClicked -= OnCardClicked;
         CardSlot.OnCardDragStarted -= OnCardDragStarted;
@@ -416,11 +594,117 @@ public class GamePanel : BasePanel
         EventCenter.Instance.RemoveEventListener<int>(E_EventType.BackgroundJump, OnBackgroundJump);
         EventCenter.Instance.RemoveEventListener<int>(E_EventType.PanicChanged, OnEmotionChanged);
         EventCenter.Instance.RemoveEventListener<int>(E_EventType.ExciteChanged, OnEmotionChanged);
+        EventCenter.Instance.RemoveEventListener<int>(E_EventType.TaskProgressChanged, OnTaskProgressChanged);
+        EventCenter.Instance.RemoveEventListener<int>(E_EventType.TaskGoalCompleted, OnTaskGoalCompleted);
+        if (Instance == this) Instance = null;
+    }
+
+    // ==================== 老师相关UI ====================
+
+    public void ShowTeacherImage()
+    {
+        if (teacherImg != null) teacherImg.SetActive(true);
+    }
+
+    public void HideTeacherImage()
+    {
+        if (teacherImg != null) teacherImg.SetActive(false);
+    }
+
+    public void UpdateHpDisplay(int currentLives)
+    {
+        if (hpImages == null) return;
+        for (int i = 0; i < hpImages.Length; i++)
+        {
+            if (hpImages[i] != null)
+                hpImages[i].SetActive(i < currentLives);
+        }
+    }
+
+    public void ShowCaughtOverlay()
+    {
+        // 只显示Bg5003，隐藏其他所有子物体
+        if (gameplayUIRoot != null)
+        {
+            foreach (Transform child in gameplayUIRoot.transform)
+            {
+                if (caughtOverlay != null && child.gameObject == caughtOverlay) continue;
+                child.gameObject.SetActive(false);
+            }
+        }
+        if (caughtOverlay != null) caughtOverlay.SetActive(true);
+    }
+
+    public void HideCaughtOverlay()
+    {
+        if (caughtOverlay != null) caughtOverlay.SetActive(false);
+    }
+
+    public void ShowFailOverlay()
+    {
+        // 只显示Bg5004，隐藏其他所有子物体
+        if (gameplayUIRoot != null)
+        {
+            foreach (Transform child in gameplayUIRoot.transform)
+            {
+                if (failOverlay != null && child.gameObject == failOverlay) continue;
+                child.gameObject.SetActive(false);
+            }
+        }
+        if (failOverlay != null) failOverlay.SetActive(true);
+    }
+
+    /// <summary>强制显示闭眼UI（遮罩+闭眼按钮），用于被抓后恢复闭眼状态</summary>
+    public void ShowEyeClosedUI()
+    {
+        if (gameplayUIRoot == null) return;
+
+        // 恢复游戏界面并记录状态，供后续睁眼时恢复
+        preEyeCloseActiveState.Clear();
+        foreach (Transform child in gameplayUIRoot.transform)
+        {
+            if (child.name == "EyeCloseOverlay") continue;
+            if (child.name == "Bg5003") continue;
+            if (child.name == "Bg5004") continue;
+            if (child.name == "Bg5005") continue;
+            if (child.name == "TeacherImg") continue;
+            if (child.name.Contains("Dialogue")) continue;
+
+            child.gameObject.SetActive(true);
+            preEyeCloseActiveState[child.name] = true;
+        }
+
+        // 闭眼遮罩 + 闭眼按钮置顶
+        if (eyeCloseOverlay != null) eyeCloseOverlay.gameObject.SetActive(true);
+        if (closeEyesBtn != null)
+        {
+            closeEyesBtn.gameObject.SetActive(true);
+            closeEyesBtn.transform.SetAsLastSibling();
+        }
+
+        // 刷新卡牌备选区
+        RefreshSelectionArea();
+    }
+
+    public void ShowFlashlightOverlay(float duration)
+    {
+        if (flashlightOverlay != null)
+        {
+            flashlightOverlay.transform.SetAsLastSibling();
+            flashlightOverlay.SetActive(true);
+            StartCoroutine(HideFlashlightAfterDelay(duration));
+        }
+    }
+
+    private System.Collections.IEnumerator HideFlashlightAfterDelay(float delay)
+    {
+        yield return new WaitForSecondsRealtime(delay);
+        if (flashlightOverlay != null)
+            flashlightOverlay.SetActive(false);
     }
 
     public override void ShowMe()
     {
-        SetSceneBackground(5001);
         RefreshSelectionArea();
     }
 
@@ -433,6 +717,14 @@ public class GamePanel : BasePanel
     {
         if (card.CardData == null) return;
         if (isReading) return;
+
+        // 关闭卡牌信息弹窗（如果打开）
+        if (activePopup != null && activePopup.IsShown)
+        {
+            activePopup.Hide();
+            CardSlot.IsPopupActive = false;
+            Time.timeScale = prePopupTimeScale;
+        }
 
         readingCardSlot = card;
         readingCardData = card.CardData;
@@ -637,7 +929,7 @@ public class GamePanel : BasePanel
 
         // 跳转背景画面
         if (readingCardData.backgroundJumpId != 0)
-            SetSceneBackground(readingCardData.backgroundJumpId);
+            SetSceneBackground(readingCardData.backgroundJumpId, 0.5f);
 
         preReadSnapshot = null;
         RefreshSelectionArea();
@@ -712,7 +1004,7 @@ public class GamePanel : BasePanel
             var parts = data.description.Split(new[] { "\n【描述】" },
                 System.StringSplitOptions.None);
             thinkingFullText = parts.Length >= 2
-                ? "【描述】" + parts[1] : data.description;
+                ? parts[1] : data.description;
         }
         else
         {
@@ -787,13 +1079,13 @@ public class GamePanel : BasePanel
 
     private void OnCloseEyesClicked()
     {
-        if (isReading) return;
+        if (IsInteractionLocked) return;
         ToggleEyeClose();
     }
 
     private void ToggleEyeClose()
     {
-        if (isReading) return;
+        if (IsInteractionLocked) return;
         HideThinkingText();
         PlayerState.Instance?.ToggleEyesClosed();
     }
@@ -810,19 +1102,17 @@ public class GamePanel : BasePanel
         {
             if (closed)
             {
-                // 记住每个子物体的当前状态，然后隐藏
+                // 记住每个子物体的当前状态，然后隐藏（保留CloseEyesBtn原位不动、不换图）
                 preEyeCloseActiveState.Clear();
                 foreach (Transform child in gameplayUIRoot.transform)
                 {
                     if (child.name == "EyeCloseOverlay") continue;
+                    if (child.name == "Bg5005") continue;
                     if (child.name == "CloseEyesBtn")
                     {
-                        var rt = child.GetComponent<RectTransform>();
-                        if (rt != null)
-                            rt.anchoredPosition = Vector2.zero;
-                        child.SetAsLastSibling();
-                        if (closeEyesBtnImage != null)
+                        if (closeEyesBtnImage != null && closeEyeSprite != null)
                             closeEyesBtnImage.sprite = closeEyeSprite;
+                        child.SetAsLastSibling();
                         continue;
                     }
                     if (child.name == "TeacherStatus")
@@ -833,23 +1123,16 @@ public class GamePanel : BasePanel
                     preEyeCloseActiveState[child.name] = child.gameObject.activeSelf;
                     child.gameObject.SetActive(false);
                 }
-                // 闭眼按钮始终在最上层
-                if (closeEyesBtn != null)
-                    closeEyesBtn.transform.SetAsLastSibling();
             }
             else
             {
                 // 恢复闭眼前的状态
+                if (closeEyesBtnImage != null && openEyeSprite != null)
+                    closeEyesBtnImage.sprite = openEyeSprite;
                 foreach (Transform child in gameplayUIRoot.transform)
                 {
                     if (child.name == "EyeCloseOverlay") continue;
-                    if (child.name == "CloseEyesBtn")
-                    {
-                        var rt = child.GetComponent<RectTransform>();
-                        if (rt != null)
-                            rt.anchoredPosition = closeEyesBtnOriginalPos;
-                        continue;
-                    }
+                    if (child.name == "CloseEyesBtn") continue;
                     if (preEyeCloseActiveState.TryGetValue(child.name, out bool wasActive))
                         child.gameObject.SetActive(wasActive);
                 }
@@ -933,6 +1216,7 @@ public class GamePanel : BasePanel
         if (activePopup != null && activePopup.IsShown)
         {
             activePopup.Hide();
+            CardSlot.IsPopupActive = false;
             Time.timeScale = prePopupTimeScale;
             return;
         }
@@ -946,6 +1230,7 @@ public class GamePanel : BasePanel
             Debug.Log($"[GamePanel] 弹窗实例化成功: {go.name}");
         }
 
+        CardSlot.IsPopupActive = true;
         activePopup.Show(card.CardData, card.GetComponent<RectTransform>());
         prePopupTimeScale = Time.timeScale;
         Time.timeScale = 0f;

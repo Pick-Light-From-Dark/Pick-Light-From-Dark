@@ -115,6 +115,9 @@ namespace Game.Flow
         {
             Debug.Log("[LevelFlowCoordinator] === 阶段2：游玩 ===");
 
+            // 先初始化 GameFlowController，避免 GamePanel.Awake 用 TestLevelConfig 自初始化
+            GameFlowController.Instance.Initialize(levelConfig);
+
             var teacherObj = new GameObject("TeacherAI");
             teacherAI = teacherObj.AddComponent<Game.AI.TeacherAI>();
 

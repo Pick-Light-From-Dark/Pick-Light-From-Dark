@@ -17,6 +17,7 @@ namespace Game.Card
         public bool isInitial;        // 是否为初始卡牌
         public float savedReadTime;   // 打断时保存的读条进度（saveProgressOnInterrupt）
         public int savedSegmentIndex; // 打断时保存的片段索引
+        public List<int> runtimeRelatedCardIds; // 运行时关联列表副本（避免修改ScriptableObject）
 
         public bool IsDepleted => remainingStacks <= 0;
     }
@@ -42,8 +43,11 @@ namespace Game.Card
         /// <summary>顶替映射：被消耗的卡牌ID → 其关联卡牌ID列表（永久生效）</summary>
         private Dictionary<int, List<int>> replaceMap = new Dictionary<int, List<int>>();
 
-        /// <summary>运行时额外关联：卡牌ID → 临时追加的关联ID列表（仅本局有效，不修改ScriptableObject）</summary>
+        /// <summary>运行时额外关联：卡牌ID → 临时追加的关联ID列表（影响生成+保留）</summary>
         private Dictionary<int, List<int>> runtimeExtraAssociations = new Dictionary<int, List<int>>();
+
+        /// <summary>运行时保留关联：卡牌ID → 仅保留可见、不触发生成的ID列表</summary>
+        private Dictionary<int, List<int>> runtimeKeepOnly = new Dictionary<int, List<int>>();
 
         private LevelConfigSO levelConfig;
 
@@ -98,6 +102,7 @@ namespace Game.Card
             savedNonPersistentStacks.Clear();
             replaceMap.Clear();
             runtimeExtraAssociations.Clear();
+            runtimeKeepOnly.Clear();
             cardHistory.Clear();
             pooledCardIds.Clear();
 
@@ -137,9 +142,12 @@ namespace Game.Card
                     // 持续关联类：重置为初始层数
                     if (data.relatedType == RelatedType.Persistent)
                     {
-                        globalPool[cardId].remainingStacks = data.initialStack;
-                        globalPool[cardId].isUnlocked = true;
-                        globalPool[cardId].isInitial = true;
+                        var existing = globalPool[cardId];
+                        existing.remainingStacks = data.initialStack;
+                        existing.isUnlocked = true;
+                        existing.isInitial = true;
+                        existing.runtimeRelatedCardIds = data.relatedCardIds != null
+                            ? new List<int>(data.relatedCardIds) : new List<int>();
                     }
                 }
                 else
@@ -149,7 +157,9 @@ namespace Game.Card
                         data = data,
                         remainingStacks = data.cardType == CardType.Stackable ? data.initialStack : 1,
                         isUnlocked = true,
-                        isInitial = true
+                        isInitial = true,
+                        runtimeRelatedCardIds = data.relatedCardIds != null
+                            ? new List<int>(data.relatedCardIds) : new List<int>()
                     };
                     globalPool.Add(cardId, pooled);
                     pooledCardIds.Add(cardId);
@@ -259,14 +269,20 @@ namespace Game.Card
             HandleSpecialEffects(usedCard);
 
             // 5. 持续关联卡牌：使用后隐藏非关联卡牌，使用递归解析后的ID做keepSet
-            if (usedCard.relatedType == RelatedType.Persistent && usedCard.relatedCardIds != null && usedCard.relatedCardIds.Count > 0)
+            var effectiveIds = GetEffectiveRelatedIds(usedCard);
+            if (usedCard.relatedType == RelatedType.Persistent && effectiveIds != null && effectiveIds.Count > 0)
             {
-                var keepSet = new HashSet<int>(ResolveLinkedIds(usedCard.relatedCardIds));
+                var keepSet = new HashSet<int>(ResolveLinkedIds(effectiveIds));
                 // 合并运行时额外关联（仅本局有效，不修改ScriptableObject）
                 if (runtimeExtraAssociations.TryGetValue(usedCard.id, out var extras))
                 {
                     foreach (int extra in extras)
                         keepSet.Add(extra);
+                }
+                if (runtimeKeepOnly.TryGetValue(usedCard.id, out var keepOnlyList))
+                {
+                    foreach (int id in keepOnlyList)
+                        keepSet.Add(id);
                 }
                 // 2016生成暂停时从keepSet中移除，保持隐藏
                 if (isCard2016GenerationPaused)
@@ -376,10 +392,11 @@ namespace Game.Card
         /// </summary>
         public void TriggerLinkedCards(CardData usedCard)
         {
-            if (usedCard == null || usedCard.relatedCardIds == null) return;
+            var effectiveIds = GetEffectiveRelatedIds(usedCard);
+            if (usedCard == null || effectiveIds == null) return;
 
-            // 递归解析顶替链
-            var resolvedIds = ResolveLinkedIds(usedCard.relatedCardIds);
+            // 递归解析顶替链（使用运行时副本）
+            var resolvedIds = ResolveLinkedIds(effectiveIds);
             // 合并运行时额外关联（仅本局有效）
             if (runtimeExtraAssociations.TryGetValue(usedCard.id, out var extras))
             {
@@ -388,7 +405,7 @@ namespace Game.Card
                         resolvedIds.Add(extra);
             }
 
-            Debug.Log($"[CardManager] TriggerLinkedCards: usedCard={usedCard.id}({usedCard.cardName}), rawIds=[{string.Join(",", usedCard.relatedCardIds)}], resolvedIds=[{string.Join(",", resolvedIds)}], relatedType={usedCard.relatedType}");
+            Debug.Log($"[CardManager] TriggerLinkedCards: usedCard={usedCard.id}({usedCard.cardName}), effectiveIds=[{string.Join(",", effectiveIds)}], resolvedIds=[{string.Join(",", resolvedIds)}], relatedType={usedCard.relatedType}");
 
             foreach (int linkedId in resolvedIds)
             {
@@ -440,7 +457,9 @@ namespace Game.Card
                         data = linkedData,
                         remainingStacks = stacks,
                         isUnlocked = true,
-                        isInitial = false
+                        isInitial = false,
+                        runtimeRelatedCardIds = linkedData.relatedCardIds != null
+                            ? new List<int>(linkedData.relatedCardIds) : new List<int>()
                     };
                     globalPool.Add(linkedId, newPooled);
                     pooledCardIds.Add(linkedId);
@@ -458,33 +477,43 @@ namespace Game.Card
         }
 
         /// <summary>
+        /// 获取卡牌的运行时关联列表（优先返回PooledCard中的运行时副本，避免修改ScriptableObject）
+        /// </summary>
+        private List<int> GetEffectiveRelatedIds(CardData data)
+        {
+            if (data == null) return new List<int>();
+            if (globalPool.TryGetValue(data.id, out var pooled) && pooled.runtimeRelatedCardIds != null)
+                return pooled.runtimeRelatedCardIds;
+            return data.relatedCardIds ?? new List<int>();
+        }
+
+        /// <summary>
         /// 顶替机制：被消耗的非持续关联卡牌的关联卡牌 永久加入所有父卡牌的关联列表
         /// </summary>
         private void ApplyReplaceToParents(CardData consumedCard)
         {
-            Debug.Log($"[CardManager] ApplyReplaceToParents: consumedCard={consumedCard.id}, relatedCardIds before=[{string.Join(",", consumedCard.relatedCardIds ?? new List<int>())}]");
-            replaceMap[consumedCard.id] = new List<int>(consumedCard.relatedCardIds ?? new List<int>());
+            var consumedIds = GetEffectiveRelatedIds(consumedCard);
+            Debug.Log($"[CardManager] ApplyReplaceToParents: consumedCard={consumedCard.id}, relatedCardIds before=[{string.Join(",", consumedIds)}]");
+            replaceMap[consumedCard.id] = new List<int>(consumedIds);
 
-            // 找到所有在关联列表中包含此卡牌的父卡牌
+            // 找到所有在关联列表中包含此卡牌的父卡牌（读取运行时副本）
             foreach (var kvp in globalPool)
             {
-                var parentData = kvp.Value.data;
-                if (parentData == null || parentData.relatedCardIds == null) continue;
-                if (!parentData.relatedCardIds.Contains(consumedCard.id)) continue;
+                var parentIds = GetEffectiveRelatedIds(kvp.Value.data);
+                if (parentIds == null || !parentIds.Contains(consumedCard.id)) continue;
 
-                Debug.Log($"[CardManager] ApplyReplaceToParents: 找到父卡牌 {kvp.Key}({parentData.cardName}), 其relatedCardIds=[{string.Join(",", parentData.relatedCardIds)}]");
+                Debug.Log($"[CardManager] ApplyReplaceToParents: 找到父卡牌 {kvp.Key}({kvp.Value.data.cardName}), 其relatedCardIds=[{string.Join(",", parentIds)}]");
 
-                // 移除被消耗的卡牌
-                parentData.relatedCardIds.Remove(consumedCard.id);
-                // 添加被消耗卡牌的关联卡牌
-                foreach (int replaceId in consumedCard.relatedCardIds ?? new List<int>())
+                // 修改运行时副本，不再修改ScriptableObject
+                parentIds.Remove(consumedCard.id);
+                foreach (int replaceId in consumedIds)
                 {
-                    if (!parentData.relatedCardIds.Contains(replaceId))
-                        parentData.relatedCardIds.Add(replaceId);
+                    if (!parentIds.Contains(replaceId))
+                        parentIds.Add(replaceId);
                 }
-                Debug.Log($"[CardManager] ApplyReplaceToParents: 父卡牌 {kvp.Key} 修改后 relatedCardIds=[{string.Join(",", parentData.relatedCardIds)}]");
+                Debug.Log($"[CardManager] ApplyReplaceToParents: 父卡牌 {kvp.Key} 修改后 relatedCardIds=[{string.Join(",", parentIds)}]");
             }
-            Debug.Log($"[CardManager] ApplyReplaceToParents: 完成, consumedCard.relatedCardIds after=[{string.Join(",", consumedCard.relatedCardIds ?? new List<int>())}]");
+            Debug.Log($"[CardManager] ApplyReplaceToParents: 完成, consumedCard.relatedCardIds after=[{string.Join(",", consumedIds)}]");
         }
 
         /// <summary>
@@ -521,6 +550,21 @@ namespace Game.Card
             }
         }
 
+        /// <summary>仅保留可见，不触发生成</summary>
+        private void AddKeepOnly(int cardId, int keepId)
+        {
+            if (!runtimeKeepOnly.TryGetValue(cardId, out var list))
+            {
+                list = new List<int>();
+                runtimeKeepOnly[cardId] = list;
+            }
+            if (!list.Contains(keepId))
+            {
+                list.Add(keepId);
+                Debug.Log($"[CardManager] AddKeepOnly: {keepId} 加入 keepOnly[{cardId}]");
+            }
+        }
+
         /// <summary>
         /// 处理卡牌特殊效果（测试案v2定义的条件生成、动态关联、特殊消耗等）
         /// </summary>
@@ -532,7 +576,8 @@ namespace Game.Card
                     if (usedCardIds.Contains(2014))
                     {
                         UnlockCardById(2015);
-                        Debug.Log("[CardManager] 特殊效果: 酱包(2013)+海苔包(2014)均已使用，生成搅拌拌面(2015)");
+                        AddKeepOnly(2002, 2015);
+                        Debug.Log("[CardManager] 特殊效果: 酱包(2013)+海苔包(2014)均已使用，生成搅拌拌面(2015)，加入2002运行时关联");
                     }
                     break;
 
@@ -540,13 +585,15 @@ namespace Game.Card
                     if (usedCardIds.Contains(2013))
                     {
                         UnlockCardById(2015);
-                        Debug.Log("[CardManager] 特殊效果: 海苔包(2014)+酱包(2013)均已使用，生成搅拌拌面(2015)");
+                        AddKeepOnly(2002, 2015);
+                        Debug.Log("[CardManager] 特殊效果: 海苔包(2014)+酱包(2013)均已使用，生成搅拌拌面(2015)，加入2002运行时关联");
                     }
                     break;
 
-                case 2015: // 搅拌拌面：2016由关联列表[2010,2011,2016]自然生成；2017加入2003运行时关联；仅重置2003
+                case 2015: // 搅拌拌面：2016由关联列表生成；2017加入2003运行时关联；重置2003
                 {
                     AddRuntimeAssociation(2003, 2017);
+                    AddKeepOnly(2002, 2016); // 2016也加入2002关联，避免经由2011→2002后丢失
                     if (globalPool.TryGetValue(2003, out var p2003))
                     {
                         p2003.remainingStacks = 1;
@@ -558,11 +605,13 @@ namespace Game.Card
 
                 case 2017: // 分享拌面：2018由关联列表生成；特殊效果处理2016减少+暂停+对话
                 {
-                    // 减少2016(吃拌面)堆叠层数1，并从备选区隐藏
+                    AddKeepOnly(2003, 2018); // 2018仅属于2003视角，切换回来后保留
                     if (globalPool.TryGetValue(2016, out var pooled2016))
                     {
                         pooled2016.remainingStacks = Mathf.Max(0, pooled2016.remainingStacks - 1);
                         pooled2016.isUnlocked = false;
+                        // 通知任务系统：2016消耗一层（等同于使用一次吃拌面）
+                        Task.TaskManager.Instance.HandleCardCompleted(2016);
                     }
                     // 保存并暂停2016生成
                     if (!isCard2016GenerationPaused)
@@ -576,14 +625,10 @@ namespace Game.Card
                     break;
                 }
 
-                case 2018: // 拿回拌面：解除2016生成暂停，恢复2016可见
+                case 2018: // 拿回拌面：解除2016生成暂停（2016仅在2002视角下可见）
                 {
                     isCard2016GenerationPaused = false;
-                    if (globalPool.TryGetValue(2016, out var pooled2016) && !pooled2016.IsDepleted)
-                    {
-                        pooled2016.isUnlocked = true;
-                    }
-                    Debug.Log("[CardManager] 特殊效果: 拿回拌面 → 解除2016生成暂停，恢复2016可见");
+                    Debug.Log("[CardManager] 特殊效果: 拿回拌面 → 解除2016生成暂停");
                     break;
                 }
 
@@ -622,9 +667,10 @@ namespace Game.Card
                         if (!usedCardIds.Contains(2025))
                         {
                             var card2001 = GetCardDataById(2001);
-                            if (card2001 != null && card2001.relatedCardIds != null && !card2001.relatedCardIds.Contains(2025))
+                            var ids2001 = GetEffectiveRelatedIds(card2001);
+                            if (ids2001 != null && !ids2001.Contains(2025))
                             {
-                                card2001.relatedCardIds.Add(2025);
+                                ids2001.Add(2025);
                                 Debug.Log("[CardManager] 特殊效果: 拿走面包(2026) → 2025未用过，将2025加入2001(掀开被子)的关联列表");
                             }
                             if (globalPool.TryGetValue(2025, out var pooled2025))
@@ -633,9 +679,10 @@ namespace Game.Card
                                 Debug.Log("[CardManager] 特殊效果: 拿走面包(2026) → 隐藏2025，需经2030→2001路径重新获取");
                             }
                             var card2024 = GetCardDataById(2024);
-                            if (card2024 != null && card2024.relatedCardIds != null && card2024.relatedCardIds.Contains(2025))
+                            var ids2024 = GetEffectiveRelatedIds(card2024);
+                            if (ids2024 != null && ids2024.Contains(2025))
                             {
-                                card2024.relatedCardIds.Remove(2025);
+                                ids2024.Remove(2025);
                                 Debug.Log("[CardManager] 特殊效果: 拿走面包(2026) → 从2024(打开储物柜)关联列表中移除2025");
                             }
                         }
@@ -671,7 +718,9 @@ namespace Game.Card
                 data = data,
                 remainingStacks = data.cardType == CardType.Stackable ? data.initialStack : 1,
                 isUnlocked = true,
-                isInitial = false
+                isInitial = false,
+                runtimeRelatedCardIds = data.relatedCardIds != null
+                    ? new List<int>(data.relatedCardIds) : new List<int>()
             };
             globalPool.Add(cardId, pooled);
             pooledCardIds.Add(cardId);

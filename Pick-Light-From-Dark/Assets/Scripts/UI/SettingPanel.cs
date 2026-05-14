@@ -21,13 +21,15 @@ public class SettingPanel : BasePanel
     protected override void ClickBtn(string btnName)
     {
         switch (btnName)
-
         {
             case "BackBtn":
                 UIMgr.Instance.HidePanel<SettingPanel>();
-                UIMgr.Instance.ShowPanel<BeginPanel>();
+                // 游戏中打开的设置 → 返回暂停面板；主菜单打开的 → 返回主菜单
+                if (Game.Flow.GameFlowController.Instance.IsInitialized)
+                    UIMgr.Instance.ShowPanel<StopGamePanel>();
+                else
+                    UIMgr.Instance.ShowPanel<BeginPanel>();
                 break;
-            
         }
     }
     protected override void SliderValueChange(string sliderName, float value)

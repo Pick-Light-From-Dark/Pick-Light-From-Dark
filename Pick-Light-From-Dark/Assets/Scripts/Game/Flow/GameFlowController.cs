@@ -37,6 +37,13 @@ namespace Game.Flow
                 return;
             }
 
+            // 已初始化且游戏未结束时，跳过重复初始化（避免重置任务进度等运行时状态）
+            if (isInitialized && !isGameOver)
+            {
+                Debug.Log("[GameFlow] 已初始化，跳过重复 Initialize 调用");
+                return;
+            }
+
             Debug.Log($"[GameFlow] InstanceID:{GetInstanceID()} === Initialize 开始 ===");
             Debug.Log($"[GameFlow] InstanceID:{GetInstanceID()} 当前状态: isInitialized={isInitialized}, isGameOver={isGameOver}, isPaused={isPaused}, hasStartedFirstFrame={hasStartedFirstFrame}, remainingTime={remainingTime:F2}");
 
@@ -50,6 +57,9 @@ namespace Game.Flow
             // 初始化情绪值系统
             emotionSystem.Initialize(levelConfig);
 
+            // 初始化卡牌管理器（必须在 TaskManager 之前，TaskManager 需要通过 CardManager 查询卡牌数据）
+            Game.Card.CardManager.Instance.Initialize(levelConfig);
+
             // 初始化任务系统
             taskManager.Initialize(levelConfig);
 
@@ -58,9 +68,6 @@ namespace Game.Flow
 
             // 初始化闭眼系统（让 LevelConfigSO 的 eyeClose 阈值/倍率参数生效，并复位加速状态）
             Game.EyeClose.EyeCloseSystem.Instance.Initialize(levelConfig);
-
-            // 初始化卡牌管理器（重置 handCards / cardHistory / nextInstanceId，并发放初始卡牌）
-            Game.Card.CardManager.Instance.Initialize(levelConfig);
 
             // 初始化时间
             remainingTime = levelConfig.timeLimit;
@@ -241,28 +248,66 @@ namespace Game.Flow
             currentLives--;
             Debug.Log($"[GameFlow] 玩家被抓，生命值剩余: {currentLives}/{levelConfig.maxLives}");
 
-            // 生命值耗尽 → 游戏失败
+            var gamePanel = FindFirstObjectByType<GamePanel>();
+
+            // 生命值耗尽 → 显示失败UI，5秒后游戏失败
             if (currentLives <= 0)
             {
-                GameLose("生命值耗尽");
+                PauseGame();
+                if (gamePanel != null)
+                {
+                    gamePanel.ShowFailOverlay();
+                    gamePanel.UpdateHpDisplay(0);
+                }
+                StartCoroutine(GameLoseAfterDelay(5f));
                 return;
             }
 
-            // 还有生命值：暂停 + 2秒后恢复（让玩家反应）
+            // 还有生命值：暂停 + 显示被抓UI + 5秒后重置
             PauseGame();
-            StartCoroutine(ResumeAfterDelayRealtime(2f));
+            if (gamePanel != null)
+            {
+                gamePanel.ShowCaughtOverlay();
+                gamePanel.UpdateHpDisplay(currentLives);
+            }
+            StartCoroutine(ResumeAfterCaughtDelay(5f));
         }
 
         /// <summary>
-        /// 延迟恢复游戏（使用真实时间，不受 timeScale=0 影响）
+        /// 被抓后延迟恢复：隐藏UI，重置玩家状态，恢复游戏
         /// </summary>
-        private System.Collections.IEnumerator ResumeAfterDelayRealtime(float delay)
+        private System.Collections.IEnumerator ResumeAfterCaughtDelay(float delay)
         {
             yield return new WaitForSecondsRealtime(delay);
+
+            var gamePanel = FindFirstObjectByType<GamePanel>();
+            if (gamePanel != null)
+            {
+                gamePanel.HideCaughtOverlay();
+                gamePanel.ShowEyeClosedUI();
+            }
+
+            // 重置玩家状态：躺回床上、闭眼
+            var ps = Game.Data.PlayerState.Instance;
+            if (ps != null)
+            {
+                ps.SetInBed(true);
+                ps.SetEyesClosed(true);
+            }
+
             if (!isGameOver)
             {
                 ResumeGame();
             }
+        }
+
+        /// <summary>
+        /// 生命耗尽后延迟触发GameLose：等Bg5004展示5秒后再切到TipPanel
+        /// </summary>
+        private System.Collections.IEnumerator GameLoseAfterDelay(float delay)
+        {
+            yield return new WaitForSecondsRealtime(delay);
+            GameLose("生命值耗尽");
         }
 
         /// <summary>
