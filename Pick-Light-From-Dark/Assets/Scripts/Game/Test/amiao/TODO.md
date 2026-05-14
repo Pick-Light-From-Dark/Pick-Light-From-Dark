@@ -108,7 +108,6 @@
     [se:DXH_SOUND/04.移动被子]
   ```
   之后只显示舍友，对话内容为妈，并且卡在这里无法推进 适配一下Pick-Light-From-Dark\Assets\Resources\Dialogue中的格式 让里边的内容、背景、音效都可以被跳过，尽量做
-  -[ ]
 ```
 
 
