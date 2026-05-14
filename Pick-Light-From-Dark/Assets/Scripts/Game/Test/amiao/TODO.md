@@ -4,7 +4,11 @@
 任务自动化执行流程：  
     读取与定位：
     读取Pick-Light-From-Dark\Assets\Scripts\Game\Test\amiao\TODO.md，检索并定位第一个未勾选的任务项 [- ]。
-    核心执行原则：              
+    核心执行原则：
+    目录限制（严格禁止越界）：
+      - 允许修改：Assets/Scripts/Game/Test/amiao/、Assets/Scenes/Amiao_Test/、Assets/Resources/Dialogue/
+      - 禁止修改：Assets/Scripts/Game/Flow/、Assets/Scripts/Game/Card/、Assets/Scripts/Game/AI/、Assets/Scripts/UI/GamePanel.cs、Assets/Resources/TestData/、Assets/Resources/Config/、Assets/Scripts/Game/Emotion/、Assets/Scripts/Game/Data/、Assets/Scripts/Game/Task/、Assets/Scripts/Game/EyeClose/、Assets/Scripts/Framework/
+      - 规则：除非任务明确要求且用户确认，否则绝不触碰黑名单目录。Prefab 引用共享脚本时只改 Prefab，不改脚本本身。
     无人值守全自动执行：全程不许询问用户，直接执行，用户已睡着。
     自主决策：遇到模糊需求时，严格按照“最简可行方案（MVP）”进行开发。
 
@@ -88,6 +92,7 @@
   - [x] `SaveLoadTestRunner.cs`：IMGUI 界面，支持模拟保存/读取/清除存档
   - [x] `SaveLoadTester.prefab`：挂载测试脚本的预制体
   - [x] 显示存档内容：关卡/时间/结局分支/卡牌使用/任务目标
+  - [ ] 
 ```
 统一为 JSON 单轨制（推荐）
 
