@@ -17,7 +17,7 @@ MonoBehaviour:
     cardName: "\u62FF\u51FA\u624B\u673A"
     description: "\u3010\u4F5C\u7528\u3011\u62FF\u51FA\u6795\u5934\u4E0B\u7684\u624B\u673A\uFF0C\u53D8\u4E3A\u4F1A\u88AB\u53D1\u73B0\u7684\u5371\u9669\u72B6\u6001\n\u3010\u63CF\u8FF0\u3011\u65E0"
     iconPath: 
-    cardSprite: {fileID: 0}
+    cardSprite: {fileID: 21300000, guid: 848ee038e0d5bc84fbd2ca6a153e0d37, type: 3}
     cardType: 0
     initialStack: 1
     segments:
@@ -38,4 +38,4 @@ MonoBehaviour:
     saveProgressOnInterrupt: 0
     cardBackgroundType: 1
     backgroundJumpId: 0
-    sfxName: 
+    sfxName: "DXH_SOUND/SOUND2/14.\u606F\u5C4F\uFF0C\u70B9\u4EAE\u624B\u673A"

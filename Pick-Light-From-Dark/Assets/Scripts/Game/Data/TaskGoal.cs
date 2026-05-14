@@ -2,9 +2,6 @@ using System;
 
 namespace Game.Data
 {
-    /// <summary>
-    /// 任务目标状态
-    /// </summary>
     public enum TaskState
     {
         Pending = 0,
@@ -12,12 +9,11 @@ namespace Game.Data
         Completed = 2
     }
 
-    /// <summary>
-    /// 关卡任务目标定义
-    /// </summary>
     [Serializable]
     public class TaskGoal
     {
+        public int taskId;
+        public string taskName;
         public int targetCardId;
         public int targetCount;
         public int currentCount;

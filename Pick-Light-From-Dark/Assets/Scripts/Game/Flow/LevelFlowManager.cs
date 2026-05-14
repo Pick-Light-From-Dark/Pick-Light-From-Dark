@@ -134,6 +134,9 @@ namespace Game.Flow
         {
             currentState = FlowState.Gameplay;
 
+            // 先初始化 GameFlowController，避免 GamePanel.Awake 用 TestLevelConfig 自初始化
+            GameFlowController.Instance.Initialize(currentLevelConfig);
+
             // 创建老师AI
             var teacherObj = new GameObject("TeacherAI");
             DontDestroyOnLoad(teacherObj);

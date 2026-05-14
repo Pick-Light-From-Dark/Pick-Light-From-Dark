@@ -52,6 +52,7 @@ namespace Game.UI
         public static event System.Action<CardSlot> OnCardDragStarted;
         public static event System.Action<CardSlot> OnCardDragEnded;
         public static CardSlot CurrentDragging { get; private set; }
+        public static bool IsPopupActive { get; set; }
 
         void Awake()
         {
@@ -163,6 +164,7 @@ namespace Game.UI
 
         public void OnPointerEnter(PointerEventData eventData)
         {
+            if (GamePanel.IsInteractionLocked) return;
             isHovered = true;
             targetScale = hoverScale;
             MusicMgr.Instance.PlaySound("DXH_SOUND/11.悬停卡片UI");
@@ -178,6 +180,7 @@ namespace Game.UI
 
         public void OnPointerClick(PointerEventData eventData)
         {
+            if (GamePanel.IsInteractionLocked) return;
             MusicMgr.Instance.PlaySound("DXH_SOUND/12.点击卡片UI");
             OnCardClicked?.Invoke(this);
         }
@@ -186,6 +189,8 @@ namespace Game.UI
 
         public void OnBeginDrag(PointerEventData eventData)
         {
+            if (IsPopupActive) return;
+            if (GamePanel.IsInteractionLocked) return;
             CurrentDragging = this;
             acceptedParent = null;
             isDragging = true;

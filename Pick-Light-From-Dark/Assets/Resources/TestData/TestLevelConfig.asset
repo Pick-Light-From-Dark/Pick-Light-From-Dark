@@ -29,3 +29,11 @@ MonoBehaviour:
   flashPanicPerSec: 2
   initialCards: D1070000DA070000
   maxLives: 2
+  taskGoals:
+  - taskId: 3001
+    taskName: "吃薯片"
+    targetCardId: 2008
+    targetCount: 0
+    currentCount: 0
+    state: 0
+  cardDataPath: Card
