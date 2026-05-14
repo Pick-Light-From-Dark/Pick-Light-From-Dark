@@ -196,8 +196,11 @@ public class GamePanel : BasePanel
         if (!Game.Flow.GameFlowController.Instance.IsInitialized)
         {
             var config = overrideLevelConfig ?? Resources.Load<Game.Config.LevelConfigSO>("TestData/TestLevelConfig");
-            if (config != null)
+            if (config != null && Time.frameCount != lastGameFlowInitFrame)
+            {
+                lastGameFlowInitFrame = Time.frameCount;
                 Game.Flow.GameFlowController.Instance.Initialize(config);
+            }
         }
 
         // 初始化生命值显示
@@ -210,19 +213,6 @@ public class GamePanel : BasePanel
         CardSlot.OnCardClicked += OnCardClicked;
         CardSlot.OnCardDragStarted += OnCardDragStarted;
         CardSlot.OnCardDragEnded += OnCardDragEnded;
-
-        if (!Game.Flow.GameFlowController.Instance.IsInitialized)
-        {
-            var config = overrideLevelConfig ?? Resources.Load<Game.Config.LevelConfigSO>("TestData/TestLevelConfig");
-            if (config != null && Time.frameCount != lastGameFlowInitFrame)
-            {
-                lastGameFlowInitFrame = Time.frameCount;
-                Game.Flow.GameFlowController.Instance.Initialize(config);
-            }
-        }
-
-        // 提前触发 PlayerState 单例初始化，确保其 Update() 开始运行以监听 C 键
-        var ps = PlayerState.Instance;
 
         if (cardLoadingBarBg != null) cardLoadingBarBg.transform.parent.gameObject.SetActive(false);
         if (LoadingCount != null) LoadingCount.gameObject.SetActive(false);

@@ -735,6 +735,9 @@ namespace Game.Test
             s = Resources.Load<Sprite>("UI/Dialogue/Backgrounds/" + name);
             if (s != null) { Debug.Log($"[LoadBgSprite] 从 Resources/UI/Dialogue/Backgrounds 找到: {name}"); return s; }
 
+            s = Resources.Load<Sprite>("UI/Background/" + name);
+            if (s != null) { Debug.Log($"[LoadBgSprite] 从 Resources/UI/Background 找到: {name}"); return s; }
+
 #if UNITY_EDITOR
             if (s == null)
             {
@@ -925,6 +928,10 @@ namespace Game.Test
             panelRect.anchoredPosition = Vector2.zero;
             panelRect.sizeDelta = new Vector2(600, 320);
             choicePanel.SetActive(false);
+            var choiceCanvas = choicePanel.AddComponent<Canvas>();
+            choiceCanvas.overrideSorting = true;
+            choiceCanvas.sortingOrder = 200;
+            choicePanel.AddComponent<GraphicRaycaster>();
 
             // 按钮1（上排大按钮）
             choiceBtn1 = CreateButton("ChoiceBtn1", choicePanel.transform,
