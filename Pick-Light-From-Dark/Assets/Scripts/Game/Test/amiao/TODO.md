@@ -98,7 +98,7 @@
   - [x] Pick-Light-From-Dark\Assets\Scenes\GameScene.unity游戏开始的时候 剧情到游玩部分 这些切换的时候会没有画面出现透明 而且会看到开始画面（还没消失）可以使用loading画面吗
   - [x] 做一个跳过功能的prefab 用以检查跳过的内容，跳过的时候跳到选项边，是不是显示的是选项之前的那个对话   同时这个跳过功能不应该能跳过选项
   - [x] 优化存档系统 在全局（视觉小说+游玩+结局） 分成两路存储 关卡数和其他数据 每次读档 按照关卡数回到对应的关卡的时间 而其他数据和结局相关Pick-Light-From-Dark\Logs\player_data.json 分析这个方案的可行性和优化方向  还是说原来的更好？ 然后做一个有剧情的prefab可以存档 Dialogue1~2 在2存档 再读档就是2剧情开始处；然后做一个Pick-Light-From-Dark\Assets\Scenes\GameScene.unity类似的prefab Dialogue1+level1+Dialogue1-1+Dialogue2 测试能不能读档到第二个
-  - [ ] Pick-Light-From-Dark\Logs\05150420快进bug.log Assets/Scripts/Game/Test/amiao/FastForwardDevMode.cs   快进时遇到
+  - [x] Pick-Light-From-Dark\Logs\05150420快进bug.log Assets/Scripts/Game/Test/amiao/FastForwardDevMode.cs   快进时遇到
   ```txt
     [hide_dialog]
     [wait:2]

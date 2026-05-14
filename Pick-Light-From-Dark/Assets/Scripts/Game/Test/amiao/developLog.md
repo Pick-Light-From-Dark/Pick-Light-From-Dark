@@ -696,3 +696,23 @@
 - 测试器：`Assets/Scripts/Game/Test/amiao/CrossLevelSaveTestRunner.cs`
 - Prefab：`Assets/Scenes/Amiao_Test/TestPrefabs/CrossLevelSaveTester.prefab`
 
+## 2026-05-15 快进模式 bug 修复
+
+**问题**：快进时遇到 `[hide_dialog]` / `[wait:2]` / `[show_dialog]` / `[bg:...]` / `[se:...]` 后卡住，只显示"舍友"、对话内容为"妈"，无法推进。
+
+**根因**：`ShowNextLine()` 中 `[wait:2]` 和 `[center_text:xxx]` 指令的等待时间固定（2s / 3s），不受 `isFastForwarding` 影响。快进模式下 `FastForwardSkipRoutine` 与 `WaitAndContinue` 协程竞争 `isProcessing` 状态，导致流程卡住。
+
+**修复**：`FungusVNController.cs` 中两个等待指令增加快进分支：
+- `centerText` 等待：`isFastForwarding ? 0.05f : 3f`
+- `wait` 指令等待：`isFastForwarding ? 0.05f : line.wait`
+
+快进模式下所有等待统一压缩到 0.05 秒，背景、音效等同步指令本身不受影响（已正常执行）。
+
+**测试方式**：
+1. 挂载 `FastForwardDevMode` 到场景
+2. 运行剧情，在含 `[wait:2]` 或 `[center_text:...]` 的段落按住空格快进
+3. 观察是否流畅通过，不再卡住
+
+**重要路径**：
+- 修复代码：`Assets/Scripts/Game/Test/amiao/FungusVNController.cs`（`ShowNextLine` 方法，centerText / wait 分支）
+

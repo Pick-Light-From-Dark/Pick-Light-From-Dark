@@ -1320,14 +1320,14 @@ namespace Game.Test
             if (!string.IsNullOrEmpty(line.centerText))
             {
                 ShowCenterText(line.centerText);
-                StartCoroutine(WaitAndContinue(3f));
+                StartCoroutine(WaitAndContinue(isFastForwarding ? 0.05f : 3f));
                 return;
             }
 
             // ========== 等待指令 ==========
             if (line.wait > 0)
             {
-                StartCoroutine(WaitAndContinue(line.wait));
+                StartCoroutine(WaitAndContinue(isFastForwarding ? 0.05f : line.wait));
                 return;
             }
 
