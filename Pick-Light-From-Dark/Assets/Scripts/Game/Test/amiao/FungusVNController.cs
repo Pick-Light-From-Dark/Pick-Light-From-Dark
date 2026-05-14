@@ -107,6 +107,10 @@ namespace Game.Test
         // 居中大字显示
         private Text centerTextDisplay;
 
+        // 文本位置调整标志（避免重复偏移）
+        private bool namePositionAdjusted = false;
+        private bool storyPositionAdjusted = false;
+
         // 各层正在运行的背景转场协程（避免多重协程冲突）
         private Coroutine bgTransitionRoutine;
         private Coroutine mgTransitionRoutine;
@@ -425,31 +429,36 @@ namespace Game.Test
 
         void SetupNameTextAlignment()
         {
-            if (sayDialog == null) return;
+            if (sayDialog == null || namePositionAdjusted) return;
 
             var nameTextObj = sayDialog.gameObject.transform.Find("Panel/NameText");
             if (nameTextObj == null) return;
 
-            // 只设居中对齐，位置由预制体决定
+            var nameRect = nameTextObj.GetComponent<RectTransform>();
+            if (nameRect != null)
+            {
+                nameRect.anchoredPosition += new Vector2(0f, 20f);
+                namePositionAdjusted = true;
+            }
+
             var tmp = nameTextObj.GetComponent<TMPro.TextMeshProUGUI>();
             if (tmp != null)
                 tmp.alignment = TMPro.TextAlignmentOptions.Center;
-            else
-            {
-                var nameRect = nameTextObj.GetComponent<RectTransform>();
-                if (nameRect != null)
-                {
-                    nameRect.anchorMin = new Vector2(0.5f, 1f);
-                    nameRect.anchorMax = new Vector2(0.5f, 1f);
-                    nameRect.pivot = new Vector2(0.5f, 1f);
-                    nameRect.anchoredPosition = new Vector2(-20f, 0f);
-                }
-            }
         }
 
         void SetupStoryTextPosition()
         {
-            // 位置由预制体决定，不再运行时覆盖
+            if (sayDialog == null || storyPositionAdjusted) return;
+
+            var storyTextObj = sayDialog.gameObject.transform.Find("Panel/StoryText");
+            if (storyTextObj == null) return;
+
+            var storyRect = storyTextObj.GetComponent<RectTransform>();
+            if (storyRect != null)
+            {
+                storyRect.anchoredPosition += new Vector2(0f, -20f);
+                storyPositionAdjusted = true;
+            }
         }
 
         /// <summary>查找或创建某一层背景 Image</summary>
@@ -1377,6 +1386,21 @@ namespace Game.Test
             sayDialog.gameObject.SetActive(true);
             // 保留之前的文本，不清空 StoryText，使选项与旁白同时显示
 
+            // 向前查找最近一句对话/旁白/场景文本，确保跳过到达选项时对话框显示正确内容
+            int choiceIdx = lines.IndexOf(line);
+            if (choiceIdx >= 0 && sayDialog != null)
+            {
+                for (int i = choiceIdx - 1; i >= 0; i--)
+                {
+                    var prev = lines[i];
+                    if ((prev.type == "对话" || prev.type == "旁白" || prev.type == "场景") && !string.IsNullOrEmpty(prev.content))
+                    {
+                        sayDialog.StoryText = prev.content;
+                        break;
+                    }
+                }
+            }
+
             // 设置按钮文本并显示
             if (choiceText1 != null)
                 choiceText1.text = string.IsNullOrEmpty(line.choice1) ? "..." : line.choice1;
@@ -1523,7 +1547,7 @@ namespace Game.Test
 
                 textGo.AddComponent<CanvasRenderer>();
                 centerTextDisplay = textGo.AddComponent<Text>();
-                centerTextDisplay.fontSize = 72;
+                centerTextDisplay.fontSize = 48;
                 centerTextDisplay.color = Color.white;
                 centerTextDisplay.alignment = TextAnchor.MiddleCenter;
                 centerTextDisplay.raycastTarget = false;
