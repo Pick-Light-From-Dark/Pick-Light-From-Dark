@@ -127,7 +127,11 @@ namespace Game.Test
 
         void Start()
         {
-            RestartDialogue();
+            // 若场景中有 LevelFlowCoordinator，由它统一管理 VN 启动，避免重复初始化
+            if (Game.Flow.LevelFlowCoordinator.Instance == null)
+            {
+                RestartDialogue();
+            }
             if (showSkipButtonOnStart)
                 SetSkipButtonVisible(true);
         }
@@ -141,6 +145,17 @@ namespace Game.Test
             {
                 Debug.LogError("[FungusVNController] dialogueText 未赋值");
                 return;
+            }
+
+            // 停止所有可能正在运行的协程，防止重入时状态污染
+            StopAllCoroutines();
+
+            // 停止 Fungus Writer，避免旧的打字机回调与新流程交错
+            if (sayDialog != null)
+            {
+                var writer = sayDialog.GetComponent<Writer>();
+                if (writer != null && writer.IsWriting)
+                    writer.Stop();
             }
 
             // 重置状态
@@ -437,7 +452,7 @@ namespace Game.Test
             var nameRect = nameTextObj.GetComponent<RectTransform>();
             if (nameRect != null)
             {
-                nameRect.anchoredPosition += new Vector2(0f, 20f);
+                nameRect.anchoredPosition += new Vector2(0f, 10f);
                 namePositionAdjusted = true;
             }
 

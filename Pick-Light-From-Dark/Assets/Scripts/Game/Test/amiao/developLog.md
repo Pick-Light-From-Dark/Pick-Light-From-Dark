@@ -495,3 +495,127 @@
 - 修复代码：`Assets/Scripts/Game/Test/amiao/FungusVNController.cs`（`OnSkipStory` 方法）
 - 流程协调器：`Assets/Scripts/Game/Flow/LevelFlowCoordinator.cs`
 
+## 2026-05-15 修复 GameScene 自动跳过第一句话
+
+**问题**：`GameScene.unity` / `Level1.unity` 运行时剧情自动跳过第一句话，`day1-1.prefab` 独立测试无此问题。
+
+**根因**：
+- `FungusVNController.Start()` 自行调用 `RestartDialogue()` 启动剧情
+- `LevelFlowCoordinator.Start()` 也调用 `vnController.RestartDialogue()` 重新初始化
+- 剧情驱动被初始化两次：`sayDialog.Say()` 被重复调用，旧的 Writer 状态与新流程交错，导致首句被跳过
+
+**修复**：
+- `FungusVNController.Start()`：检测 `LevelFlowCoordinator.Instance != null` 时跳过自动启动，由外部流程协调器统一管理
+- `RestartDialogue()`：方法开头增加 `StopAllCoroutines()` + `writer.Stop()`，防止重入时协程/打字机回调污染状态
+
+**测试方式**：
+1. 运行 `Level1.unity`（含 LevelFlowCoordinator），开场剧情应从第一句正常开始
+2. 直接运行 `day1-1.prefab`（无 LevelFlowCoordinator），仍应自动启动对话
+
+**重要路径**：
+- 修复代码：`Assets/Scripts/Game/Test/amiao/FungusVNController.cs`（`Start` 与 `RestartDialogue` 方法）
+
+## 2026-05-15 结局画面功能 Prefab
+
+**任务**：做一个结局画面的功能 prefab，包含重新开始和返回主界面按钮。
+
+**实现**：
+- `EndingScreenController.cs`：独立结局画面控制器
+  - 显示结局名称 + 描述
+  - 重新开始按钮：死亡结局从本关游玩部分开始，其他结局从头开始
+  - 返回主界面按钮：加载主菜单场景
+  - 预留 `OnRestartRequested` / `OnReturnToMainMenuRequested` 接口供存档系统接入
+  - 按钮使用 SpriteSwap 过渡：`deadButton.png` → `deadButtonHover.png`（悬停发红光）
+- `EndingScreen.prefab`：独立 Canvas 预制体
+  - 全屏黑色背景
+  - 标题文本（48px 加粗居中）
+  - 描述文本（28px 居中）
+  - 两个按钮（240×70），带悬停 SpriteSwap
+- `EndingScreenTester.cs`：测试脚本
+  - F3 = 显示测试结局
+  - F4 = 切换死亡/普通结局模式
+  - 数字键 1~5 = 切换结局 ID
+
+**测试方式**：
+1. 将 `EndingScreen.prefab` 拖入场景
+2. 挂载 `EndingScreenTester.cs` 到空 GameObject
+3. 运行后按 F3 显示结局画面，观察按钮悬停效果和文本
+4. 按 F4 切换死亡模式，观察重新开始按钮文本变化
+
+## 2026-05-15 结局分支系统设计与后端接口
+
+**任务**：按照 ending.md 设计结局分支系统，结合游玩过程，设计留给后端调用的接口。
+
+**设计**：
+- `EndingBranchSystem.cs`：正式结局分支判定系统
+  - 接收 `GameplayRecord`（游玩记录：关卡、分支选择、生命值、情绪值、卡牌使用、道具收集）
+  - 按优先级匹配 `EndingBranchCondition`（Inspector 可配置）
+  - 自动填充默认5结局条件
+  - 兜底：根据分支标识推断结局
+- `GameplayRecord.cs`：可序列化的游玩记录数据结构
+  - 支持存档系统持久化
+- `EndingBranchCondition`：Inspector 可配置的结局条件
+  - 支持：关卡、分支选择（包含/排除）、生命值范围、情绪值范围、必须/禁止卡牌、关键道具
+- 后端接口（供 EndingManager / LevelFlowCoordinator 调用）：
+  - `EvaluateEnding()` — 主入口，返回结局ID
+  - `EvaluateEnding(GameplayRecord)` — 一次性判定
+  - `CanTriggerEnding(int)` — 检查指定结局是否可触发
+  - `GetAllPossibleEndings()` — 获取所有满足条件的结局
+  - `RecordBranchChoice(string)` — 记录分支选择
+  - `RecordCardUsed(int)` — 记录卡牌使用
+  - `RecordItemCollected(string)` — 记录道具收集
+  - `SetFinalState(int, int)` — 设置最终生命/情绪值
+  - `GetGameplayRecord()` — 获取当前游玩记录（供存档）
+  - `OnGameplayRecordUpdated` — 游玩数据更新事件（预留存档接口）
+- `EndingBranchSystemTester.cs`：IMGUI 测试界面
+  - 手动配置游玩记录参数，实时测试结局判定
+  - 提供5个结局的快捷测试按钮
+
+**测试方式**：
+1. 挂载 `EndingBranchSystem` 到场景空 GameObject
+2. 挂载 `EndingBranchSystemTester` 到另一个 GameObject
+3. 运行后调整 Inspector 中的分支/生命/情绪/道具，点击"执行判定"
+4. 观察 Console 输出的匹配条件和结局ID
+
+**重要路径**：
+- 分支系统：`Assets/Scripts/Game/Test/amiao/EndingBranchSystem.cs`
+- 测试器：`Assets/Scripts/Game/Test/amiao/EndingBranchSystemTester.cs`
+- 分析文档：`Assets/Scripts/Game/Test/amiao/EndingBranchAnalysis.md`
+
+**重要路径**：
+- 控制器：`Assets/Scripts/Game/Test/amiao/EndingScreenController.cs`
+- 测试器：`Assets/Scripts/Game/Test/amiao/EndingScreenTester.cs`
+- Prefab：`Assets/Scenes/Amiao_Test/TestPrefabs/EndingScreen.prefab`
+- 按钮素材：`Assets/Art/ui/deadButton.png`、`Assets/Art/ui/deadButtonHover.png`
+
+## 2026-05-15 Loading 画面
+
+**任务**：GameScene.unity 剧情到游玩切换时出现透明帧，需要 Loading 画面遮挡。
+
+**实现**：
+- `LoadingScreenController.cs`：全屏 Loading 画面控制器
+  - 单例模式，自动创建（若场景中不存在）
+  - `Show()` / `Hide()`：带淡入淡出动画（默认 0.3s，使用 unscaledDeltaTime 不受 timeScale 影响）
+  - `ShowImmediate()` / `HideImmediate()`：无动画立即显隐
+  - `SetText(string)`：动态修改 Loading 文字
+  - Canvas SortingOrder = 999，overrideSorting = true，确保在最上层
+  - 运行时自动创建 Canvas + CanvasScaler + GraphicRaycaster + CanvasGroup + Background Image + Loading Text
+- `LoadingScreen.prefab`：预制体版本
+  - 全屏黑色背景（Image）
+  - 中央白色 "Loading..." 文字（36px）
+  - 挂载 `LoadingScreenController`，字段已绑定
+
+**集成说明**（需后端在黑名单代码中加入）：
+- `LevelFlowCoordinator.StartGameplay()` 开头：`LoadingScreenController.Show()`
+- `UIMgr.Instance.ShowPanel<GamePanel>()` 回调完成时：`LoadingScreenController.Hide()`
+- 同理，游玩→剧情切换（OnGameWin/OnGameLose）也可使用 LoadingScreen 遮挡过渡
+
+**测试方式**：
+1. 将 `LoadingScreen.prefab` 拖入场景
+2. 任意脚本中调用 `LoadingScreenController.Show()` / `Hide()`
+3. 观察黑色全屏遮罩与淡入淡出效果
+
+**重要路径**：
+- 代码：`Assets/Scripts/Game/Test/amiao/LoadingScreenController.cs`
+- Prefab：`Assets/Scenes/Amiao_Test/TestPrefabs/LoadingScreen.prefab`
+
