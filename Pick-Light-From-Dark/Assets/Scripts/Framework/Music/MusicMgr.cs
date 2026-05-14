@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
@@ -41,8 +41,6 @@ public class MusicMgr : BaseManager<MusicMgr>
         if (!soundIsPlay)
             return;
 
-        //暂停的不处理 对象池那边 如果没有音效正在播放 就会回收到对象池中
-        //为了避免被对象池移除 我们不做处理
         for (int i = soundList.Count - 1; i >= 0; --i)
         {
             if (soundList[i] == null)
@@ -55,8 +53,7 @@ public class MusicMgr : BaseManager<MusicMgr>
             {
                 source.clip = null;
                 soundList.RemoveAt(i);
-                if (source != null && source.gameObject != null)
-                    PoolMgr.Instance.PushObj(source.gameObject);
+                PoolMgr.Instance.PushObj(source.gameObject);
             }
         }
     }
@@ -83,7 +80,7 @@ public class MusicMgr : BaseManager<MusicMgr>
     //播放背景音乐 - Resources加载版本
     public void PlayBKMusic(string name)
     {
-        
+
         if (currentBKName == name)
             return;
 

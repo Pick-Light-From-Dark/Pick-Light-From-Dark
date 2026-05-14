@@ -88,9 +88,6 @@ public class PoolData
 
         //�������
         obj.SetActive(true);
-        //�Ͽ����ӹ�ϵ
-        if (PoolMgr.isOpenLayout)
-            obj.transform.SetParent(null);
 
         return obj;
     }
@@ -170,9 +167,11 @@ public class PoolMgr : BaseManager<PoolMgr>
 
     private PoolMgr() {
 
-        //���������Ϊ�� �ʹ���
         if (poolObj == null && isOpenLayout)
+        {
             poolObj = new GameObject("Pool");
+            UnityEngine.Object.DontDestroyOnLoad(poolObj);
+        }
 
     }
 
@@ -185,7 +184,10 @@ public class PoolMgr : BaseManager<PoolMgr>
     {
         //���������Ϊ�� �ʹ���
         if (poolObj == null && isOpenLayout)
+        {
             poolObj = new GameObject("Pool");
+            UnityEngine.Object.DontDestroyOnLoad(poolObj);
+        }
 
         GameObject obj;
 
@@ -205,6 +207,8 @@ public class PoolMgr : BaseManager<PoolMgr>
             //����ʵ���������Ķ��� Ĭ�ϻ������ֺ����һ��(Clone)
             //�������������� �����������
             obj.name = name;
+            if (PoolMgr.isOpenLayout)
+                obj.transform.SetParent(poolObj.transform);
 
             //��������
             if(!poolDic.ContainsKey(name))

@@ -1,5 +1,3 @@
-using UnityEngine;
-using UnityEngine.SceneManagement;
 using Game.Flow;
 
 [UIPath("UI/Content")]
@@ -17,15 +15,15 @@ public class TipPanel : BasePanel
                 MusicMgr.Instance.PlaySound("按钮点击音效");
                 UIMgr.Instance.HideAllPanels();
                 if (coordinator != null && !string.IsNullOrEmpty(coordinator.CurrentLevelSceneName))
-                    SceneManager.LoadScene(coordinator.CurrentLevelSceneName);
+                    SceneMgr.Instance.LoadScene(coordinator.CurrentLevelSceneName);
                 else
-                    SceneManager.LoadScene("GameScene");
+                    SceneMgr.Instance.LoadScene("GameScene");
                 break;
 
             case "BackBtn":
                 MusicMgr.Instance.PlaySound("按钮点击音效");
                 UIMgr.Instance.HideAllPanels();
-                SceneManager.LoadScene("GameScene");
+                SceneMgr.Instance.LoadScene("GameScene");
                 break;
         }
     }

@@ -50,6 +50,10 @@ public class GamePanel : BasePanel
     [Header("场景背景")]
     [SerializeField] private Image sceneBackgroundImage;
 
+    [Header("情绪进度条")]
+    [SerializeField] private Image panicBarFill;
+    [SerializeField] private Image exciteBarFill;
+
     [Header("老师巡查状态")]
     [SerializeField] private TextMeshProUGUI teacherStatusText;
 
@@ -63,6 +67,8 @@ public class GamePanel : BasePanel
     // 情绪值显示
     private TextMeshProUGUI chaosCountText;
     private TextMeshProUGUI happlyCountText;
+    private const int EMOTION_DISPLAY_MIN = 0;
+    private const int EMOTION_DISPLAY_MAX = 50;
 
     /// <summary>读条前的备选区卡牌快照（打断时恢复用）</summary>
     private List<CardData> preReadSnapshot;
@@ -188,8 +194,12 @@ public class GamePanel : BasePanel
         var emo = EmotionSystem.Instance;
         if (emo == null) return;
         var info = emo.GetEmotionInfo();
-        if (chaosCountText != null) chaosCountText.text = info.panicValue.ToString();
-        if (happlyCountText != null) happlyCountText.text = info.exciteValue.ToString();
+        if (chaosCountText != null) chaosCountText.text = $"{info.panicValue}/{EMOTION_DISPLAY_MAX}";
+        if (happlyCountText != null) happlyCountText.text = $"{info.exciteValue}/{EMOTION_DISPLAY_MAX}";
+        if (panicBarFill != null)
+            panicBarFill.fillAmount = (info.panicValue - EMOTION_DISPLAY_MIN) / (float)(EMOTION_DISPLAY_MAX - EMOTION_DISPLAY_MIN);
+        if (exciteBarFill != null)
+            exciteBarFill.fillAmount = (info.exciteValue - EMOTION_DISPLAY_MIN) / (float)(EMOTION_DISPLAY_MAX - EMOTION_DISPLAY_MIN);
     }
 
     private void SetupTeacherStatus()

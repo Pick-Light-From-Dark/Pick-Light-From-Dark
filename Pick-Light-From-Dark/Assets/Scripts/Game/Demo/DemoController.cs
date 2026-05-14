@@ -103,7 +103,7 @@ namespace Game.Demo
         void ReloadDemo()
         {
             Debug.Log("[DemoController] 重新加载 Demo 关卡...");
-            UnityEngine.SceneManagement.SceneManager.LoadScene(
+            SceneMgr.Instance.LoadScene(
                 UnityEngine.SceneManagement.SceneManager.GetActiveScene().name
             );
         }
