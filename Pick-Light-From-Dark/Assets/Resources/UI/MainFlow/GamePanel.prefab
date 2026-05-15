@@ -1199,6 +1199,11 @@ MonoBehaviour:
   panicBarFill: {fileID: 3251192711204416697}
   exciteBarFill: {fileID: 4997879930494325531}
   teacherStatusText: {fileID: 0}
+  teacherImg: {fileID: 0}
+  hpImages: []
+  caughtOverlay: {fileID: 0}
+  failOverlay: {fileID: 0}
+  flashlightOverlay: {fileID: 0}
   overrideLevelConfig: {fileID: 0}
 --- !u!1 &5343972839262305328
 GameObject:
@@ -1586,6 +1591,8 @@ GameObject:
   - component: {fileID: 4324436224741492018}
   - component: {fileID: 987283846900977669}
   - component: {fileID: 3240779064039696923}
+  - component: {fileID: 3858075836993482017}
+  - component: {fileID: 3941339981892230092}
   m_Layer: 5
   m_Name: PlayerImg
   m_TagString: Untagged
@@ -1650,6 +1657,41 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!95 &3858075836993482017
+Animator:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6786580633767755360}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: dba21190dd053f649b66df4f0caa9d37, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &3941339981892230092
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6786580633767755360}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e2392055ced34d4e80f203f3454e00f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  blinkIntervalMin: 2
+  blinkIntervalMax: 6
 --- !u!1 &6800507811548287003
 GameObject:
   m_ObjectHideFlags: 0
