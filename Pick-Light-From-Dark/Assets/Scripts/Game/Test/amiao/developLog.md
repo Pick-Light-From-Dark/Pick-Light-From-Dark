@@ -716,3 +716,17 @@
 **重要路径**：
 - 修复代码：`Assets/Scripts/Game/Test/amiao/FungusVNController.cs`（`ShowNextLine` 方法，centerText / wait 分支）
 
+## 2026-05-15 编译错误 + Prefab 修复
+
+**问题**：Unity 报错 CS1022（XML 注释与类声明同行）+ Prefab Transform 引用错误。
+
+**修复**：
+- `SkipTestRunner.cs` (12行): `/// </summary>` 与 `public class SkipTestRunner` 分行
+- `CrossLevelSaveSystem.cs` (13行): 同上
+- `EndingScreen.prefab`: `m_Children` / `m_Father` 从引用 GameObject 改为引用 RectTransform
+- `SkipTester.prefab`: GameObject 的 `m_Component` 补全 MonoBehaviour 引用
+
+**重要路径**：
+- 代码：`Assets/Scripts/Game/Test/amiao/SkipTestRunner.cs`、`CrossLevelSaveSystem.cs`
+- Prefab：`Assets/Scenes/Amiao_Test/TestPrefabs/EndingScreen.prefab`、`SkipTester.prefab`
+
