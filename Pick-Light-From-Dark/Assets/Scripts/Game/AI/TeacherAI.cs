@@ -42,13 +42,36 @@ namespace Game.AI
         {
             Instance = this;
             gameFlow = GameFlowController.Instance;
+            EventCenter.Instance.AddEventListener(E_EventType.GamePause, OnGamePause);
+            EventCenter.Instance.AddEventListener(E_EventType.GameResume, OnGameResume);
         }
 
         void OnDestroy()
         {
             StopFootstep();
             EventCenter.Instance.RemoveEventListener<int>(E_EventType.CardReadComplete, OnCardUsed);
+            EventCenter.Instance.RemoveEventListener(E_EventType.GamePause, OnGamePause);
+            EventCenter.Instance.RemoveEventListener(E_EventType.GameResume, OnGameResume);
             if (Instance == this) Instance = null;
+        }
+
+        private void OnGamePause()
+        {
+            StopFootstep();
+        }
+
+        private void OnGameResume()
+        {
+            if (currentState == TeacherState.Approaching || currentState == TeacherState.Leaving)
+            {
+                MusicMgr.Instance.PlaySound("DXH_SOUND/08.脚步声", true, (source) =>
+                {
+                    footstepSource = source;
+                    footstepSource.volume = currentState == TeacherState.Approaching
+                        ? 0.65f * MusicMgr.Instance.SoundValue
+                        : MusicMgr.Instance.SoundValue;
+                });
+            }
         }
 
         private void OnCardUsed(int cardId)

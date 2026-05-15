@@ -753,7 +753,8 @@ public class GamePanel : BasePanel
         {
             activePopup.Hide();
             CardSlot.IsPopupActive = false;
-            Time.timeScale = prePopupTimeScale;
+            if (prePopupTimeScale > 0f)
+                Game.Flow.GameFlowController.Instance.ResumeGame();
         }
 
         readingCardSlot = card;
@@ -1274,7 +1275,8 @@ public class GamePanel : BasePanel
         {
             activePopup.Hide();
             CardSlot.IsPopupActive = false;
-            Time.timeScale = prePopupTimeScale;
+            if (prePopupTimeScale > 0f)
+                Game.Flow.GameFlowController.Instance.ResumeGame();
             return;
         }
 
@@ -1289,8 +1291,8 @@ public class GamePanel : BasePanel
 
         CardSlot.IsPopupActive = true;
         activePopup.Show(card.CardData, card.GetComponent<RectTransform>());
-        prePopupTimeScale = Time.timeScale;
-        Time.timeScale = 0f;
+        prePopupTimeScale = Game.Flow.GameFlowController.Instance.IsPaused() ? 0f : 1f;
+        Game.Flow.GameFlowController.Instance.PauseGame();
         Debug.Log($"[GamePanel] 弹窗显示: {card.CardData.cardName}");
     }
 
