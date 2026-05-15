@@ -77,6 +77,6 @@
 [se:DXH_SOUND/08.脚步声]
 [wait:3]
 
-[hide_dialog]
+[hide_dialog]如果 central text 就是中间大致显示。
 [wait:2]
 [show_dialog]
