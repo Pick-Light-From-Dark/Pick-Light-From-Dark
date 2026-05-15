@@ -76,3 +76,4 @@
 [hide_dialog]
 [wait:2]
 [show_dialog]
+看不到图像会
