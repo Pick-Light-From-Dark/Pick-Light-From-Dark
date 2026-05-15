@@ -40,6 +40,12 @@ namespace Game.AI
 
         void Awake()
         {
+            if (Instance != null && Instance != this)
+            {
+                Debug.LogWarning($"[TeacherAI] 检测到重复实例，销毁新实例 (InstanceID={GetInstanceID()})");
+                Destroy(gameObject);
+                return;
+            }
             Instance = this;
             gameFlow = GameFlowController.Instance;
             EventCenter.Instance.AddEventListener(E_EventType.GamePause, OnGamePause);
@@ -62,16 +68,10 @@ namespace Game.AI
 
         private void OnGameResume()
         {
-            if (currentState == TeacherState.Approaching || currentState == TeacherState.Leaving)
-            {
-                MusicMgr.Instance.PlaySound("DXH_SOUND/08.脚步声", true, (source) =>
-                {
-                    footstepSource = source;
-                    footstepSource.volume = currentState == TeacherState.Approaching
-                        ? 0.65f * MusicMgr.Instance.SoundValue
-                        : MusicMgr.Instance.SoundValue;
-                });
-            }
+            if (currentState == TeacherState.Approaching)
+                StartFootstep(0.2f * MusicMgr.Instance.SoundValue);
+            else if (currentState == TeacherState.Leaving)
+                StartFootstep(MusicMgr.Instance.SoundValue);
         }
 
         private void OnCardUsed(int cardId)
@@ -160,9 +160,9 @@ namespace Game.AI
                     float sv = MusicMgr.Instance.SoundValue;
                     float targetVol;
                     if (currentState == TeacherState.Approaching)
-                        targetVol = Mathf.Lerp(0.65f * sv, sv, approachProgress);
+                        targetVol = Mathf.Lerp(0.2f * sv, sv, approachProgress);
                     else // Leaving
-                        targetVol = approachProgress * sv;
+                        targetVol = Mathf.Lerp(sv, 0.1f * sv, 1f - approachProgress);
                     footstepSource.volume = Mathf.Lerp(footstepSource.volume, targetVol, Time.deltaTime * 4f);
                 }
 
@@ -227,12 +227,9 @@ namespace Game.AI
             // 触发脚步声事件
             EventCenter.Instance.EventTrigger(E_EventType.TeacherFootstepStart, currentInspectType);
 
-            // 播放脚步声（循环），音量从25%渐增至100%
-            MusicMgr.Instance.PlaySound("DXH_SOUND/08.脚步声", true, (source) =>
-            {
-                footstepSource = source;
-                footstepSource.volume = 0.65f * MusicMgr.Instance.SoundValue;
-            });
+            // 播放脚步声（循环），音量从20%渐增至100%
+            if (!gameFlow.IsPaused())
+                StartFootstep(0.2f * MusicMgr.Instance.SoundValue);
         }
 
         void EnterInspecting()
@@ -277,11 +274,9 @@ namespace Game.AI
             GamePanel.Instance?.HideTeacherImage();
 
             // 重新播放脚步声（循环），音量从满渐减，由Update根据approachProgress调整
-            MusicMgr.Instance.PlaySound("DXH_SOUND/08.脚步声", true, (source) =>
-            {
-                footstepSource = source;
-                footstepSource.volume = MusicMgr.Instance.SoundValue;
-            });
+            // 如果游戏已暂停（如被抓后），跳过，由 OnGameResume 负责恢复
+            if (!gameFlow.IsPaused())
+                StartFootstep(MusicMgr.Instance.SoundValue);
 
             Debug.Log($"[TeacherAI] 离开中，耗时 {stateTimer:F1}秒 (第{patrolCount}次巡逻)");
 
@@ -305,7 +300,8 @@ namespace Game.AI
             {
                 Debug.Log($"[TeacherAI] 玩家被抓！检查类型: {currentInspectType}");
 
-                // 播放敲门声
+                // 停止脚步声，播放敲门声
+                StopFootstep();
                 MusicMgr.Instance.PlaySound("DXH_SOUND/SOUND2/26.敲门声");
 
                 // 触发被抓音效事件
@@ -434,8 +430,25 @@ namespace Game.AI
             }
         }
 
+        private int _footstepSerial;
+
+        void StartFootstep(float initialVolume)
+        {
+            StopFootstep();
+            int serial = ++_footstepSerial;
+            MusicMgr.Instance.PlaySound("DXH_SOUND/08.脚步声", true, (source) =>
+            {
+                if (serial != _footstepSerial) { MusicMgr.Instance.StopSound(source); return; }
+                if (footstepSource != null)
+                    MusicMgr.Instance.StopSound(footstepSource);
+                footstepSource = source;
+                footstepSource.volume = initialVolume;
+            });
+        }
+
         void StopFootstep()
         {
+            _footstepSerial++;
             if (footstepSource != null)
             {
                 MusicMgr.Instance.StopSound(footstepSource);
@@ -445,7 +458,8 @@ namespace Game.AI
 
         void ExitState(TeacherState state)
         {
-            // 状态退出时的清理工作
+            if (state == TeacherState.Approaching || state == TeacherState.Leaving)
+                StopFootstep();
         }
 
         /// <summary>
