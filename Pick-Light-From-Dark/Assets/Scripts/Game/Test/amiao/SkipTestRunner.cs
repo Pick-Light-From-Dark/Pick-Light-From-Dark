@@ -8,7 +8,8 @@ namespace Game.Test
 {
     /// <summary>
     /// 跳过功能测试器 — 验证跳过行为：跳到选项时是否显示选项前对话，且不会跳过选项
-    /// </summary>    public class SkipTestRunner : MonoBehaviour
+    /// </summary>
+    public class SkipTestRunner : MonoBehaviour
     {
         FungusVNController vn;
         SayDialog sayDialog;

@@ -9,7 +9,8 @@ namespace Game.Test
     /// 跨关卡全局存档系统 — 两路存储方案
     /// 第一路：关卡进度（时间线定位）
     /// 第二路：结局相关累积数据（分支/卡牌/道具/状态）
-    /// </summary>    public class CrossLevelSaveSystem : MonoBehaviour
+    /// </summary>
+    public class CrossLevelSaveSystem : MonoBehaviour
     {
         public static CrossLevelSaveSystem Instance { get; private set; }
 
