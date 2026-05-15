@@ -54,12 +54,24 @@ namespace Game.UI
         public static CardSlot CurrentDragging { get; private set; }
         public static bool IsPopupActive { get; set; }
 
+        static TMP_FontAsset cardFont;
+
         void Awake()
         {
             rectTransform = GetComponent<RectTransform>();
             canvasGroup = GetComponent<CanvasGroup>();
             if (canvasGroup == null)
                 canvasGroup = gameObject.AddComponent<CanvasGroup>();
+
+            if (cardFont == null) cardFont = Resources.Load<TMP_FontAsset>("Font/siyuan");
+            if (cardFont != null)
+            {
+                if (nameText != null) nameText.font = cardFont;
+                if (timeText != null) timeText.font = cardFont;
+                if (panicText != null) panicText.font = cardFont;
+                if (exciteText != null) exciteText.font = cardFont;
+                if (stackText != null) stackText.font = cardFont;
+            }
         }
 
         void Update()

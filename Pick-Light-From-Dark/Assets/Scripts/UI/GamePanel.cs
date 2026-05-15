@@ -505,37 +505,35 @@ public class GamePanel : BasePanel
 
     private IEnumerator FadeBackground(int bgId, Sprite newSprite, float duration)
     {
-        float half = duration / 2f;
-        float elapsed = 0f;
-        Color color = sceneBackgroundImage.color;
+        // 交叉淡入：在旧图上方创建临时 Image 叠加新图，避免暴露相机底色
+        var overlay = new GameObject("BgTransition");
+        overlay.transform.SetParent(sceneBackgroundImage.transform.parent, false);
+        var overlayRect = overlay.AddComponent<RectTransform>();
+        overlayRect.anchorMin = sceneBackgroundImage.rectTransform.anchorMin;
+        overlayRect.anchorMax = sceneBackgroundImage.rectTransform.anchorMax;
+        overlayRect.offsetMin = sceneBackgroundImage.rectTransform.offsetMin;
+        overlayRect.offsetMax = sceneBackgroundImage.rectTransform.offsetMax;
+        var overlayImg = overlay.AddComponent<Image>();
+        overlayImg.sprite = newSprite;
+        overlayImg.color = new Color(1f, 1f, 1f, 0f);
+        // 放在 sceneBackgroundImage 后面（渲染在其上方）
+        overlay.transform.SetAsLastSibling();
 
-        // 淡出
-        while (elapsed < half)
+        float elapsed = 0f;
+        while (elapsed < duration)
         {
             elapsed += Time.unscaledDeltaTime;
-            color.a = 1f - elapsed / half;
-            sceneBackgroundImage.color = color;
+            float t = Mathf.Clamp01(elapsed / duration);
+            overlayImg.color = new Color(1f, 1f, 1f, t);
             yield return null;
         }
-        color.a = 0f;
-        sceneBackgroundImage.color = color;
 
-        // 切换图片
+        // 完成：将新图应用到主 Image，销毁临时对象
         currentBackgroundId = bgId;
         sceneBackgroundImage.sprite = newSprite;
+        sceneBackgroundImage.color = Color.white;
+        Destroy(overlay);
         Debug.Log($"[GamePanel] 背景画面设置: {bgId}");
-
-        // 淡入
-        elapsed = 0f;
-        while (elapsed < half)
-        {
-            elapsed += Time.unscaledDeltaTime;
-            color.a = elapsed / half;
-            sceneBackgroundImage.color = color;
-            yield return null;
-        }
-        color.a = 1f;
-        sceneBackgroundImage.color = color;
 
         backgroundFadeRoutine = null;
     }
