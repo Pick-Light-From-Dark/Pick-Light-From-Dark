@@ -18,25 +18,18 @@
 
 舍友 A：啊！怎么又要熄灯了！
 
-[bg:indoor light,fade]
+[bg:night_room,fade]
 
 陆莹：哎，明明吃过晚饭，现在又饿了......
 
 陆莹：可以悄悄吃个面包，我记得放在柜子里面了。
 
-[bg:cabinet _ open _ backpack,fade]
-
 陆萤：（今天的晚自习宋明月又请假了，真羡慕…… 如果我跟妈妈说想请假，成绩和手机的事肯定又会被拿出来说教一顿。）
+
+[se:DXH_SOUND/06.深呼吸]
 
 陆萤：一想到这些糟心事，就根本睡不着了。玩会手机吧。
 
-[bg:night_room,fade]
-[se:DXH_SOUND/06.深呼吸]
-
 [bg:black_sence]
-[hide_dialog]
-[wait:3]
-[show_dialog]
-[center_text:夜晚十点四十五分 宿管巡逻 开始了]
 
-[se:DXH_SOUND/08. footsteps]
+[center_text:夜晚十点四十五分 宿管巡逻 开始了]
