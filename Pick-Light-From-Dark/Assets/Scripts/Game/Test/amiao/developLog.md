@@ -1,5 +1,35 @@
 # 开发日志
 
+## 2026-05-15 EndingConditionBridge — Fungus 结局条件后端
+
+**功能**：为 Fungus 剧情提供可调用后端，记录/查询结局分支前置条件。
+
+**实现**：
+- `EndingConditionBridge.cs`：MonoBehaviour 桥接器
+  - `RecordCard2017()` / `RecordCard2026()`：记录卡牌使用（供 Fungus Call Method）
+  - `HasUsedCard2017()` / `HasUsedCard2026()`：单卡查询（供 Fungus Invoke Method 捕获返回值）
+  - `CanShowRooftopChoice()`：两卡全部使用返回 true（绑定 Menu.hideThisOption 控制天台选项显示）
+  - `ResetCardUsage()`：重置记录（测试用）
+  - 内部优先使用 `CrossLevelSaveSystem` 持久化，不可用时 fallback 到内存 HashSet
+
+**Fungus 使用方式**：
+1. 场景创建 GameObject 挂载本组件
+2. 使用卡牌时：Flowchart → Call Method → `RecordCard2017` / `RecordCard2026`
+3. 天台选项前：Flowchart → Invoke Method → `CanShowRooftopChoice` → Save Return Value 到 Boolean Variable
+4. Menu 命令的 `hideThisOption` 绑定该 Boolean Variable
+
+**测试方式**：
+1. 挂载到场景 GameObject
+2. 从其他脚本调用 `RecordCard2017()` 和 `RecordCard2026()`
+3. 调用 `CanShowRooftopChoice()` 应返回 true
+4. 调用 `ResetCardUsage()` 后再查询应返回 false
+
+**重要路径**：
+- 桥接器：`Assets/Scripts/Game/Test/amiao/EndingConditionBridge.cs`
+- 存档系统：`Assets/Scripts/Game/Test/amiao/CrossLevelSaveSystem.cs`
+
+---
+
 ## 2026-05-15 结局条件测试器 Prefab
 
 **功能**：Inspector 中手动勾选条件，测试进入哪个结局
