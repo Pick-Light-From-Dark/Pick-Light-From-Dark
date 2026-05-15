@@ -13,7 +13,7 @@ public class BeginPanel : BasePanel
             case "StartBtn":
                 MusicMgr.Instance.PlaySound("按钮点击音效");
                 UIMgr.Instance.HidePanel<BeginPanel>(true);
-                SceneMgr.Instance.LoadScene("Level1");
+                Game.Flow.LevelFlowManager.Instance.StartGame();
                 break;
 
             case "SaveBtn":

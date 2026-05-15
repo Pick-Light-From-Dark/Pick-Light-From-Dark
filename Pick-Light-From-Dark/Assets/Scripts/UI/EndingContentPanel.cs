@@ -210,9 +210,9 @@ public class EndingContentPanel : BasePanel
     private void ContinueGame()
     {
         UIMgr.Instance.HideAllPanels();
-        var coordinator = LevelFlowCoordinator.Instance;
-        if (coordinator != null && !string.IsNullOrEmpty(coordinator.NextLevelSceneName))
-            SceneMgr.Instance.LoadScene(coordinator.NextLevelSceneName);
+        var flowMgr = Game.Flow.LevelFlowManager.Instance;
+        if (flowMgr != null && flowMgr.IsRunning)
+            flowMgr.AdvanceToNextLevel();
         else
             SceneMgr.Instance.LoadScene("GameScene");
     }
