@@ -129,6 +129,9 @@ public class GamePanel : BasePanel
 
     private Sprite loadingFillSprite;
 
+    /// <summary>当前读条卡牌的音效源，打断时需停止</summary>
+    private AudioSource cardSfxSource;
+
     // ==================== 闭眼状态 ====================
 
 
@@ -784,7 +787,8 @@ public class GamePanel : BasePanel
         {
             activePopup.Hide();
             CardSlot.IsPopupActive = false;
-            Time.timeScale = prePopupTimeScale;
+            if (prePopupTimeScale > 0f)
+                Game.Flow.GameFlowController.Instance.ResumeGame();
         }
 
         readingCardSlot = card;
@@ -869,7 +873,12 @@ public class GamePanel : BasePanel
 
         // 播放卡牌音效
         if (!string.IsNullOrEmpty(readingCardData.sfxName))
-            MusicMgr.Instance.PlaySound(readingCardData.sfxName);
+            MusicMgr.Instance.PlaySound(readingCardData.sfxName, false, (source) =>
+            {
+                cardSfxSource = source;
+            });
+        else
+            cardSfxSource = null;
 
         Debug.Log($"[GamePanel] 开始读条: {card.CardData.cardName} 时长={totalReadTime:F1}s");
     }
@@ -1012,6 +1021,7 @@ public class GamePanel : BasePanel
         MusicMgr.Instance.PlaySound("DXH_SOUND/SOUND2/24.读条完成音效");
 
         preReadSnapshot = null;
+        cardSfxSource = null;
         RefreshSelectionArea();
         Debug.Log($"[GamePanel] 读条完成: {readingCardData.cardName}");
     }
@@ -1032,6 +1042,13 @@ public class GamePanel : BasePanel
         IsCardReading = false;
         IsInUninterruptibleSegment = false;
         readTime = 0f;
+
+        // 停止卡牌音效
+        if (cardSfxSource != null)
+        {
+            MusicMgr.Instance.StopSound(cardSfxSource);
+            cardSfxSource = null;
+        }
 
         DestroyReadingCard();
         ClearSegmentBar();
@@ -1305,7 +1322,8 @@ public class GamePanel : BasePanel
         {
             activePopup.Hide();
             CardSlot.IsPopupActive = false;
-            Time.timeScale = prePopupTimeScale;
+            if (prePopupTimeScale > 0f)
+                Game.Flow.GameFlowController.Instance.ResumeGame();
             return;
         }
 
@@ -1320,8 +1338,8 @@ public class GamePanel : BasePanel
 
         CardSlot.IsPopupActive = true;
         activePopup.Show(card.CardData, card.GetComponent<RectTransform>());
-        prePopupTimeScale = Time.timeScale;
-        Time.timeScale = 0f;
+        prePopupTimeScale = Game.Flow.GameFlowController.Instance.IsPaused() ? 0f : 1f;
+        Game.Flow.GameFlowController.Instance.PauseGame();
         Debug.Log($"[GamePanel] 弹窗显示: {card.CardData.cardName}");
     }
 

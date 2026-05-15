@@ -119,8 +119,13 @@ namespace Game.Flow
             // 先初始化 GameFlowController，避免 GamePanel.Awake 用 TestLevelConfig 自初始化
             GameFlowController.Instance.Initialize(levelConfig);
 
-            var teacherObj = new GameObject("TeacherAI");
-            teacherAI = teacherObj.AddComponent<Game.AI.TeacherAI>();
+            var teacherAI = FindFirstObjectByType<Game.AI.TeacherAI>();
+            if (teacherAI == null)
+            {
+                var teacherObj = new GameObject("TeacherAI");
+                teacherAI = teacherObj.AddComponent<Game.AI.TeacherAI>();
+            }
+            this.teacherAI = teacherAI;
 
             UIMgr.Instance.ShowPanel<GamePanel>(
                 E_UILayer.Middle,
