@@ -495,3 +495,238 @@
 - 修复代码：`Assets/Scripts/Game/Test/amiao/FungusVNController.cs`（`OnSkipStory` 方法）
 - 流程协调器：`Assets/Scripts/Game/Flow/LevelFlowCoordinator.cs`
 
+## 2026-05-15 修复 GameScene 自动跳过第一句话
+
+**问题**：`GameScene.unity` / `Level1.unity` 运行时剧情自动跳过第一句话，`day1-1.prefab` 独立测试无此问题。
+
+**根因**：
+- `FungusVNController.Start()` 自行调用 `RestartDialogue()` 启动剧情
+- `LevelFlowCoordinator.Start()` 也调用 `vnController.RestartDialogue()` 重新初始化
+- 剧情驱动被初始化两次：`sayDialog.Say()` 被重复调用，旧的 Writer 状态与新流程交错，导致首句被跳过
+
+**修复**：
+- `FungusVNController.Start()`：检测 `LevelFlowCoordinator.Instance != null` 时跳过自动启动，由外部流程协调器统一管理
+- `RestartDialogue()`：方法开头增加 `StopAllCoroutines()` + `writer.Stop()`，防止重入时协程/打字机回调污染状态
+
+**测试方式**：
+1. 运行 `Level1.unity`（含 LevelFlowCoordinator），开场剧情应从第一句正常开始
+2. 直接运行 `day1-1.prefab`（无 LevelFlowCoordinator），仍应自动启动对话
+
+**重要路径**：
+- 修复代码：`Assets/Scripts/Game/Test/amiao/FungusVNController.cs`（`Start` 与 `RestartDialogue` 方法）
+
+## 2026-05-15 结局画面功能 Prefab
+
+**任务**：做一个结局画面的功能 prefab，包含重新开始和返回主界面按钮。
+
+**实现**：
+- `EndingScreenController.cs`：独立结局画面控制器
+  - 显示结局名称 + 描述
+  - 重新开始按钮：死亡结局从本关游玩部分开始，其他结局从头开始
+  - 返回主界面按钮：加载主菜单场景
+  - 预留 `OnRestartRequested` / `OnReturnToMainMenuRequested` 接口供存档系统接入
+  - 按钮使用 SpriteSwap 过渡：`deadButton.png` → `deadButtonHover.png`（悬停发红光）
+- `EndingScreen.prefab`：独立 Canvas 预制体
+  - 全屏黑色背景
+  - 标题文本（48px 加粗居中）
+  - 描述文本（28px 居中）
+  - 两个按钮（240×70），带悬停 SpriteSwap
+- `EndingScreenTester.cs`：测试脚本
+  - F3 = 显示测试结局
+  - F4 = 切换死亡/普通结局模式
+  - 数字键 1~5 = 切换结局 ID
+
+**测试方式**：
+1. 将 `EndingScreen.prefab` 拖入场景
+2. 挂载 `EndingScreenTester.cs` 到空 GameObject
+3. 运行后按 F3 显示结局画面，观察按钮悬停效果和文本
+4. 按 F4 切换死亡模式，观察重新开始按钮文本变化
+
+## 2026-05-15 结局分支系统设计与后端接口
+
+**任务**：按照 ending.md 设计结局分支系统，结合游玩过程，设计留给后端调用的接口。
+
+**设计**：
+- `EndingBranchSystem.cs`：正式结局分支判定系统
+  - 接收 `GameplayRecord`（游玩记录：关卡、分支选择、生命值、情绪值、卡牌使用、道具收集）
+  - 按优先级匹配 `EndingBranchCondition`（Inspector 可配置）
+  - 自动填充默认5结局条件
+  - 兜底：根据分支标识推断结局
+- `GameplayRecord.cs`：可序列化的游玩记录数据结构
+  - 支持存档系统持久化
+- `EndingBranchCondition`：Inspector 可配置的结局条件
+  - 支持：关卡、分支选择（包含/排除）、生命值范围、情绪值范围、必须/禁止卡牌、关键道具
+- 后端接口（供 EndingManager / LevelFlowCoordinator 调用）：
+  - `EvaluateEnding()` — 主入口，返回结局ID
+  - `EvaluateEnding(GameplayRecord)` — 一次性判定
+  - `CanTriggerEnding(int)` — 检查指定结局是否可触发
+  - `GetAllPossibleEndings()` — 获取所有满足条件的结局
+  - `RecordBranchChoice(string)` — 记录分支选择
+  - `RecordCardUsed(int)` — 记录卡牌使用
+  - `RecordItemCollected(string)` — 记录道具收集
+  - `SetFinalState(int, int)` — 设置最终生命/情绪值
+  - `GetGameplayRecord()` — 获取当前游玩记录（供存档）
+  - `OnGameplayRecordUpdated` — 游玩数据更新事件（预留存档接口）
+- `EndingBranchSystemTester.cs`：IMGUI 测试界面
+  - 手动配置游玩记录参数，实时测试结局判定
+  - 提供5个结局的快捷测试按钮
+
+**测试方式**：
+1. 挂载 `EndingBranchSystem` 到场景空 GameObject
+2. 挂载 `EndingBranchSystemTester` 到另一个 GameObject
+3. 运行后调整 Inspector 中的分支/生命/情绪/道具，点击"执行判定"
+4. 观察 Console 输出的匹配条件和结局ID
+
+**重要路径**：
+- 分支系统：`Assets/Scripts/Game/Test/amiao/EndingBranchSystem.cs`
+- 测试器：`Assets/Scripts/Game/Test/amiao/EndingBranchSystemTester.cs`
+- 分析文档：`Assets/Scripts/Game/Test/amiao/EndingBranchAnalysis.md`
+
+**重要路径**：
+- 控制器：`Assets/Scripts/Game/Test/amiao/EndingScreenController.cs`
+- 测试器：`Assets/Scripts/Game/Test/amiao/EndingScreenTester.cs`
+- Prefab：`Assets/Scenes/Amiao_Test/TestPrefabs/EndingScreen.prefab`
+- 按钮素材：`Assets/Art/ui/deadButton.png`、`Assets/Art/ui/deadButtonHover.png`
+
+## 2026-05-15 Loading 画面
+
+**任务**：GameScene.unity 剧情到游玩切换时出现透明帧，需要 Loading 画面遮挡。
+
+**实现**：
+- `LoadingScreenController.cs`：全屏 Loading 画面控制器
+  - 单例模式，自动创建（若场景中不存在）
+  - `Show()` / `Hide()`：带淡入淡出动画（默认 0.3s，使用 unscaledDeltaTime 不受 timeScale 影响）
+  - `ShowImmediate()` / `HideImmediate()`：无动画立即显隐
+  - `SetText(string)`：动态修改 Loading 文字
+  - Canvas SortingOrder = 999，overrideSorting = true，确保在最上层
+  - 运行时自动创建 Canvas + CanvasScaler + GraphicRaycaster + CanvasGroup + Background Image + Loading Text
+- `LoadingScreen.prefab`：预制体版本
+  - 全屏黑色背景（Image）
+  - 中央白色 "Loading..." 文字（36px）
+  - 挂载 `LoadingScreenController`，字段已绑定
+
+**集成说明**（需后端在黑名单代码中加入）：
+- `LevelFlowCoordinator.StartGameplay()` 开头：`LoadingScreenController.Show()`
+- `UIMgr.Instance.ShowPanel<GamePanel>()` 回调完成时：`LoadingScreenController.Hide()`
+- 同理，游玩→剧情切换（OnGameWin/OnGameLose）也可使用 LoadingScreen 遮挡过渡
+
+**测试方式**：
+1. 将 `LoadingScreen.prefab` 拖入场景
+2. 任意脚本中调用 `LoadingScreenController.Show()` / `Hide()`
+3. 观察黑色全屏遮罩与淡入淡出效果
+
+**重要路径**：
+- 代码：`Assets/Scripts/Game/Test/amiao/LoadingScreenController.cs`
+- Prefab：`Assets/Scenes/Amiao_Test/TestPrefabs/LoadingScreen.prefab`
+
+## 2026-05-15 跳过功能测试 Prefab
+
+**任务**：验证跳过行为——跳到选项时是否显示选项前对话，且跳过不应越过选项。
+
+**实现**：
+- `SkipTestRunner.cs`：运行时 IMGUI 测试窗口
+  - 自动查找场景中的 `FungusVNController` 和 `SayDialog`
+  - 显示 VN 状态：总行数、当前行、下一选项位置
+  - 显示对话框当前文本（姓名 + 内容）
+  - 「执行跳过测试」按钮：记录跳过前/后的 NameText 和 StoryText
+  - 自动计算预期选项前对话（向前扫描最近一句对话/旁白/场景）
+  - 验证结果：绿色=停在选项处 + 文本正确，红色=失败
+  - 测试日志窗口，保留最近 50 条记录
+- `SkipTester.prefab`：挂载 `SkipTestRunner` 的预制体
+
+**测试方式**：
+1. 将 `SkipTester.prefab` 拖入含 VN 剧情的场景
+2. 运行后按 F4 显示/隐藏测试窗口
+3. 点击「执行跳过测试」，观察跳过后是否停在选项且对话框显示正确内容
+
+**重要路径**：
+- 代码：`Assets/Scripts/Game/Test/amiao/SkipTestRunner.cs`
+- Prefab：`Assets/Scenes/Amiao_Test/TestPrefabs/SkipTester.prefab`
+
+## 2026-05-15 跨关卡存档系统（两路存储）
+
+**任务**：优化存档系统，全局分成两路存储（关卡进度 + 结局相关数据），分析可行性并做跨关卡读档测试。
+
+**现有系统分析**：
+- `PlayerDataStore` / `JsonLevelRecord`：按关卡存储历史记录（通关后才写入），无剧情节点级存档
+- 问题：无法在中途存档/读档，没有"当前进度"概念，结局数据分散在各关记录中
+
+**两路存储方案设计**：
+- `CrossLevelSaveSystem.cs`：全局跨关卡存档系统（独立组件，不修改 Backend 黑名单代码）
+  - 存储方式：PlayerPrefs（JSON 序列化），键名 `CrossLevelSave_v1`
+  - **第一路 `LevelCheckpoint`**：关卡进度定位
+    - `currentLevelId`：当前关卡
+    - `storyFileName`：当前剧情文件名
+    - `storyLineIndex`：剧情行索引
+    - `isInGameplay`：true=游玩中 / false=剧情中
+  - **第二路 `EndingAccumulatedData`**：结局相关累积数据
+    - `branchChoices`：分支选择记录（去重）
+    - `cardsUsed`：卡牌使用记录（去重）
+    - `itemsCollected`：道具收集（去重）
+    - `lastLives` / `lastEmotion`：最终状态
+  - API：`SaveStoryProgress()` / `SaveGameplayProgress()` / `LoadCheckpoint()` / `LoadEndingData()` / `RecordBranchChoice()` / `RecordCardUsed()` / `RecordItemCollected()`
+
+**测试器**：
+- `CrossLevelSaveTestRunner.cs`：运行时 IMGUI 窗口
+  - 模拟存档："存档到 Dialogue2 开始处" / "存档到 Level1 游玩中"
+  - 记录结局数据：分支/卡牌/道具
+  - 读档验证：显示两路数据，验证读档后能否正确恢复关卡和剧情
+  - 完整流程测试：自动模拟 Dialogue1 -> Level1 -> Dialogue1-1 -> Dialogue2 -> 读档回到 Dialogue2
+- `CrossLevelSaveTester.prefab`：挂载测试脚本的预制体
+
+**两路存储 vs 原方案对比**：
+| 维度 | 原方案 (PlayerDataStore) | 新方案 (CrossLevelSaveSystem) |
+|---|---|---|
+| 存档时机 | 关卡结束后 | 任意节点（剧情/游玩中） |
+| 进度定位 | 无 | 关卡ID + 剧情文件 + 行号 |
+| 结局数据 | 分散在各关记录 | 统一累积存储 |
+| 跨关卡读档 | 不支持 | 支持 |
+| 兼容性 | 原 Backend 系统保留 | 新增系统，可并存 |
+
+**建议**：两路存储更适合本项目的 VN+游玩混合流程。原方案保留作为"关卡历史记录"（成就/统计），新方案负责"游戏进度存档"。
+
+**测试方式**：
+1. 将 `CrossLevelSaveTester.prefab` 拖入场景
+2. 按顺序点击按钮 1~5 模拟存档和记录数据
+3. 点击「读档并显示结果」验证数据完整性
+4. 点击「执行完整跨关卡流程测试」观看自动测试
+
+**重要路径**：
+- 存档系统：`Assets/Scripts/Game/Test/amiao/CrossLevelSaveSystem.cs`
+- 测试器：`Assets/Scripts/Game/Test/amiao/CrossLevelSaveTestRunner.cs`
+- Prefab：`Assets/Scenes/Amiao_Test/TestPrefabs/CrossLevelSaveTester.prefab`
+
+## 2026-05-15 快进模式 bug 修复
+
+**问题**：快进时遇到 `[hide_dialog]` / `[wait:2]` / `[show_dialog]` / `[bg:...]` / `[se:...]` 后卡住，只显示"舍友"、对话内容为"妈"，无法推进。
+
+**根因**：`ShowNextLine()` 中 `[wait:2]` 和 `[center_text:xxx]` 指令的等待时间固定（2s / 3s），不受 `isFastForwarding` 影响。快进模式下 `FastForwardSkipRoutine` 与 `WaitAndContinue` 协程竞争 `isProcessing` 状态，导致流程卡住。
+
+**修复**：`FungusVNController.cs` 中两个等待指令增加快进分支：
+- `centerText` 等待：`isFastForwarding ? 0.05f : 3f`
+- `wait` 指令等待：`isFastForwarding ? 0.05f : line.wait`
+
+快进模式下所有等待统一压缩到 0.05 秒，背景、音效等同步指令本身不受影响（已正常执行）。
+
+**测试方式**：
+1. 挂载 `FastForwardDevMode` 到场景
+2. 运行剧情，在含 `[wait:2]` 或 `[center_text:...]` 的段落按住空格快进
+3. 观察是否流畅通过，不再卡住
+
+**重要路径**：
+- 修复代码：`Assets/Scripts/Game/Test/amiao/FungusVNController.cs`（`ShowNextLine` 方法，centerText / wait 分支）
+
+## 2026-05-15 编译错误 + Prefab 修复
+
+**问题**：Unity 报错 CS1022（XML 注释与类声明同行）+ Prefab Transform 引用错误。
+
+**修复**：
+- `SkipTestRunner.cs` (12行): `/// </summary>` 与 `public class SkipTestRunner` 分行
+- `CrossLevelSaveSystem.cs` (13行): 同上
+- `EndingScreen.prefab`: `m_Children` / `m_Father` 从引用 GameObject 改为引用 RectTransform
+- `SkipTester.prefab`: GameObject 的 `m_Component` 补全 MonoBehaviour 引用
+
+**重要路径**：
+- 代码：`Assets/Scripts/Game/Test/amiao/SkipTestRunner.cs`、`CrossLevelSaveSystem.cs`
+- Prefab：`Assets/Scenes/Amiao_Test/TestPrefabs/EndingScreen.prefab`、`SkipTester.prefab`
+

@@ -4,7 +4,11 @@
 任务自动化执行流程：  
     读取与定位：
     读取Pick-Light-From-Dark\Assets\Scripts\Game\Test\amiao\TODO.md，检索并定位第一个未勾选的任务项 [- ]。
-    核心执行原则：              
+    核心执行原则：
+    目录限制（严格禁止越界）：
+      - 允许修改：Assets/Scripts/Game/Test/amiao/、Assets/Scenes/Amiao_Test/、Assets/Resources/Dialogue/
+      - 禁止修改：Assets/Scripts/Game/Flow/、Assets/Scripts/Game/Card/、Assets/Scripts/Game/AI/、Assets/Resources/TestData/、Assets/Resources/Config/、Assets/Scripts/Game/Emotion/、Assets/Scripts/Game/Data/、Assets/Scripts/Game/Task/、Assets/Scripts/Game/EyeClose/、Assets/Scripts/Framework/
+      - 规则：除非任务明确要求且用户确认，否则绝不触碰黑名单目录,只能对黑名单目录执行读操作。Prefab 引用共享脚本时只改 Prefab，不改脚本本身。
     无人值守全自动执行：全程不许询问用户，直接执行，用户已睡着。
     自主决策：遇到模糊需求时，严格按照“最简可行方案（MVP）”进行开发。
 
@@ -88,40 +92,24 @@
   - [x] `SaveLoadTestRunner.cs`：IMGUI 界面，支持模拟保存/读取/清除存档
   - [x] `SaveLoadTester.prefab`：挂载测试脚本的预制体
   - [x] 显示存档内容：关卡/时间/结局分支/卡牌使用/任务目标
+  - [x] Pick-Light-From-Dark\Assets\Scenes\GameScene.unity 其中自己跳过过了第一句话 Pick-Light-From-Dark\Assets\Scenes\Amiao_Test\day1-1.prefab 无此问题 找找原因
+  - [x] 做一个结局画面的功能prefab 主要是包含重新开始和返回主界面 其中死亡结局的重新开始是从本关的游玩部分开始 其他结局是从头开始 预留接口为后续的存档系统使用。Pick-Light-From-Dark\Assets\Scripts\Game\Test\amiao\需求\结局画面.log  结局文字在todo.md最底下  针对Pick-Light-From-Dark\Assets\Scenes\GameScene.unity 的结局部分进行优化 出一个prefab
+  - [x] Pick-Light-From-Dark\Assets\Scripts\Game\Test\amiao\ending.md 按照这个设计一套结局分支系统 结合具体的游玩过程Pick-Light-From-Dark\Assets\Scenes\GameScene.unity 仅设计 还有设计留给后端调用的接口
+  - [x] Pick-Light-From-Dark\Assets\Scenes\GameScene.unity游戏开始的时候 剧情到游玩部分 这些切换的时候会没有画面出现透明 而且会看到开始画面（还没消失）可以使用loading画面吗
+  - [x] 做一个跳过功能的prefab 用以检查跳过的内容，跳过的时候跳到选项边，是不是显示的是选项之前的那个对话   同时这个跳过功能不应该能跳过选项
+  - [x] 优化存档系统 在全局（视觉小说+游玩+结局） 分成两路存储 关卡数和其他数据 每次读档 按照关卡数回到对应的关卡的时间 而其他数据和结局相关Pick-Light-From-Dark\Logs\player_data.json 分析这个方案的可行性和优化方向  还是说原来的更好？ 然后做一个有剧情的prefab可以存档 Dialogue1~2 在2存档 再读档就是2剧情开始处；然后做一个Pick-Light-From-Dark\Assets\Scenes\GameScene.unity类似的prefab Dialogue1+level1+Dialogue1-1+Dialogue2 测试能不能读档到第二个
+  - [x] Pick-Light-From-Dark\Logs\05150420快进bug.log Assets/Scripts/Game/Test/amiao/FastForwardDevMode.cs   快进时遇到
+  ```txt
+    [hide_dialog]
+    [wait:2]
+    [show_dialog]
+
+    [bg:light_room,fade]
+    [se:DXH_SOUND/04.移动被子]
+  ```
+  之后只显示舍友，对话内容为妈，并且卡在这里无法推进 适配一下Pick-Light-From-Dark\Assets\Resources\Dialogue中的格式 让里边的内容、背景、音效都可以被跳过，尽量做
 ```
-统一为 JSON 单轨制（推荐）
 
-  改动点：
-  1. 弃用 Fungus SaveManager，剧情进度也存入 player_data.json
-  2. 扩展 PlayerDataFile：
-
-  public class PlayerDataFile
-  {
-      public List<JsonLevelRecord> records;
-      public StoryProgress storyProgress; // 新增：当前剧情进度
-  }
-
-  public class StoryProgress
-  {
-      public string currentStoryFile;
-      public int currentLineIndex;
-      public bool isOpeningDone;
-      // 可扩展：Flowchart 变量字典
-  }
-
-  3. 读档时不重载场景，直接恢复状态
-
-  优点：
-  - 一个文件、一个入口、一份真相
-  - 可随时保存"中途进度"（无需等关卡结束）
-  - 读档时不重载场景，内存状态不丢失
-  - 易于扩展（后续加情绪值、闭眼状态等都很自然）
-
-  缺点：
-  - 需要一次性替换 Fungus 存档的调用点（约 3~4 处）
-  - 需要手写状态恢复逻辑（替代 Fungus 的场景重载）
-```
-- [x] 继续编写一个完整的存档读档的prefab 包含简单ui（SaveLoadTester.prefab 已实现）
 
 
 ## 结局数据配置
