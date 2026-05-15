@@ -1,5 +1,24 @@
 # 开发日志
 
+## 2026-05-15 结局条件测试器 Prefab
+
+**功能**：Inspector 中手动勾选条件，测试进入哪个结局
+- `EndingConditionTester.cs`：提供各关血量（1/2/3/5关）、卡牌使用记录（2017分享泡面/2026寻求帮助）、木门选择（独自前往/邀请宋明月）的可编辑字段
+- 右键菜单 `测试结局判定` 或按 `T` 键运行判定，按 EndingBranchAnalysis.md 中的 P0→P1 优先级规则输出结果
+- 右键菜单 `重置为默认条件` 一键恢复初始值
+- Prefab 直接拖拽到场景即可使用
+
+**测试方式**：
+1. 将 `EndingConditionTester.prefab` 拖入场景
+2. Inspector 中修改条件（如将四关血量全设为1）
+3. 右键点击组件 → `测试结局判定`，观察 Console 输出
+
+**重要路径**：
+- 代码：`Assets/Scripts/Game/Test/amiao/EndingConditionTester.cs`
+- Prefab：`Assets/Scenes/Amiao_Test/TestPrefabs/EndingConditionTester.prefab`
+
+---
+
 ## 2026-05-14 跳过到选项时对话文本同步
 
 **功能**：修复跳过按钮跳到选项位置时，对话框文本未同步更新问题
