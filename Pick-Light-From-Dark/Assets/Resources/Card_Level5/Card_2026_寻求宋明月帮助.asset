@@ -28,12 +28,12 @@ MonoBehaviour:
     interruptPanicAdd: 0
     bindTaskId: 0
     relatedType: 0
-    relatedCardIds: d1070000d5070000da070000
+    relatedCardIds: d1070000d3070000d5070000da070000
     allowedLevelIds:
     - 1005
     bedStateChange: 0
-    specialEffect: "\u5C06\u5361\u724CID\u4E3A2040\u7684\u5361\u724C\u8BBE\u7F6E\u4E3A\u5361\u724CID\u4E3A2005\u7684\u5173\u8054\u5361\u724C\u3002"
+    specialEffect: "\u5C06\u5361\u724CID\u4E3A2038\u7684\u5361\u724C\u8BBE\u7F6E\u4E3A\u5361\u724CID\u4E3A2005\u7684\u5173\u8054\u5361\u724C\u3002\u5C06\u753B\u9762\u5207\u6362\u4E3A\u80CC\u666F\u753B\u9762ID\uFF1A5012\uFF0C\u89E6\u53D1\u5BF9\u8BDD\uFF0C\u5BF9\u8BDD\u7ED3\u675F\u540E\uFF0C\u5C06\u753B\u9762\u5207\u6362\u4E3A\u80CC\u666F\u753B\u9762ID\uFF1A5011\u3002"
     saveProgressOnInterrupt: 0
     cardBackgroundType: 0
-    backgroundJumpId: 0
+    backgroundJumpId: 5012
     sfxName: "DXH_SOUND/07.\u5BF9\u8BDD\u58F0"

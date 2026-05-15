@@ -145,6 +145,9 @@ public class GamePanel : BasePanel
         overrideLevelConfig = config;
         if (config != null)
             Game.Flow.GameFlowController.Instance.Initialize(config);
+
+        // 初始化时立即设置初始背景（避免 ImgBk 显示默认占位图）
+        SetSceneBackground(currentBackgroundId);
     }
 
     protected override void Awake()
@@ -337,10 +340,40 @@ public class GamePanel : BasePanel
         secondEventText = transform.Find("ImgBk/EventImgBk/SecondEvent")?.GetComponent<TextMeshProUGUI>();
         thirdEventText = transform.Find("ImgBk/EventImgBk/ThirdEvent")?.GetComponent<TextMeshProUGUI>();
 
+        var eventImgBk = transform.Find("ImgBk/EventImgBk");
+        if (eventImgBk != null)
+        {
+            var font = Resources.Load<TMP_FontAsset>("Font/siyuan");
+            firstEventText = EnsureTaskText("FirstEvent", eventImgBk, firstEventText, 0, font);
+            secondEventText = EnsureTaskText("SecondEvent", eventImgBk, secondEventText, 1, font);
+            thirdEventText = EnsureTaskText("ThirdEvent", eventImgBk, thirdEventText, 2, font);
+        }
+
         EventCenter.Instance.AddEventListener<int>(E_EventType.TaskProgressChanged, OnTaskProgressChanged);
         EventCenter.Instance.AddEventListener<int>(E_EventType.TaskGoalCompleted, OnTaskGoalCompleted);
 
         RefreshTaskDisplay();
+    }
+
+    private TextMeshProUGUI EnsureTaskText(string name, Transform parent, TextMeshProUGUI existing, int index, TMP_FontAsset font)
+    {
+        if (existing != null) return existing;
+        var go = new GameObject(name, typeof(RectTransform));
+        go.transform.SetParent(parent, false);
+        var rt = go.GetComponent<RectTransform>();
+        rt.anchorMin = new Vector2(0f, 1f);
+        rt.anchorMax = new Vector2(1f, 1f);
+        rt.pivot = new Vector2(0f, 1f);
+        rt.anchoredPosition = new Vector2(28f, -38f - index * 28f);
+        rt.sizeDelta = new Vector2(-16f, 24f);
+        var tmp = go.AddComponent<TextMeshProUGUI>();
+        tmp.font = font;
+        tmp.fontSize = 18;
+        tmp.color = Color.white;
+        tmp.alignment = TextAlignmentOptions.Left;
+        tmp.raycastTarget = false;
+        go.SetActive(false);
+        return tmp;
     }
 
     private void OnTaskProgressChanged(int cardId) { RefreshTaskDisplay(); }
@@ -426,11 +459,18 @@ public class GamePanel : BasePanel
         EventCenter.Instance.AddEventListener(E_EventType.GameDialogueEnd, OnGameDialogueEnd);
     }
 
+    /// <summary>对话背景画面覆盖值（0=使用默认5004）</summary>
+    public static int DialogueBackgroundOverride = 0;
+    /// <summary>对话结束后背景画面覆盖值（0=恢复对话前画面）</summary>
+    public static int PostDialogueBackgroundOverride = 0;
+
     private void OnGameDialogueStart(string resourcePath)
     {
-        // 保存当前背景画面ID，切换至床对面视角(5004)
+        // 保存当前背景画面ID，切换至对话背景（可被覆盖）
         preDialogueBackgroundId = GetCurrentBackgroundId();
-        SetSceneBackground(5004);
+        int dialogueBg = DialogueBackgroundOverride != 0 ? DialogueBackgroundOverride : 5004;
+        DialogueBackgroundOverride = 0;
+        SetSceneBackground(dialogueBg);
 
         // 暂停游戏：时间停止、老师AI暂停巡逻
         preDialogueTimeScale = Time.timeScale;
@@ -442,9 +482,11 @@ public class GamePanel : BasePanel
 
     private void OnGameDialogueEnd()
     {
-        // 恢复对话前背景画面
-        if (preDialogueBackgroundId != 0)
-            SetSceneBackground(preDialogueBackgroundId);
+        // 恢复背景画面（可被覆盖为指定背景）
+        int restoreBg = PostDialogueBackgroundOverride != 0 ? PostDialogueBackgroundOverride : preDialogueBackgroundId;
+        PostDialogueBackgroundOverride = 0;
+        if (restoreBg != 0)
+            SetSceneBackground(restoreBg);
 
         // 恢复游戏
         if (!Game.Flow.GameFlowController.Instance.IsGameOver())
@@ -493,37 +535,35 @@ public class GamePanel : BasePanel
 
     private IEnumerator FadeBackground(int bgId, Sprite newSprite, float duration)
     {
-        float half = duration / 2f;
-        float elapsed = 0f;
-        Color color = sceneBackgroundImage.color;
+        // 交叉淡入：在旧图上方创建临时 Image 叠加新图，避免暴露相机底色
+        var overlay = new GameObject("BgTransition");
+        overlay.transform.SetParent(sceneBackgroundImage.transform.parent, false);
+        var overlayRect = overlay.AddComponent<RectTransform>();
+        overlayRect.anchorMin = sceneBackgroundImage.rectTransform.anchorMin;
+        overlayRect.anchorMax = sceneBackgroundImage.rectTransform.anchorMax;
+        overlayRect.offsetMin = sceneBackgroundImage.rectTransform.offsetMin;
+        overlayRect.offsetMax = sceneBackgroundImage.rectTransform.offsetMax;
+        var overlayImg = overlay.AddComponent<Image>();
+        overlayImg.sprite = newSprite;
+        overlayImg.color = new Color(1f, 1f, 1f, 0f);
+        // 放在 sceneBackgroundImage 后面（渲染在其上方）
+        overlay.transform.SetAsLastSibling();
 
-        // 淡出
-        while (elapsed < half)
+        float elapsed = 0f;
+        while (elapsed < duration)
         {
             elapsed += Time.unscaledDeltaTime;
-            color.a = 1f - elapsed / half;
-            sceneBackgroundImage.color = color;
+            float t = Mathf.Clamp01(elapsed / duration);
+            overlayImg.color = new Color(1f, 1f, 1f, t);
             yield return null;
         }
-        color.a = 0f;
-        sceneBackgroundImage.color = color;
 
-        // 切换图片
+        // 完成：将新图应用到主 Image，销毁临时对象
         currentBackgroundId = bgId;
         sceneBackgroundImage.sprite = newSprite;
+        sceneBackgroundImage.color = Color.white;
+        Destroy(overlay);
         Debug.Log($"[GamePanel] 背景画面设置: {bgId}");
-
-        // 淡入
-        elapsed = 0f;
-        while (elapsed < half)
-        {
-            elapsed += Time.unscaledDeltaTime;
-            color.a = elapsed / half;
-            sceneBackgroundImage.color = color;
-            yield return null;
-        }
-        color.a = 1f;
-        sceneBackgroundImage.color = color;
 
         backgroundFadeRoutine = null;
     }
@@ -750,8 +790,20 @@ public class GamePanel : BasePanel
         readingCardSlot = card;
         readingCardData = card.CardData;
         totalReadTime = card.CardData.CalculateTotalDuration();
-        readTime = 0f;
-        currentSegmentIndex = 0;
+
+        // 恢复打断时保存的读条进度（吃面包等卡牌特殊效果）
+        if (readingCardData.saveProgressOnInterrupt
+            && cardManager.PopSavedReadProgress(readingCardData.id, out float savedTime, out int savedSeg))
+        {
+            readTime = savedTime;
+            currentSegmentIndex = savedSeg;
+            Debug.Log($"[GamePanel] 恢复读条进度: {readingCardData.cardName} 时间={readTime:F2}s 片段={currentSegmentIndex}");
+        }
+        else
+        {
+            readTime = 0f;
+            currentSegmentIndex = 0;
+        }
         isReading = true;
         IsCardReading = true;
         IsInUninterruptibleSegment = card.CardData.segments.Count > 0 && !card.CardData.segments[0].isInterruptible;
@@ -952,6 +1004,13 @@ public class GamePanel : BasePanel
         if (readingCardData.backgroundJumpId != 0)
             SetSceneBackground(readingCardData.backgroundJumpId, 0.5f);
 
+        // 播放卡牌动作音效
+        if (!string.IsNullOrEmpty(readingCardData.sfxName))
+            MusicMgr.Instance.PlaySound(readingCardData.sfxName);
+
+        // 播放读条完成通用音效
+        MusicMgr.Instance.PlaySound("DXH_SOUND/SOUND2/24.读条完成音效");
+
         preReadSnapshot = null;
         RefreshSelectionArea();
         Debug.Log($"[GamePanel] 读条完成: {readingCardData.cardName}");
@@ -961,6 +1020,13 @@ public class GamePanel : BasePanel
     public void InterruptReading()
     {
         if (!isReading) return;
+
+        // 保存读条进度（吃面包等卡牌特殊效果）
+        if (readingCardData != null && readingCardData.saveProgressOnInterrupt)
+        {
+            cardManager.SaveReadProgress(readingCardData.id, readTime, currentSegmentIndex);
+            Debug.Log($"[GamePanel] 保存读条进度: {readingCardData.cardName} 时间={readTime:F2}s 片段={currentSegmentIndex}");
+        }
 
         isReading = false;
         IsCardReading = false;
