@@ -31,11 +31,12 @@ namespace Game.Test
         public int currentLives = 2;
 
         private bool isValidating;
+        private Level1Choice lastLevel1Choice = Level1Choice.Eat;
 
         // ========== 区域二：结局一 — 太阳照常升起（第一关触发） ==========
         [Header("【区域二】结局一：太阳照常升起 — 第一关触发")]
         [Tooltip("第一关分支选择")]
-        public Level1Choice level1Choice = Level1Choice.NotEat;
+        public Level1Choice level1Choice = Level1Choice.Eat;
 
         public enum Level1Choice
         {
@@ -75,12 +76,27 @@ namespace Game.Test
         {
             if (!Application.isPlaying) return;
             if (isValidating) return;
+
             if (currentLives == 0)
             {
                 isValidating = true;
                 TriggerDeadEnd(0);
                 currentLives = 2;
                 isValidating = false;
+            }
+
+            if (level1Choice == Level1Choice.NotEat)
+            {
+                isValidating = true;
+                TriggerEnding1("not_eat");
+                level1Choice = Level1Choice.Eat;
+                lastLevel1Choice = Level1Choice.Eat;
+                isValidating = false;
+            }
+            else if (level1Choice == Level1Choice.Eat && lastLevel1Choice != Level1Choice.Eat)
+            {
+                lastLevel1Choice = Level1Choice.Eat;
+                Debug.Log("[EndingTriggerTester] 未触发结局（选择：吃）");
             }
         }
 

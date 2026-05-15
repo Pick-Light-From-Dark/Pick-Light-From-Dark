@@ -68,11 +68,7 @@ namespace Game.Test.Editor
 
             EditorGUILayout.LabelField("【区域二】结局一：太阳照常升起 — 第一关触发", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(serializedObject.FindProperty("level1Choice"));
-
-            if (GUILayout.Button("触发结局一", GUILayout.Height(28)))
-            {
-                tester.TriggerEnding1FromInspector();
-            }
+            EditorGUILayout.HelpBox("选择'不吃'自动触发结局一，选择'吃'则输出未触发日志", MessageType.Info);
 
             EditorGUILayout.EndVertical();
         }
