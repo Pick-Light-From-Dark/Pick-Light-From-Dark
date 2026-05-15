@@ -64,19 +64,16 @@
 [wait:3]
 [show_dialog]
 
-[bg:the spread quilt,fade]
+[se:DXH_SOUND/04.移动被子]
 
 陆萤：（呼--终于赶在最后一分钟泡好了面。）
 
 陆莹：（小小声）看来只能晚上摸黑吃了。”
 
-[bg:quilt aside,fade]
-[se:DXH_SOUND/04.移动被子]
-
 [center_text:巡夜晚十点四十五分 宿管巡逻 开始了]
 [se:DXH_SOUND/08.脚步声]
-[wait:3]
 
 [hide_dialog]
 [wait:2]
 [show_dialog]
+看不到图像会

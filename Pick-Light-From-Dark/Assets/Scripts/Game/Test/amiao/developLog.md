@@ -1,5 +1,54 @@
 # 开发日志
 
+## 2026-05-15 EndingConditionBridge — Fungus 结局条件后端
+
+**功能**：为 Fungus 剧情提供可调用后端，记录/查询结局分支前置条件。
+
+**实现**：
+- `EndingConditionBridge.cs`：MonoBehaviour 桥接器
+  - `RecordCard2017()` / `RecordCard2026()`：记录卡牌使用（供 Fungus Call Method）
+  - `HasUsedCard2017()` / `HasUsedCard2026()`：单卡查询（供 Fungus Invoke Method 捕获返回值）
+  - `CanShowRooftopChoice()`：两卡全部使用返回 true（绑定 Menu.hideThisOption 控制天台选项显示）
+  - `ResetCardUsage()`：重置记录（测试用）
+  - 内部优先使用 `CrossLevelSaveSystem` 持久化，不可用时 fallback 到内存 HashSet
+
+**Fungus 使用方式**：
+1. 场景创建 GameObject 挂载本组件
+2. 使用卡牌时：Flowchart → Call Method → `RecordCard2017` / `RecordCard2026`
+3. 天台选项前：Flowchart → Invoke Method → `CanShowRooftopChoice` → Save Return Value 到 Boolean Variable
+4. Menu 命令的 `hideThisOption` 绑定该 Boolean Variable
+
+**测试方式**：
+1. 挂载到场景 GameObject
+2. 从其他脚本调用 `RecordCard2017()` 和 `RecordCard2026()`
+3. 调用 `CanShowRooftopChoice()` 应返回 true
+4. 调用 `ResetCardUsage()` 后再查询应返回 false
+
+**重要路径**：
+- 桥接器：`Assets/Scripts/Game/Test/amiao/EndingConditionBridge.cs`
+- 存档系统：`Assets/Scripts/Game/Test/amiao/CrossLevelSaveSystem.cs`
+
+---
+
+## 2026-05-15 结局条件测试器 Prefab
+
+**功能**：Inspector 中手动勾选条件，测试进入哪个结局
+- `EndingConditionTester.cs`：提供各关血量（1/2/3/5关）、卡牌使用记录（2017分享泡面/2026寻求帮助）、木门选择（独自前往/邀请宋明月）的可编辑字段
+- 右键菜单 `测试结局判定` 或按 `T` 键运行判定，按 EndingBranchAnalysis.md 中的 P0→P1 优先级规则输出结果
+- 右键菜单 `重置为默认条件` 一键恢复初始值
+- Prefab 直接拖拽到场景即可使用
+
+**测试方式**：
+1. 将 `EndingConditionTester.prefab` 拖入场景
+2. Inspector 中修改条件（如将四关血量全设为1）
+3. 右键点击组件 → `测试结局判定`，观察 Console 输出
+
+**重要路径**：
+- 代码：`Assets/Scripts/Game/Test/amiao/EndingConditionTester.cs`
+- Prefab：`Assets/Scenes/Amiao_Test/TestPrefabs/EndingConditionTester.prefab`
+
+---
+
 ## 2026-05-14 跳过到选项时对话文本同步
 
 **功能**：修复跳过按钮跳到选项位置时，对话框文本未同步更新问题
@@ -730,3 +779,45 @@
 - 代码：`Assets/Scripts/Game/Test/amiao/SkipTestRunner.cs`、`CrossLevelSaveSystem.cs`
 - Prefab：`Assets/Scenes/Amiao_Test/TestPrefabs/EndingScreen.prefab`、`SkipTester.prefab`
 
+---
+
+## 2026-05-15 存档读档测试 Prefab（三层递进）
+
+**功能**：三层递进的存档读档测试系统，验证单段、两段串联、PlayerData JSON 变化。
+
+### Phase 1: 单段存档读档测试
+- `VNCheckpointTest.cs`：测试 day1-1 单段 VN 的存档读档
+  - 自动查找 VN 控制器、存档系统、Flowchart 设置
+  - F5=存档当前进度（Fungus + CrossLevelSaveSystem 双重存档）
+  - F9=读档回到当前 VN 开头（重置 Flowchart 变量 + RestartDialogue）
+  - GUI 面板显示存档状态和操作按钮
+- `VNCheckpointTest.prefab`：挂载脚本的预制体
+
+### Phase 2: 两段连贯剧情存档测试
+- `VNSequenceTest.cs`：串联 day1-1 和 day2-1
+  - 可配置多段 VN（segmentName + dialogueText + levelId）
+  - F5=存档 | F9=读档（自动匹配段名回到对应段开头） | F6=切换下一段
+  - 动态更换 vnController.dialogueText 实现段切换
+- `VNSequenceTest.prefab`：挂载脚本的预制体
+
+### Phase 3: PlayerData JSON 存档变化测试
+- `TestPlayerData.cs`：可序列化的玩家数据结构 + 管理器
+  - TestPlayerData：playerId, playerName, lives, emotion, currentLevel, currentSegment, hasSeenOpening
+  - TestPlayerDataManager：JSON 读写（Application.persistentDataPath/test_player_data.json）、变化追踪
+- `VNDataChangeTest.cs`：在 VN 段开头改变 player data，存档读档显示变化
+  - F7=应用当前段数据变化（day1-1: lives-1/emotion+10, day2-1: lives-2/emotion+20）
+  - F5=存档（VN + PlayerData） | F9=读档（恢复 VN + PlayerData）
+  - 控制台打印 BEFORE/AFTER JSON 对比
+- `VNDataChangeTest.prefab`：挂载脚本的预制体
+
+**测试方式**：
+1. Phase 1：场景放 day1-1.prefab + VNCheckpointTest.prefab，F5存档->F9读档
+2. Phase 2：场景放 VNSequenceTest.prefab（自动加载两段），F6切换->F5存档->F9读档
+3. Phase 3：场景放 VNDataChangeTest.prefab，F7改数据->F5存档->F9读档->观察控制台JSON
+
+**重要路径**：
+- Phase 1：`Assets/Scripts/Game/Test/amiao/VNCheckpointTest.cs`、`Assets/Scenes/Amiao_Test/TestPrefabs/VNCheckpointTest.prefab`
+- Phase 2：`Assets/Scripts/Game/Test/amiao/VNSequenceTest.cs`、`Assets/Scenes/Amiao_Test/TestPrefabs/VNSequenceTest.prefab`
+- Phase 3：`Assets/Scripts/Game/Test/amiao/TestPlayerData.cs`、`Assets/Scripts/Game/Test/amiao/VNDataChangeTest.cs`、`Assets/Scenes/Amiao_Test/TestPrefabs/VNDataChangeTest.prefab`
+
+---

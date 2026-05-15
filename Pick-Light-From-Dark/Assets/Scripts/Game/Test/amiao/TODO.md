@@ -16,7 +16,8 @@
     先检查是否已实现
     检查是否需要插件，需要则安装到Pick-Light-From-Dark\Assets\ThirdParty
     若为“排查bug/修复代码”类：直接读取相关代码文件，定位问题并完成修复。              
-    若为“生成Prefab/测试脚本”类：直接创建相关文件并生成对应的 Prefab。          
+    若为“生成Prefab/测试脚本”类：直接创建相关文件并生成对应的 Prefab。       
+       
     若为“设计数据结构”类：直接创建 ScriptableObject 或 Manager 框架代码。
                                                                          
     状态更新：
@@ -28,8 +29,6 @@
                                                             
     一边开发一边进行push，同时写下开发日志Pick-Light-From-Dark\Assets\Scripts\Game\Tes
     t\amiao\developLog.md 要求简短重点体现功能、如何测试和重要代码的路径 
-
-    每完成一个阶段则push一次
 
     若所有待办已完成 执行 stop loop
 ```
@@ -108,6 +107,7 @@
     [se:DXH_SOUND/04.移动被子]
   ```
   之后只显示舍友，对话内容为妈，并且卡在这里无法推进 适配一下Pick-Light-From-Dark\Assets\Resources\Dialogue中的格式 让里边的内容、背景、音效都可以被跳过，尽量做
+  -[x]  整一个新的测试预制体，不用Pick-Light-From-Dark\Assets\Scripts\Game\Test\amiao\EndingConditionTester.cs。触发结局分支 → 不再走 EndingContentPanel 的动态创建老路 → 直接 Instantiate一个完整的结局预制体（像 Ending2_Mobius.prefab 这样）→ 预制体里的按钮带悬停效果。 为每个结局独立预制体。悬停用SpriteSwap
 ```
 
 

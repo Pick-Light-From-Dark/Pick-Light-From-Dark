@@ -1,146 +1,283 @@
-# 结局分歧点分析
+# 结局分歧点分析 v2
 
-> 本文档分析《Pick Light From Dark》5 个结局在剧情与操作中的触发位置、已知条件和推测机制。
-> 基于当前剧本文本（Dialogue1~5）和代码实现（StoryChainTestRunner / FungusVNController）整理。
-
----
-
-## 结局总览
-
-| 结局ID | 结局名称 | 对应剧本文件 | 分支标识 |
-|--------|----------|-------------|----------|
-| 6001 | 【结局一：太阳照常升起】 | `Dialogue1-2noeat.txt` | `not_eat` |
-| 6002 | 【结局二：莫比乌斯环】 | `Dialogue5-2a.txt` | `confused` |
-| 6003 | 【结局三：人心不足蛇吞象】 | `Dialogue5-2b.txt` | `internet` |
-| 6004 | 【结局四：星垂之夜】 | `Dialogue5-2c.txt` / `Dialogue5-2d.txt` | `rooftop` |
-| 6005 | 【结局五：北极星】 | `Dialogue5-2e.txt` | `friend` |
+> 本文档基于 2026-05-15 策划新规则重写，分析《Pick Light From Dark》5 个结局在第五关 gameplay 结束后的触发条件、优先级与数据需求。
+> 代码参考：GameFlowController (生命值)、CardManager (卡牌 2017/2026)、LevelRecordManager/JsonLevelRecord (存档 JSON)、EmotionSystem (情绪值)。
 
 ---
 
-## 分歧点一：第一关 - 吃 or 不吃（结局一的分岔）
+## 一、结局总览
 
-### 触发位置
-- **剧情节点**：`Dialogue1-1.txt` 结尾（第58行）
-- **选项文本**：`选项 - 吃 or - 不吃`
-- **对应 Prefab**：`day1-1.prefab` → 选项后进入 `day1-2a.prefab` 或 `day1-2b.prefab`
+| 结局ID | 结局名称 | 触发关卡 | 触发时机 | 优先级 |
+|--------|----------|----------|----------|--------|
+| 6001 | 【结局一：太阳照常升起】 | 第一关剧情 | `Dialogue1-1` 选项"不吃" | 剧情分支，与第五关判定无关 |
+| 6002 | 【结局二：莫比乌斯环】 | 第五关 | 使用"前往厕所"卡后 | **P0（最高）** |
+| 6003 | 【结局三：人心不足蛇吞象】 | 第五关 | — | 当前规则未定义触发条件，待定 |
+| 6004 | 【结局四：星垂之夜】 | 第五关 | 使用"前往厕所"卡后 | P1 |
+| 6005 | 【结局五：北极星】 | 第五关 | 使用"前往厕所"卡后 | P1 |
 
-### 分支结果
-| 选择 | 后续剧情 | 结局 |
-|------|---------|------|
-| 吃（eat） | 继续进入第二关游玩 | 无（进入后续关卡） |
-| 不吃（not_eat） | 陆萤把薯片塞回宋明月课桌，一切照旧 | **结局一：太阳照常升起** |
+> **优先级说明**：第五关使用"前往厕所"卡后，系统按 P0 → P1 顺序判定。一旦匹配高优先级条件，低优先级不再检查。
 
-### 已知条件
-- 纯剧情选择，无血量/情绪值/卡牌条件
-- 选择"不吃"直接导向结局一，不进入后续关卡
+---
 
-### 测试配置（Inspector）
+## 二、需要记录的数据
+
+### 2.1 数据来源（JSON 存档）
+
+结局判定依赖 **跨关卡汇总数据**，需从 `PlayerDataFile.records`（即 `JsonLevelRecord` 列表）中提取：
+
+| 数据项 | 来源字段 | 说明 |
+|--------|----------|------|
+| 第1关通关血量 | `records[i].levelId=1` 的 `isWin=true` 时的 `finalLives` | 需 GameFlowController 在 `GameWin` 时写入 |
+| 第2关通关血量 | `records[i].levelId=2` 的 `isWin=true` 时的 `finalLives` | 同上 |
+| 第3关通关血量 | `records[i].levelId=3` 的 `isWin=true` 时的 `finalLives` | 同上 |
+| 第5关通关血量 | `records[i].levelId=5` 的 `isWin=true` 时的 `finalLives` | 同上 |
+| 第1关通关时间 | `records[i].levelId=1` 的 `timeUsed` | 秒，LevelRecordManager 已记录 |
+| 第2关通关时间 | `records[i].levelId=2` 的 `timeUsed` | 同上 |
+| 第3关通关时间 | `records[i].levelId=3` 的 `timeUsed` | 同上 |
+| 第5关通关时间 | `records[i].levelId=5` 的 `timeUsed` | 同上 |
+| 第二关是否使用分享泡面卡 | `records[i].levelId=2` 的 `cardUses` 中是否有 `cardId=2017` | CardManager case 2017 |
+| 第五关是否使用寻求宋明月帮助 | `records[i].levelId=5` 的 `cardUses` 中是否有 `cardId=2026` | CardManager case 2026 |
+
+### 2.2 当前存档结构缺口
+
+`JsonLevelRecord` 当前已有字段：
+- `levelId`, `timeUsed`, `isWin`, `cardUses` (List<CardUseEntry>), `taskGoals`
+- 但 **缺少 `finalLives`（通关时剩余生命值）**
+
+**建议补充**（仅分析，后端接口预留）：
 ```
-EndingCondition:
-  endingId: 6001
-  requiredBranch: "not_eat"
+JsonLevelRecord 新增字段：
+  int finalLives = 0;      // 关卡结束时的剩余血量（GameWin/GameLose 时写入）
+  int finalEmotion = 0;    // 关卡结束时的情绪值总和（已有 EmotionSystem 可读取）
+```
+
+写入时机：
+- `LevelRecordManager.EndRecording(bool isWin)` 中，调用 `GameFlowController.Instance.GetCurrentLives()` 和 `EmotionSystem.Instance.GetTotalValue()` 写入。
+
+---
+
+## 三、结局触发条件表（第五关判定）
+
+### 触发时机统一说明
+
+**所有第五关结局（6002/6004/6005）的判定时机**：
+> 玩家在第五关 gameplay 中使用 **"前往厕所"卡**（对应卡牌 ID 需确认，暂记为 `goto_toilet`）后，进入结局判定流程。
+
+判定流程：
+1. 系统读取跨关卡 JSON 数据（1/2/3/5 关的 `finalLives`、`timeUsed`、卡牌使用记录）
+2. 按优先级从高到低匹配条件
+3. 匹配成功后调用 `EndingManager.TriggerEnding(id)`
+
+### 3.1 【莫比乌斯环】6002 — P0 最高优先级
+
+| 条件项 | 要求 |
+|--------|------|
+| 触发关卡 | 第五关 |
+| 触发时机 | 使用"前往厕所"卡后 |
+| 血量条件 | 第1、2、3、5关通关时的 `finalLives` **全部等于 1** |
+| 卡牌条件 | 无要求 |
+| 剧情选项 | 无要求 |
+| 覆盖规则 | **此条件为强制覆盖**，只要四关血量全为1，不论其他条件如何，直接触发本结局 |
+
+> 设计意图：玩家在所有关卡都以最低血量（1点）通关，体现一种"苟延残喘、循环往复"的压抑感。
+
+### 3.2 【星垂之夜】6004 — P1
+
+**情况A：两卡未全部使用**
+
+| 条件项 | 要求 |
+|--------|------|
+| 触发关卡 | 第五关 |
+| 触发时机 | 使用"前往厕所"卡后 |
+| 血量条件 | 第1、2、3、5关通关时的 `finalLives` **至少有一关 > 1** |
+| 卡牌条件 | **NOT** (第二关使用了分享泡面卡 2017 **AND** 第五关使用了寻求宋明月帮助 2026) |
+| 剧情选项 | 无要求 |
+
+**情况B：两卡全部使用 + 选择"独自前往"**
+
+| 条件项 | 要求 |
+|--------|------|
+| 触发关卡 | 第五关 |
+| 触发时机 | 使用"前往厕所"卡后，木门剧情选项 |
+| 血量条件 | 第1、2、3、5关通关时的 `finalLives` **至少有一关 > 1** |
+| 卡牌条件 | 第二关使用了分享泡面卡 2017 **AND** 第五关使用了寻求宋明月帮助 2026 |
+| 剧情选项 | 木门前选择 **【独自前往】** |
+
+### 3.3 【北极星】6005 — P1
+
+| 条件项 | 要求 |
+|--------|------|
+| 触发关卡 | 第五关 |
+| 触发时机 | 使用"前往厕所"卡后，木门剧情选项 |
+| 血量条件 | 第1、2、3、5关通关时的 `finalLives` **至少有一关 > 1** |
+| 卡牌条件 | 第二关使用了分享泡面卡 2017 **AND** 第五关使用了寻求宋明月帮助 2026 |
+| 剧情选项 | 木门前选择 **【邀请宋明月】** |
+
+> **星垂之夜(6004) 与 北极星(6005) 的互斥关系**：两者血量条件和卡牌条件完全相同，仅在木门选项处分歧。系统在判定到这一步时，不直接触发结局，而是弹出选项，由玩家选择后触发对应结局。
+
+---
+
+## 四、优先级判定流程图
+
+```
+第五关使用"前往厕所"卡后
+        |
+        v
+[读取跨关卡JSON数据]
+        |
+        v
+[P0] 检查莫比乌斯环条件
+      1/2/3/5关 finalLives 全部 == 1 ?
+        |
+       是 → 触发 6002 莫比乌斯环（结束）
+        |
+       否 → 继续
+        |
+        v
+[P1] 检查基础条件
+      1/2/3/5关 finalLives 至少有一关 > 1 ?
+        |
+       否 → 无匹配（可进入兜底/默认逻辑）
+        |
+       是 → 继续
+        |
+        v
+      第二关使用2017(分享泡面) 且 第五关使用2026(寻求帮助) ?
+        |
+       否 → 触发 6004 星垂之夜（情况A，结束）
+        |
+       是 → 弹出木门选项：【独自前往】/【邀请宋明月】
+                |
+        【独自前往】 → 触发 6004 星垂之夜（情况B）
+        【邀请宋明月】 → 触发 6005 北极星
 ```
 
 ---
 
-## 分歧点二：第五关 - 结局分支（结局二~五的分岔）
+## 五、JSON 数据结构建议（供后端接口设计）
 
-### 触发位置
-- **剧情节点**：`Dialogue5.txt`（旧版本）第171行 或 第五关 gameplay 结束后
-- **选项文本**：`【选项 - 独自前去 or - 邀友同行】`
-- **对应 Prefab**：`day5-2.prefab`（主流程）→ 分支进入 `day5-2a~2e.prefab`
+### 5.1 跨关卡汇总数据（EndingEvaluationData）
 
-### 分支结果
+建议后端在判定前，从 `PlayerDataFile.records` 聚合出以下结构：
 
-#### 结局二：莫比乌斯环（6002）- 迷茫结局
-- **触发路径**：第五关 gameplay 中未拿到天台钥匙 / 未触发任何特殊事件 → 在走廊被宿管发现
-- **对应剧本**：`Dialogue5-2a.txt`
-- **关键剧情**：陆萤去厕所后回宿舍，在走廊上感觉"走了好久"，看到宿管人影，意识到"这样躲躲藏藏的生活什么时候是个头"
-- **分支标识**：`confused`
+```json
+{
+  "levelSummary": {
+    "1": { "finalLives": 1, "timeUsed": 120.5, "won": true },
+    "2": { "finalLives": 2, "timeUsed": 180.0, "won": true, "usedCard2017": true },
+    "3": { "finalLives": 1, "timeUsed": 95.0, "won": true },
+    "5": { "finalLives": 2, "timeUsed": 210.0, "won": true, "usedCard2026": true }
+  },
+  "flags": {
+    "allLivesEqualOne": false,
+    "anyLivesGreaterThanOne": true,
+    "usedCard2017": true,
+    "usedCard2026": true,
+    "bothCardsUsed": true
+  }
+}
+```
 
-#### 结局三：人心不足蛇吞象（6003）- 网吧结局
-- **触发路径**：拿到天台钥匙，选择上去看看，但看到网吧后产生去网吧的念头
-- **对应剧本**：`Dialogue5-2b.txt`
-- **关键剧情**：陆萤在天台看到网吧还在营业，把钥匙藏起来，心想"下次去网吧玩玩"
-- **分支标识**：`internet`
+### 5.2 建议补充到 JsonLevelRecord 的字段
 
-#### 结局四：星垂之夜（6004）- 天台结局（独自）
-- **触发路径**：拿到天台钥匙，选择独自上天台，欣赏夜空后许愿
-- **对应剧本**：`Dialogue5-2c.txt` / `Dialogue5-2d.txt`
-- **关键剧情**：陆萤独自在天台看到满天繁星，说出"天之苍苍，其正色耶"，许愿"往后的每一天都会想起现在的心情"
-- **分支标识**：`rooftop`
-
-#### 结局五：北极星（6005）- 邀友同行
-- **触发路径**：拿到天台钥匙，选择邀宋明月一起上天台，两人一起看星星并对话
-- **对应剧本**：`Dialogue5-2e.txt`
-- **关键剧情**：宋明月指出北斗七星和北极星，陆萤坦白嫉妒她，宋明月说"你就继续往前进吧"
-- **分支标识**：`friend`
-
----
-
-## 结局条件推测
-
-基于剧情文本分析，结局触发可能与以下操作因素相关：
-
-### 推测条件表
-
-| 结局 | 推测触发条件 | 关键操作 | 情绪值推测 | 生命值推测 | 卡牌推测 |
-|------|-------------|---------|-----------|-----------|---------|
-| 6001 太阳照常升起 | 第一关选择"不吃" | 剧情选项 | 无特殊要求 | 无特殊要求 | 未使用"零食"类卡牌 |
-| 6002 莫比乌斯环 | 第五关 gameplay 中**被宿管抓住**或**未探索关键区域** |  无特殊要求 |1，2，3，5关，游玩流程结束时的血量都为1点时| 无特殊要求 | 无特殊要求|
-| 6003 人心不足蛇吞象 | 第五关 gameplay 中**拾取钥匙**但**情绪值较低**或**未邀请同伴** | 拾取钥匙 + 独自探索 | 中等 | 正常 | 可能使用了"好奇心"类卡牌 |
-| 6004 星垂之夜 | 第五关 gameplay 中**拾取钥匙** + **独自上天台** + **情绪值较高** | 拾取钥匙 + 独自上天台 | 高（平静、释然）| 正常 | 未使用"求助"类卡牌 |
-| 6005 北极星 | 第五关 gameplay 中**拾取钥匙** + **邀请宋明月** + **情绪值较高** | 拾取钥匙 + 邀友同行 | 高（坦诚、释怀）| 正常 | 使用了"社交"类卡牌 |
-
-### 关键道具：天台钥匙
-- **获取位置**：第五关 gameplay 中，厕所附近（踢飞东西后拾取）
-- **作用**：解锁天台结局（四、五）和网吧结局（三）的前提条件
-- **未获取**：导向迷茫结局（二）
-
-### 关键操作：上天台后的选择
-- 拿到钥匙后，在 `Dialogue5.txt` 第171行出现选项：
-  - "独自前去" → 结局四
-  - "邀友同行" → 结局五
-- 但 `Dialogue5-2b.txt`（结局三）也拿到了钥匙并上了天台，说明还有隐藏条件（如情绪值、特定卡牌使用）决定进入哪个分支
-
----
-
-## 代码实现参考
-
-### StoryChainTestRunner 中的结局判定
 ```csharp
-// 1. 优先匹配 Inspector 配置的 EndingCondition
-foreach (var condition in endingConditions)
-{
-    if (MatchesCondition(condition)) return condition.endingId;
-}
-
-// 2. 兜底：根据当前节点 ID 推断结局
-switch (nodeId)
-{
-    case "day1_2b": return 6001;  // 不吃 → 结局一
-    case "day5_2a": return 6002;  // 迷茫 → 结局二
-    case "day5_2b": return 6003;  // 网吧 → 结局三
-    case "day5_2c": return 6004;  // 天台 → 结局四
-    case "day5_2d": return 6005;  // 邀友 → 结局五
-    case "day5_2e": return 6005;  // 邀友 → 结局五
-}
+// 现有字段保持不变，新增：
+public int finalLives;       // 关卡结束时的剩余血量（GameWin/GameLose 时从 GameFlowController 读取）
+public int finalEmotion;     // 关卡结束时的情绪值总和（从 EmotionSystem 读取）
 ```
 
-### 测试用 Inspector 配置示例
+写入逻辑建议（LevelRecordManager）：
 ```
-EndingConditions (List):
-  [0] endingId: 6002, requiredBranch: "confused", minLives: 1, maxLives: 2
-  [1] endingId: 6003, requiredBranch: "internet", minEmotion: 30, maxEmotion: 60
-  [2] endingId: 6004, requiredBranch: "rooftop", minEmotion: 70
-  [3] endingId: 6005, requiredBranch: "friend", minEmotion: 70, requiredCards: [101]
+EndRecording(isWin) 中：
+  _currentRecord.finalLives = Game.Flow.GameFlowController.Instance.GetCurrentLives();
+  _currentRecord.finalEmotion = Game.Emotion.EmotionSystem.Instance.GetTotalValue();
+```
+
+### 5.3 卡牌 ID 映射表（供判定使用）
+
+| 卡牌名称 | 卡牌 ID | 记录位置 |
+|----------|---------|----------|
+| 分享拌面 | 2017 | `JsonLevelRecord.cardUses`（levelId=2 的记录中查找 cardId=2017） |
+| 寻求宋明月帮助 | 2026 | `JsonLevelRecord.cardUses`（levelId=5 的记录中查找 cardId=2026） |
+| 前往厕所 | 2038 | 触发判定的时机卡 |
+
+---
+
+## 六、后端接口设计建议（留足扩展）
+
+### 6.1 数据层接口（JsonLevelRecord / PlayerDataStore 扩展）
+
+```
+// 从存档中提取指定关卡的记录
+JsonLevelRecord GetLevelRecord(int levelId)
+
+// 从存档中提取指定关卡的血量（通关时）
+int GetLevelFinalLives(int levelId)
+
+// 从存档中提取指定关卡的耗时
+float GetLevelTimeUsed(int levelId)
+
+// 检查指定关卡是否使用过某张卡牌
+bool HasUsedCard(int levelId, int cardId)
+
+// 聚合跨关卡数据（返回 EndingEvaluationData）
+EndingEvaluationData AggregateEndingData(int[] levelIds)
+```
+
+### 6.2 判定层接口（EndingBranchSystem 扩展）
+
+```
+// 主入口：第五关使用"前往厕所"卡后调用
+int EvaluateEnding()
+
+// 判定前准备：加载跨关卡数据（由存档系统注入）
+void LoadCrossLevelData(EndingEvaluationData data)
+
+// 检查 P0 条件（莫比乌斯环）
+bool CheckMobiusCondition()
+
+// 检查 P1 基础条件（至少一关血量>1）
+bool CheckBasicCondition()
+
+// 检查两卡使用情况
+bool CheckBothCardsUsed()
+
+// 根据木门选项触发结局（供剧情系统调用）
+void TriggerByChoice(string choiceId) // "alone" → 6004, "friend" → 6005
+```
+
+### 6.3 事件层接口（EventCenter 扩展建议）
+
+```
+// 第五关使用"前往厕所"卡时触发
+E_EventType.EndingEvaluationRequested
+
+// 结局判定完成，通知剧情系统显示选项或直接进入结局
+E_EventType.EndingEvaluated (int endingId, bool needsChoice)
+
+// 玩家在木门前做出选择
+E_EventType.RooftopChoiceMade (string choiceId)
 ```
 
 ---
 
-## 待确认事项
+## 七、条件判定对照表（快速查阅）
 
-1. **第五关 gameplay 中的具体分支条件**：当前剧本未明确说明 gameplay 中哪些操作导致进入哪个结局分支，需要设计师确认
-2. **情绪值阈值**：各结局的情绪值要求是推测值，需根据实际游玩测试调整
-3. **卡牌关联**：哪些卡牌使用影响结局分支，目前无明确数据
-4. **day5-2c vs day5-2d**：两者都是结局四（星垂之夜），是否有细微差别或条件不同，待确认
+| 结局 | 血量 | 卡牌2017 | 卡牌2026 | 木门选项 | 优先级 |
+|------|------|----------|----------|----------|--------|
+| 6002 莫比乌斯环 | 1,2,3,5关全=1 | — | — | — | P0 |
+| 6004 星垂之夜(A) | 至少一关>1 | 未全用 | 未全用 | — | P1 |
+| 6004 星垂之夜(B) | 至少一关>1 | 已用 | 已用 | 【独自前往】 | P1 |
+| 6005 北极星 | 至少一关>1 | 已用 | 已用 | 【邀请宋明月】 | P1 |
+| 6001 太阳照常升起 | — | — | — | — | 第一关剧情分支，独立 |
+| 6003 人心不足蛇吞象 | — | — | — | — | 当前规则未定义 |
+
+---
+
+## 八、待确认事项
+
+1. **"前往厕所"卡的具体 ID**：当前 CardManager 中未明确标记此卡，需确认对应 `cardId`。
+2. **木门选项的剧本位置**：`Dialogue5-2c/2d/2e` 中哪个文件包含【独自前往】/【邀请宋明月】选项，需确认。
+3. **结局三（6003）的触发条件**：当前规则未定义，是否保留或合并到其他结局中，需策划确认。
+4. **JsonLevelRecord.finalLives 的补充**：需要后端在 `LevelRecordManager.EndRecording` 中接入 `GameFlowController.GetCurrentLives()`。
+5. **时间记录的必要性**：当前规则未使用时间作为判定条件，但策划要求记录。是否用于后续扩展（如速通结局），需确认。
