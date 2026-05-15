@@ -426,11 +426,18 @@ public class GamePanel : BasePanel
         EventCenter.Instance.AddEventListener(E_EventType.GameDialogueEnd, OnGameDialogueEnd);
     }
 
+    /// <summary>对话背景画面覆盖值（0=使用默认5004）</summary>
+    public static int DialogueBackgroundOverride = 0;
+    /// <summary>对话结束后背景画面覆盖值（0=恢复对话前画面）</summary>
+    public static int PostDialogueBackgroundOverride = 0;
+
     private void OnGameDialogueStart(string resourcePath)
     {
-        // 保存当前背景画面ID，切换至床对面视角(5004)
+        // 保存当前背景画面ID，切换至对话背景（可被覆盖）
         preDialogueBackgroundId = GetCurrentBackgroundId();
-        SetSceneBackground(5004);
+        int dialogueBg = DialogueBackgroundOverride != 0 ? DialogueBackgroundOverride : 5004;
+        DialogueBackgroundOverride = 0;
+        SetSceneBackground(dialogueBg);
 
         // 暂停游戏：时间停止、老师AI暂停巡逻
         preDialogueTimeScale = Time.timeScale;
@@ -442,9 +449,11 @@ public class GamePanel : BasePanel
 
     private void OnGameDialogueEnd()
     {
-        // 恢复对话前背景画面
-        if (preDialogueBackgroundId != 0)
-            SetSceneBackground(preDialogueBackgroundId);
+        // 恢复背景画面（可被覆盖为指定背景）
+        int restoreBg = PostDialogueBackgroundOverride != 0 ? PostDialogueBackgroundOverride : preDialogueBackgroundId;
+        PostDialogueBackgroundOverride = 0;
+        if (restoreBg != 0)
+            SetSceneBackground(restoreBg);
 
         // 恢复游戏
         if (!Game.Flow.GameFlowController.Instance.IsGameOver())
@@ -750,8 +759,20 @@ public class GamePanel : BasePanel
         readingCardSlot = card;
         readingCardData = card.CardData;
         totalReadTime = card.CardData.CalculateTotalDuration();
-        readTime = 0f;
-        currentSegmentIndex = 0;
+
+        // 恢复打断时保存的读条进度（吃面包等卡牌特殊效果）
+        if (readingCardData.saveProgressOnInterrupt
+            && cardManager.PopSavedReadProgress(readingCardData.id, out float savedTime, out int savedSeg))
+        {
+            readTime = savedTime;
+            currentSegmentIndex = savedSeg;
+            Debug.Log($"[GamePanel] 恢复读条进度: {readingCardData.cardName} 时间={readTime:F2}s 片段={currentSegmentIndex}");
+        }
+        else
+        {
+            readTime = 0f;
+            currentSegmentIndex = 0;
+        }
         isReading = true;
         IsCardReading = true;
         IsInUninterruptibleSegment = card.CardData.segments.Count > 0 && !card.CardData.segments[0].isInterruptible;
@@ -952,6 +973,13 @@ public class GamePanel : BasePanel
         if (readingCardData.backgroundJumpId != 0)
             SetSceneBackground(readingCardData.backgroundJumpId, 0.5f);
 
+        // 播放卡牌动作音效
+        if (!string.IsNullOrEmpty(readingCardData.sfxName))
+            MusicMgr.Instance.PlaySound(readingCardData.sfxName);
+
+        // 播放读条完成通用音效
+        MusicMgr.Instance.PlaySound("DXH_SOUND/SOUND2/24.读条完成音效");
+
         preReadSnapshot = null;
         RefreshSelectionArea();
         Debug.Log($"[GamePanel] 读条完成: {readingCardData.cardName}");
@@ -961,6 +989,13 @@ public class GamePanel : BasePanel
     public void InterruptReading()
     {
         if (!isReading) return;
+
+        // 保存读条进度（吃面包等卡牌特殊效果）
+        if (readingCardData != null && readingCardData.saveProgressOnInterrupt)
+        {
+            cardManager.SaveReadProgress(readingCardData.id, readTime, currentSegmentIndex);
+            Debug.Log($"[GamePanel] 保存读条进度: {readingCardData.cardName} 时间={readTime:F2}s 片段={currentSegmentIndex}");
+        }
 
         isReading = false;
         IsCardReading = false;

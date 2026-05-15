@@ -289,7 +289,17 @@ namespace Game.Flow
             currentLives--;
             Debug.Log($"[GameFlow] 玩家被抓，生命值剩余: {currentLives}/{levelConfig.maxLives}");
 
+            // 强行打断正在进行的读条
             var gamePanel = FindFirstObjectByType<GamePanel>();
+            if (gamePanel != null && GamePanel.IsCardReading)
+            {
+                gamePanel.InterruptReading();
+            }
+            var cardReadingSystem = FindFirstObjectByType<Card.CardReadingSystem>();
+            if (cardReadingSystem != null && cardReadingSystem.IsReading())
+            {
+                cardReadingSystem.ForceClearReading();
+            }
 
             // 生命值耗尽 → 显示失败UI，5秒后游戏失败
             if (currentLives <= 0)
@@ -334,6 +344,18 @@ namespace Game.Flow
             {
                 ps.SetInBed(true);
                 ps.SetEyesClosed(true);
+            }
+
+            // 重置卡牌为初始手牌
+            Game.Card.CardManager.Instance.OnCaught();
+
+            // 重置背景画面为被窝里（初始背景）
+            EventCenter.Instance.EventTrigger(E_EventType.BackgroundJump, 5001);
+
+            // 重置情绪值到初始值
+            if (levelConfig != null && emotionSystem != null)
+            {
+                emotionSystem.Initialize(levelConfig);
             }
 
             if (!isGameOver)

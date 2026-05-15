@@ -35,5 +35,5 @@ MonoBehaviour:
     specialEffect: "\u672C\u5F20\u5361\u4E3A\u8001\u5E08\u67E5\u5BDD\u5224\u5B9A\u6761\u4EF6\u4E4B\u4E00\u7684\u56DE\u5230\u88AB\u5B50\u4E2D\u7684\u503C\u7684\u6539\u53D8\u5361\uFF0C\u5F53\u4F7F\u7528\u8FD9\u5F20\u5361\u65F6\uFF0C\u79BB\u5F00\u88AB\u5B50\uFF0C\u8FD9\u4E2A\u503C\u5C31\u4F1A\u53D8\u6210FALSE"
     saveProgressOnInterrupt: 0
     cardBackgroundType: 1
-    backgroundJumpId: 5005
+    backgroundJumpId: 5006
     sfxName: "DXH_SOUND/SOUND2/22.\u4E0B\u5E8A\u58F0"

@@ -636,9 +636,9 @@ namespace Game.Card
                 {
                     if (levelConfig != null && levelConfig.levelId == 1005)
                     {
-                        // 第五夜：拿走卫生纸 → 将2040(前往走廊)加入2005(下床)的运行时关联
-                        AddRuntimeAssociation(2005, 2040);
-                        Debug.Log("[CardManager] 特殊效果: 拿走卫生纸(2025) → 2005(下床)运行时关联新增 2040(前往走廊)");
+                        // 第五夜：拿走卫生纸 → 将2038(前往厕所)加入2005(下床)的运行时关联
+                        AddRuntimeAssociation(2005, 2038);
+                        Debug.Log("[CardManager] 特殊效果: 拿走卫生纸(2025) → 2005(下床)运行时关联新增 2038(前往厕所)");
                     }
                     else
                     {
@@ -657,9 +657,16 @@ namespace Game.Card
                 {
                     if (levelConfig != null && levelConfig.levelId == 1005)
                     {
-                        // 第五夜：寻求宋明月帮助 → 将2040(前往走廊)加入2005(下床)的运行时关联
-                        AddRuntimeAssociation(2005, 2040);
-                        Debug.Log("[CardManager] 特殊效果: 寻求宋明月帮助(2026) → 2005(下床)运行时关联新增 2040(前往走廊)");
+                        // 第五夜：寻求宋明月帮助 → 将2038(前往厕所)加入2005(下床)的运行时关联
+                        AddRuntimeAssociation(2005, 2038);
+                        Debug.Log("[CardManager] 特殊效果: 寻求宋明月帮助(2026) → 2005(下床)运行时关联新增 2038(前往厕所)");
+
+                        // 设置对话背景：5012(宋明月大图)，对话结束后回到5011(看向床对面宋明月)
+                        GamePanel.DialogueBackgroundOverride = 5012;
+                        GamePanel.PostDialogueBackgroundOverride = 5011;
+
+                        // 触发局内对话
+                        EventCenter.Instance.EventTrigger(E_EventType.GameDialogueStart, "Dialogue/Dialogue5-1");
                     }
                     else
                     {
