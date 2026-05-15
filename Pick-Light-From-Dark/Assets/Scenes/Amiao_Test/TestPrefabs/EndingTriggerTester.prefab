@@ -44,8 +44,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5a1663fff72b41a895b6afcd20ff769b, type: 3}
   m_Name:
   m_EditorClassIdentifier:
-  ending1Prefab: {fileID: 2000, guid: 8a97ceb8acb74f34a12b566b7d509e3b, type: 3}
-  ending2Prefab: {fileID: 1000, guid: 3e8c5f1a2b4d6e7f8a9b0c1d2e3f4a5b, type: 3}
+  ending1Prefab: {fileID: 8761397556599405992, guid: 0989ced22c6a0d44aa308f836b6b657b, type: 3}
+  ending2Prefab: {fileID: 1000, guid: cc00867e852a29a4ab3ba525b44f5c54, type: 3}
   ending4Prefab: {fileID: 3000, guid: 5213c12601f14a8d87110fadd69eb648, type: 3}
   ending5Prefab: {fileID: 4000, guid: c08e78eaa18d4706a259be8650a4d972, type: 3}
   deathEndingPrefab: {fileID: 6000, guid: f5bd8a962e8242ff92f62f72052e2cbd, type: 3}
