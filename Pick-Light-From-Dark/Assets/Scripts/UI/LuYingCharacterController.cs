@@ -6,17 +6,22 @@ namespace Game.UI
     {
         [SerializeField] private float blinkIntervalMin = 2f;
         [SerializeField] private float blinkIntervalMax = 6f;
+        [SerializeField] private float expressionIntervalMin = 3f;
+        [SerializeField] private float expressionIntervalMax = 8f;
 
         private Animator animator;
-        private float nextBlinkTime;
+        private float nextPlayTime;
 
         private const string StateIdle = "Idle";
         private const string StateLittleExcitedIdle = "LittleExcitedIdle";
         private const string StateExcitedIdle = "ExcitedIdle";
         private const string StateBlink = "Blink";
+        private const string StateLittleExcited = "LittleExcited";
+        private const string StateExcited = "Excited";
         private const string StateChew = "Chew";
 
         private static readonly string[] MoodIdleStates = { StateIdle, StateLittleExcitedIdle, StateExcitedIdle };
+        private static readonly string[] MoodPlayStates = { StateBlink, StateLittleExcited, StateExcited };
 
         public int Mood
         {
@@ -27,6 +32,7 @@ namespace Game.UI
                 {
                     mood = value;
                     animator.Play(MoodIdleStates[mood], 0, 0f);
+                    ScheduleNext();
                 }
             }
         }
@@ -40,25 +46,23 @@ namespace Game.UI
         void Start()
         {
             animator.Play(StateIdle, 0, 0f);
-            ScheduleNextBlink();
+            ScheduleNext();
         }
 
         void Update()
         {
-            // For mood 0: periodic blink
-            // For mood 1/2: the looping idle clips handle animation automatically
-
-            // After one-shot animations (Blink, Chew) finish, return to mood idle
+            // After one-shot animation finishes, return to mood idle
             var state = animator.GetCurrentAnimatorStateInfo(0);
             if (state.normalizedTime >= 1f && !IsIdleState(state))
             {
                 animator.Play(MoodIdleStates[mood], 0, 0f);
             }
 
-            if (mood == 0 && Time.time >= nextBlinkTime)
+            // Periodically play mood animation (blink/excited)
+            if (Time.time >= nextPlayTime)
             {
-                animator.Play(StateBlink, 0, 0f);
-                ScheduleNextBlink();
+                animator.Play(MoodPlayStates[mood], 0, 0f);
+                ScheduleNext();
             }
         }
 
@@ -72,9 +76,11 @@ namespace Game.UI
             animator.Play(StateChew, 0, 0f);
         }
 
-        void ScheduleNextBlink()
+        void ScheduleNext()
         {
-            nextBlinkTime = Time.time + Random.Range(blinkIntervalMin, blinkIntervalMax);
+            float min = mood == 0 ? blinkIntervalMin : expressionIntervalMin;
+            float max = mood == 0 ? blinkIntervalMax : expressionIntervalMax;
+            nextPlayTime = Time.time + Random.Range(min, max);
         }
     }
 }
