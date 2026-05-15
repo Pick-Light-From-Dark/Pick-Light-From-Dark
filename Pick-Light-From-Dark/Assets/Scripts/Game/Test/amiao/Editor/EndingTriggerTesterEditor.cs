@@ -92,10 +92,12 @@ namespace Game.Test.Editor
 
             EditorGUILayout.LabelField("各关通关血量", EditorStyles.miniBoldLabel);
             EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("level1Lives"), new GUIContent("L1"), GUILayout.Width(60));
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("level2Lives"), new GUIContent("L2"), GUILayout.Width(60));
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("level3Lives"), new GUIContent("L3"), GUILayout.Width(60));
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("level5Lives"), new GUIContent("L5"), GUILayout.Width(60));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("level1Lives"), new GUIContent("L1"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("level2Lives"), new GUIContent("L2"));
+            EditorGUILayout.EndHorizontal();
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("level3Lives"), new GUIContent("L3"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("level5Lives"), new GUIContent("L5"));
             EditorGUILayout.EndHorizontal();
 
             EditorGUILayout.PropertyField(serializedObject.FindProperty("usedCard2017"));
