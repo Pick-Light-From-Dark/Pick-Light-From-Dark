@@ -343,40 +343,10 @@ public class GamePanel : BasePanel
         secondEventText = transform.Find("ImgBk/EventImgBk/SecondEvent")?.GetComponent<TextMeshProUGUI>();
         thirdEventText = transform.Find("ImgBk/EventImgBk/ThirdEvent")?.GetComponent<TextMeshProUGUI>();
 
-        var eventImgBk = transform.Find("ImgBk/EventImgBk");
-        if (eventImgBk != null)
-        {
-            var font = Resources.Load<TMP_FontAsset>("Font/siyuan");
-            firstEventText = EnsureTaskText("FirstEvent", eventImgBk, firstEventText, 0, font);
-            secondEventText = EnsureTaskText("SecondEvent", eventImgBk, secondEventText, 1, font);
-            thirdEventText = EnsureTaskText("ThirdEvent", eventImgBk, thirdEventText, 2, font);
-        }
-
         EventCenter.Instance.AddEventListener<int>(E_EventType.TaskProgressChanged, OnTaskProgressChanged);
         EventCenter.Instance.AddEventListener<int>(E_EventType.TaskGoalCompleted, OnTaskGoalCompleted);
 
         RefreshTaskDisplay();
-    }
-
-    private TextMeshProUGUI EnsureTaskText(string name, Transform parent, TextMeshProUGUI existing, int index, TMP_FontAsset font)
-    {
-        if (existing != null) return existing;
-        var go = new GameObject(name, typeof(RectTransform));
-        go.transform.SetParent(parent, false);
-        var rt = go.GetComponent<RectTransform>();
-        rt.anchorMin = new Vector2(0f, 1f);
-        rt.anchorMax = new Vector2(1f, 1f);
-        rt.pivot = new Vector2(0f, 1f);
-        rt.anchoredPosition = new Vector2(28f, -38f - index * 28f);
-        rt.sizeDelta = new Vector2(-16f, 24f);
-        var tmp = go.AddComponent<TextMeshProUGUI>();
-        tmp.font = font;
-        tmp.fontSize = 18;
-        tmp.color = Color.white;
-        tmp.alignment = TextAlignmentOptions.Left;
-        tmp.raycastTarget = false;
-        go.SetActive(false);
-        return tmp;
     }
 
     private void OnTaskProgressChanged(int cardId) { RefreshTaskDisplay(); }
@@ -1432,7 +1402,12 @@ public class GamePanel : BasePanel
 
     private void EnsureEventSystem()
     {
-        var es = EventSystem.current;
+        var all = FindObjectsOfType<EventSystem>();
+        if (all.Length > 1)
+            for (int i = 1; i < all.Length; i++)
+                Destroy(all[i].gameObject);
+
+        var es = FindObjectOfType<EventSystem>();
         if (es != null && es.GetComponent<StandaloneInputModule>() == null)
             es.gameObject.AddComponent<StandaloneInputModule>();
         else if (es == null)
