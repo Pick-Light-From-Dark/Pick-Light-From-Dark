@@ -1,5 +1,35 @@
 # 开发日志
 
+## 2026-05-14 跳过到选项时对话文本同步
+
+**功能**：修复跳过按钮跳到选项位置时，对话框文本未同步更新问题
+- `ShowChoice` 中新增向前查找逻辑：从选项行往前遍历 lines，找到最近一句 `对话/旁白/场景` 文本
+- 将其 `content` 设置到 `sayDialog.StoryText`，确保跳过到达选项时对话框显示选项前的最后一句内容
+- 正常流程不受影响（StoryText 已显示正确内容，再次设置无视觉差异）
+
+**测试方式**：
+1. 在任意含选项的 VN 剧情中点击"跳过"按钮
+2. 观察对话框是否显示选项前最后一句对话/旁白（而非跳过前的旧文本）
+
+**重要路径**：
+- 代码：`Assets/Scripts/Game/Test/amiao/FungusVNController.cs`（ShowChoice 方法第1371行附近）
+
+## 2026-05-14 无人值守编译错误修复
+
+**功能**：自动巡检并修复 Unity 编译错误
+- 读取 `CoplayLogs/last_compile_errors.json` 发现 6 个 CS1022 错误
+- 根因：`/// </summary>` 与 `public class` 声明挤在同一行
+- 修复文件：`DevModeBase.cs`、`SaveLoadTestRunner.cs`、`FastForwardDevMode.cs`
+
+**测试方式**：
+1. 等待 Unity 编译或运行 `tsc` 检查错误列表是否清空
+2. 确认 Coplay 面板不再报错
+
+**重要路径**：
+- 代码：`Assets/Scripts/Game/Test/amiao/DevModeBase.cs`
+- 代码：`Assets/Scripts/Game/Test/amiao/SaveLoadTestRunner.cs`
+- 代码：`Assets/Scripts/Game/Test/amiao/FastForwardDevMode.cs`
+
 ## 2026-05-13 结局系统
 
 **功能**：结局系统核心实现
@@ -175,6 +205,79 @@
 - 剧本：Assets/Resources/Dialogue/Dialogue5.txt
 
 
+## 2026-05-13 Dialogue2~5 剧情文本分段
+
+**功能**：按关卡流程（上段-游玩-下段）对 Dialogue2~5 进行分段，更新 LevelConfig 引用。
+
+**分段结果**：
+- Dialogue2-1.txt：上段（电话~熄灯前），Dialogue2-2.txt：下段（结尾剧情）
+- Dialogue3-1.txt：上段（宿舍闲聊~巡逻开始），Dialogue3-2.txt：下段（深夜孤独~入睡）
+- Dialogue4-1.txt：上段（放假聊天~巡逻开始），Dialogue4-2.txt：下段（次日期待）
+- Dialogue5-1.txt：上段（周一回校~巡逻开始），下段为四个分支结局保留在原 Dialogue5.txt
+
+**LevelConfig 更新**：
+- LevelConfig_2：pre→Dialogue2-1，post→Dialogue2-2
+- LevelConfig_3：pre→Dialogue3-1，post→Dialogue3-2
+- LevelConfig_5：pre→Dialogue5-1，isChoiceLevel=1
+
+**重要路径**：
+- 分段文本：`Assets/Resources/Dialogue/Dialogue2-1.txt` ~ `Dialogue5-1.txt`
+- 配置：`Assets/Resources/Config/LevelConfig_2.asset`、`LevelConfig_3.asset`、`LevelConfig_5.asset`
+
+## 2026-05-13 FungusVN_1~4.prefab 跳过按钮默认可见
+
+**功能**：复刻 SimpleSkipButton 可见性逻辑到 FungusVN_1~4.prefab。
+
+**实现**：
+- `FungusVNController` 新增 `showSkipButtonOnStart` bool 字段
+- `Start()` 中若启用则自动调用 `SetSkipButtonVisible(true)`
+- FungusVN_1~4.prefab 全部启用该字段，运行时跳过按钮自动显示
+
+**重要路径**：
+- 代码：`Assets/Scripts/Game/Test/amiao/FungusVNController.cs`
+- Prefab：`Assets/Scenes/Amiao_Test/FungusVN_1.prefab` ~ `FungusVN_4.prefab`
+
+## 2026-05-13 Dialogue1 分段文本更新 + 全关分段 Prefab
+
+**功能**：按 Dialogue1.txt 最新演出效果改写旧分段文本，并为全关创建分段 Prefab。
+
+**Dialogue1 文本更新**：
+- `Dialogue1-1.txt`：上段（light_room → 选项提示），含 fade/hide_dialog/solid:black 等演出指令
+- `Dialogue1-2eat.txt`：'吃'分支（心情变好 → 新手关卡结束）
+- `Dialogue1-2noeat.txt`：'不吃'分支（塞进课桌 → 结局一）
+
+**新增分段 Prefab（10个）**：
+| 关卡 | Prefab | 引用文本 |
+|---|---|---|
+| 1 | FungusVN_1-1 | Dialogue1-1.txt |
+| 1 | FungusVN_1-2a | Dialogue1-2eat.txt |
+| 1 | FungusVN_1-2b | Dialogue1-2noeat.txt |
+| 2 | FungusVN_2-1 | Dialogue2-1.txt |
+| 2 | FungusVN_2-2 | Dialogue2-2.txt |
+| 3 | FungusVN_3-1 | Dialogue3-1.txt |
+| 3 | FungusVN_3-2 | Dialogue3-2.txt |
+| 4 | FungusVN_4-1 | Dialogue4-1.txt |
+| 4 | FungusVN_4-2 | Dialogue4-2.txt |
+| 5 | FungusVN_5-2 | Dialogue5.txt（含四个结局分支） |
+
+**重要路径**：
+- 文本：`Assets/Resources/Dialogue/Dialogue1-1.txt` ~ `Dialogue1-2noeat.txt`
+- Prefab：`Assets/Scenes/Amiao_Test/FungusVN_*-*.prefab`
+
+## 2026-05-13 FungusVN_5.prefab
+
+**功能**：新增第五关剧情演出 Prefab，用于测试 Dialogue5 剧情流程。
+
+**实现**：
+- 复制 FungusVN_4.prefab 并修改
+- 名称改为 FungusVN_5
+- dialogueText 引用 Dialogue5.txt（完整剧情含四个分支结局）
+- 启用 showSkipButtonOnStart，运行时跳过按钮自动显示
+
+**重要路径**：
+- Prefab：`Assets/Scenes/Amiao_Test/FungusVN_5.prefab`
+- 剧本：`Assets/Resources/Dialogue/Dialogue5.txt`
+
 ## 2026-05-13 占位文字 Prefab 测试
 
 **功能**：独立素材缺失占位文字显示器 + 测试套件
@@ -199,5 +302,196 @@
 
 **重要路径**：
 - 核心组件：`Assets/Scripts/Game/Test/amiao/PlaceholderDisplay.cs`
+
+## 2026-05-13 居中大字演出 + 选项说话人显示
+
+**功能**：
+- `[center_text:xxx]` 指令：隐藏对话框，在画面中央显示 72 号白色大字，3 秒后自动继续
+- 选项行继承上一行说话人：第一关选项面板现在显示"陆萤"
+
+**修改内容**：
+- `DialogueLine.cs`：新增 `centerText` 字段
+- `DialogueParser.cs`：解析 `[center_text:xxx]`，选项行继承上一行 speaker
+- `FungusVNController.cs`：`ShowCenterText` / `HideCenterText` 方法，`ShowChoice` 显示 speaker
+- `Dialogue1-1.txt`：选项前 `[旁白]` 改为 `陆萤：`
+
+**测试方式**：
+1. 在剧情文本末尾添加 `[center_text:巡逻开始 第二夜]`
+2. 运行后观察对话框隐藏、居中大字显示
+3. 第一关选项处确认 NameText 显示"陆萤"
+
+**重要路径**：
+- 数据结构：`Assets/Scripts/Game/System/Dialogue/DialogueLine.cs`
+- 解析器：`Assets/Scripts/Game/System/Dialogue/DialogueParser.cs`
+- 控制器：`Assets/Scripts/Game/Test/amiao/FungusVNController.cs`
+- 剧本：`Assets/Resources/Dialogue/Dialogue1-1.txt`
+
+## 2026-05-13 Dialogue5 结局分支分段文本 + Prefab
+
+**功能**：将 Dialogue5.txt 的4个结局分支提取为独立文本和 Prefab，方便单独测试。
+
+**分段结果**：
+- `Dialogue5-2a.txt` / `day5-2a.prefab`：迷茫结局（结局二：莫比乌斯环）
+- `Dialogue5-2b.txt` / `day5-2b.prefab`：网吧结局（结局三：人心不足蛇吞象）
+- `Dialogue5-2c.txt` / `day5-2c.prefab`：天台结局（结局四：星垂之夜）
+- `Dialogue5-2d.txt` / `day5-2d.prefab`：可选结局-独自前去（结局四：星垂之夜）
+- `Dialogue5-2e.txt` / `day5-2e.prefab`：可选结局-邀友同行（结局五：北极星）
+
+**测试方式**：
+1. 将对应 Prefab 拖入场景
+2. 运行后直接播放该分支剧情
+
+**重要路径**：
+- 分支文本：`Assets/Resources/Dialogue/Dialogue5-2a.txt` ~ `Dialogue5-2e.txt`
+- 分支 Prefab：`Assets/Scenes/Amiao_Test/day5-2a.prefab` ~ `day5-2e.prefab`
 - 测试脚本：`Assets/Scripts/Game/Test/amiao/PlaceholderTestRunner.cs`
 - Prefab：`Assets/Scenes/Amiao_Test/TestPrefabs/PlaceholderTester.prefab`
+
+## 2026-05-13 [auto] 修复 PlaceholderDisplay 字
+
+**功能**：[auto] 修复 PlaceholderDisplay 字体缺失
+
+
+## 2026-05-13 [auto] 批量替换: [陆萤] -> 陆萤
+
+**功能**：[auto] 批量替换: [陆萤] -> 陆萤
+
+## 2026-05-14 StoryChainTestRunner 重构：多关分支 + 第五关 + 结局判定
+
+**功能**：重构剧情串联测试器，支持全关分支选项与结局画面自动触发。
+
+**实现内容**：
+- `StoryChainTestRunner.cs` 重构：
+  - 新增第五关 Prefab 字段（day5_2, day5_2a~2e）
+  - 新增 `Day5Branch` 枚举 + `forceDay5Branch` 字段（Inspector 可强制指定第五关分支）
+  - 新增 `EndingCondition` 可序列化类（Inspector 可手动配置结局触发条件：生命值/情绪值/卡牌/分支）
+  - 新增 `DetermineEnding()` 方法：优先匹配 Inspector 配置条件，兜底根据当前节点 ID 推断结局
+  - 路由表覆盖全关：day1~day4 线性连接，day5 分支导向不同结局
+  - 结局一（不吃分支）和结局二~五（第五关分支）播放完后自动调用 `EndingManager.TriggerEnding()`
+  - `CreateDefaultEndingData()` 自动加载 `Assets/Art/ending/` 下的5张结局图片（Editor 下有效）
+- `StoryChainTester.prefab` 更新：添加第五关字段引用 + 默认值配置
+
+**测试方式**：
+1. 将 `StoryChainTester.prefab` 拖入场景
+2. Inspector 中配置第五关 Prefab（day5_2, day5_2a~2e）
+3. 运行后自动从第一关开始播放
+4. 第一关选项选择后进入对应分支，第五关结束后自动显示结局画面
+5. 或使用 Inspector 的 `forceDay5Branch` 强制测试指定结局
+
+**重要路径**：
+- 代码：`Assets/Scripts/Game/Test/amiao/StoryChainTestRunner.cs`
+- Prefab：`Assets/Scenes/Amiao_Test/TestPrefabs/StoryChainTester.prefab`
+- 结局图片：`Assets/Art/ending/结局1~5图.png`
+
+## 2026-05-14 文本框坐标调整
+
+**功能**：统一调整所有预制体中姓名文本框向上、对话文本框向下。
+
+**实现**：
+- `FungusVNController` 新增 `namePositionAdjusted` / `storyPositionAdjusted` 标志位
+- `SetupNameTextAlignment()`：姓名文本 `anchoredPosition.y += 20`
+- `SetupStoryTextPosition()`：对话文本 `anchoredPosition.y -= 20`
+- 防止重复累加，仅首次生效
+
+**重要路径**：
+- 代码：`Assets/Scripts/Game/Test/amiao/FungusVNController.cs`
+
+## 2026-05-14 PlaceholderTester 脚本缺失修复 + 自动测试
+
+**功能**：修复 PlaceholderTester.prefab 脚本引用丢失，新增自动显示示例。
+
+**修复**：
+- `PlaceholderTester.prefab`：脚本 GUID 从 `c470d3a41e5f4794bb9404f1e87dd981` 修复为 `3d00e60daf661bc4887171364efff953`（对应 `PlaceholderTestRunner.cs`）
+- `PlaceholderTestRunner.cs`：新增 `autoShowOnStart` 字段，运行后 0.5 秒自动显示一行缺失素材示例文字
+
+**重要路径**：
+- Prefab：`Assets/Scenes/Amiao_Test/TestPrefabs/PlaceholderTester.prefab`
+- 代码：`Assets/Scripts/Game/Test/amiao/PlaceholderTestRunner.cs`
+
+## 2026-05-14 快进开发模式
+
+**功能**：按住空格快进剧情，松手停止。建立开发者功能父类，支持一键禁用。
+
+**实现**：
+- `DevModeBase.cs`：抽象基类，所有开发模式功能继承此类
+  - `DisableAllDevModes()` 静态方法：一键禁用场景中所有开发模式
+  - 运行时自动标记 GameObject 名称为 `[DEV] xxx`
+- `FastForwardDevMode.cs`：按住 `Space` 快进，松开停止
+  - 自动查找场景中的 `FungusVNController`
+  - 调用 `targetVN.ToggleFastForward()` 切换快进状态
+  - 完全独立，不影响游戏其他系统
+
+**测试方式**：
+1. 挂载 `FastForwardDevMode` 到场景任意 GameObject
+2. 运行后按住空格，剧情自动快进；松手即恢复正常速度
+3. Inspector 中点击「禁用所有开发模式」可一键关闭
+
+**重要路径**：
+- 基类：`Assets/Scripts/Game/Test/amiao/DevModeBase.cs`
+- 快进模式：`Assets/Scripts/Game/Test/amiao/FastForwardDevMode.cs`
+
+## 2026-05-14 居中字体调小 + 每关第一段加居中大字
+
+**功能**：调小居中大字字号，为第3/4/5关第一段剧情结尾添加居中大字。
+
+**实现**：
+- `FungusVNController` 居中大字 `fontSize` 从 72 调为 48
+- `Dialogue3-1.txt` 结尾：添加 `[center_text:夜晚十点四十五分 宿管巡逻 开始了]`
+- `Dialogue4-1.txt` 结尾：同上
+- `Dialogue5-1.txt` 结尾：同上（替换原有文本行）
+
+**重要路径**：
+- 代码：`Assets/Scripts/Game/Test/amiao/FungusVNController.cs`
+- 剧本：`Assets/Resources/Dialogue/Dialogue3-1.txt`、`Dialogue4-1.txt`、`Dialogue5-1.txt`
+
+## 2026-05-14 存档读档测试 Prefab
+
+**功能**：简单 UI 验证存档数据是否被正确记录。
+
+**实现**：
+- `SaveLoadTestRunner.cs`：
+  - 运行时左上角显示 IMGUI 窗口（F3 切换显隐）
+  - 「模拟保存」生成一条带结局分支/卡牌使用/任务目标的测试记录
+  - 「读取显示」刷新窗口并打印 Console 日志
+  - 「清除存档」调用 `PlayerDataStore.ClearAllRecords()`
+- `SaveLoadTester.prefab`：预制体挂载 `SaveLoadTestRunner`
+
+**测试方式**：
+1. 将 `SaveLoadTester.prefab` 拖入场景
+2. 运行后按 F3 显示 UI
+3. 点击「模拟保存」→ 再点击「读取显示」，观察存档数据是否正确
+
+**重要路径**：
+- 代码：`Assets/Scripts/Game/Test/amiao/SaveLoadTestRunner.cs`
+- Prefab：`Assets/Scenes/Amiao_Test/TestPrefabs/SaveLoadTester.prefab`
+
+## 2026-05-14 结局分歧点分析文档
+
+**功能**：分析并记录5个结局在游戏操作中的触发位置与推测条件。
+
+**分歧点文档**：见 `Assets/Scripts/Game/Test/amiao/EndingBranchAnalysis.md`
+
+---
+
+## 2026-05-13 跳过逻辑统一：优先跳到选项，无选项则结束并接下一个 prefab
+
+**功能**：统一 `FungusVNController` 跳过按钮行为，使第一关、第五关及所有含选项的剧情段都能正确跳到选项，无选项段则结束并进入下一个 prefab。
+
+**问题**：
+- `skipToChoiceIfAvailable` 默认 false，所有 prefab 均未开启（除测试 Prefab 外）
+- `LevelFlowCoordinator` 仅在第一关运行时开启，第五关及剧情链测试中的 prefab 点击跳过直接结束，无法跳到选项
+
+**修复**：
+- `FungusVNController.OnSkipStory()`：移除对 `skipToChoiceIfAvailable` 的依赖，默认总是从当前行向后扫描第一个 `"选项"` 类型行并跳转
+- 若未找到选项，则调用 `EndDialogue()`，由外部 `StoryChainTestRunner` / `LevelFlowCoordinator` 自动接下一个 prefab
+- `LevelFlowCoordinator.StartOpeningStory()`：删除 `vnController.skipToChoiceIfAvailable = (levelId == 1)` 运行时设置，逻辑已内聚到控制器
+
+**测试方式**：
+1. 将 day1-1.prefab 拖入场景，运行后点击"跳过"，应直接跳到"吃/不吃"选项
+2. 将 day5-2.prefab 拖入场景，运行后点击"跳过"，应跳到结局分支选项
+3. 将 day2-1.prefab（无选项）拖入场景，运行后点击"跳过"，应结束剧情
+
+**重要路径**：
+- 修复代码：`Assets/Scripts/Game/Test/amiao/FungusVNController.cs`（`OnSkipStory` 方法）
+- 流程协调器：`Assets/Scripts/Game/Flow/LevelFlowCoordinator.cs`
+

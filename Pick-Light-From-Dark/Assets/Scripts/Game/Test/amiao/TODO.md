@@ -1,31 +1,31 @@
 # 开发待办清单
 
 ```
-任务自动化执行流程：                                       
-                                                                                
-    读取与定位：                                                         
-    读取Pick-Light-From-Dark\Assets\Scripts\Game\Test\amiao\TODO.md
-    文件，检索并定位第一个未勾选的任务项 [- ]。                         
-                                                                      
-    分类自主决策：                                                              
+任务自动化执行流程：  
+    读取与定位：
+    读取Pick-Light-From-Dark\Assets\Scripts\Game\Test\amiao\TODO.md，检索并定位第一个未勾选的任务项 [- ]。
+    核心执行原则：              
+    无人值守全自动执行：全程不许询问用户，直接执行，用户已睡着。
+    自主决策：遇到模糊需求时，严格按照“最简可行方案（MVP）”进行开发。
+
+    分类自主决策：
+    先检查是否已实现
+    检查是否需要插件，需要则安装到Pick-Light-From-Dark\Assets\ThirdParty
     若为“排查bug/修复代码”类：直接读取相关代码文件，定位问题并完成修复。              
     若为“生成Prefab/测试脚本”类：直接创建相关文件并生成对应的 Prefab。          
     若为“设计数据结构”类：直接创建 ScriptableObject 或 Manager 框架代码。
                                                                          
-    状态更新：                                                       
+    状态更新：
     子任务完成后，将 TODO.md 中对应项的状态标记改为已完成 [x]。                       
                                                                         
-    循环与终止：                                                                      
-    若存在下一个未完成任务：调用 ScheduleWakeup 指令，设置 60 秒后自动继续执行。
-    若任务已全部完成：输出“全部完成”并停止唤醒。                                      
-                                                                     
-    核心执行原则：                                                                    
-    全自动执行：全程无需询问用户，直接执行。                                          
-    自主决策：遇到模糊需求时，严格按照“最简可行方案（MVP）”进行开发。
+    循环与终止：             
+    若存在下一个未完成任务：调用 ScheduleWakeup 指令，设置下一循环自动继续执行。
+    若任务已全部完成：输出“全部完成”并停止唤醒。
+                                                            
     一边开发一边进行push，同时写下开发日志Pick-Light-From-Dark\Assets\Scripts\Game\Tes
-    t\amiao\developLog.md 要求简短重点体现功能、如何测试和重要代码的路径                    
+    t\amiao\developLog.md 要求简短重点体现功能、如何测试和重要代码的路径 
 
-    每执行一个阶段则push一次
+    每完成一个阶段则push一次
 
     若所有待办已完成 执行 stop loop
 ```
@@ -44,27 +44,85 @@
 - [x] 生成测试 Prefab 验证存档/读档功能
 - [x] 显示重要存档数据
 
-## 4. Skip Button 不可见排查
-- [x] 在 `BgFadeTest.cs` 中只看到存档按钮
-- [x] 排查 `FungusVNController` 中跳过按钮未显示的原因
-- [x] 修复并验证
-
-## 5. 音效未加载排查
-- [x] `Assets/Scenes/Amiao_Test` 中音效未加载
-- [x] 类似图片未加载问题，检查 Resources 路径
-- [x] 排查并修复
-
-## 6. 演出效果增强
-- [x] 不修改对话内容
-- [x] 参考 `Dialogue1.txt` 的演出方式
-- [x] 修改 Dialogue2/3/4 增强演出效果（Dialogue5 不存在，未创建）
-- [x] 在 `Assets/Art` 下找图片素材
-- [x] 在 `Assets/Audio` 下找声音素材
 
 ## 
 - [x] SimpleSkipButton按钮为巨大白色且字体未显示 为方块 SkipButtonTest可以加载出ui字体正确的按钮但是要延迟加载 尝试中和两种问题
 - [x] 修改Pick-Light-From-Dark\Assets\Resources\Dialogue\Dialogue5.txt 旁白、场景改为陆萤， 为这类对话加上（），表示心里话
 - [x] 做一个占位文字功能的prefab测试 ，在需要展示图片、展示音效音乐的时候，素材缺失则在画面最前左上角显示占位文字”img missing”例如。
+
+##
+- [x] Pick-Light-From-Dark\Assets\Resources\Dialogue下如果Dialogue1~5都是一关的剧情，可以分成两部分，比如说是上段~游玩~下段，1~5正确的文本。首先搜索整个游戏5个关卡连起来的逻辑在整个项目里是如何实现，按需对这5个文本进行分段，待到形如1-1的那些 TXT 文本上，得到分成两段的两个txt。
+- [x] 把Pick-Light-From-Dark\Assets\Scripts\Game\Test\amiao\SimpleSkipButton.cs的实现复刻到Pick-Light-From-Dark\Assets\Scenes\Amiao_Test\FungusVN_1.prefab 1~4prefab上，使按钮可见。
+- [x] 做个 FungusVN_5.prefab ，测试后可以的话可以再和结局分支合并起来。
+
+##
+- [x] Pick-Light-From-Dark\Pick-Light-From-Dark\As   sets\Resources\Dialogue\旧对话（未分段）\Dialogue5.txt   
+  根据5的结局以及天台的结局 每段剧情分成各个prefab 
+- [x] prefab存档和跳过的按钮位置偏右，存档两按钮已经超出了屏幕外，是分析是画幅出了问题还是什么问题？如果只是修改坐标就可以的话，那就修改坐标是往左一点，两个按钮
+- [x]把1~4的prefab连在一起形成一个大的预制体，可不可以的话，我要测试一下剧情之间的变化，特别是要让第一关的按钮进入两个分支生效，先不管游玩的部分，就让剧情之间可以连在一起测试,形成一个完整的剧情demo
+- [x] 站位符的功能应该是文字显示在画面的左上角，而不只是在控制台上，画面上并没有看到在预zhi体里面
+- [x] fungus是否支持？第支持就是隐藏对话框的图片，然后把文字放大字号中间显示.那个”巡逻开始 第二夜”类似的描述在每个剧情的最后面出现，这样的描述代表着是即将进入游玩的部分，这部分将它就是隐去对话框居中大字
+- [x] 第一关最后选项那里，”陆萤”应该显示出来
+
+- [x] Pick-Light-From-Dark\Assets\Scenes\Amiao_Test\旧剧情prefab（路径改了不能直接跑）和这个不一样Pick-Light-From-Dark\Assets\Scenes\Amiao_Test 分段后的prefab里的字体 按照旧的prefab的字体移植过来
+- [x] Pick-Light-From-Dark\Assets\Scenes\Amiao_Test\TestPrefabs\StoryChainTester.prefab day1-1.prefab中的选项点不了 不能进入分支剧情
+- [x] Pick-Light-From-Dark\Assets\Resources\Dialogue\Dialogue5-1.txt 5-几系列中“[ 陆萤 ]”都换成“陆萤”。以及我修改了txt但是5-2的prefab未同步过去修改，是不是生成剧本方式和Pick-Light-From-Dark\Assets\Resources\Dialogue\旧对话（未分段）不一样了
+- [x] 跳过的位置应该是跳到选项（第一关和第五关），或者跳到下一段剧情（即下一个prefab）
+- [x] 看不到文字最可能的原因是 PlaceholderDisplay.cs 没有设置字体（第109-112行）：已在 PlaceholderDisplay.cs:113-114 修复，加载 Font/LXGWWenKaiScreen 或 Font/文软雅黑。
+- [x] StoryChainTester.prefab 包含分支功能与结局判定
+  - [x] 重构 StoryChainTestRunner：支持多关分支选项与第五关 prefab
+  - [x] 结局画面集成：第一关/第五关结局自动触发 EndingManager
+  - [x] 结局条件配置：Inspector 可手动编辑 EndingCondition
+  - [x] 结局分歧点文档：写出各结局在操作中的触发位置
+- [x]整体的所有的预制体中文本框中姓名的坐标向上一点，然后底下文本框的说话内容的坐标向下一点
+- [x] The referenced script on this Behaviour (Game Object 'PlaceholderTester') is missing! 已修复 GUID 引用
+- [x] 自动显示缺失素材示例文字（无需按键，运行后0.5秒自动显示）
+- [x] 增加个快进键 开发中模式使用功能是？嗯，可以快速的推动剧情吗？把所有的那些文字一短短对话的加速，不用点击就通过，只要松开按键 fungus有类似功能吗 没有就自己实现下。可以建一个开发者功能父类，之后还有需要就添加进去，最后可以一次性取消这些操作，但是不会影响游戏其他部分，完全独立。
+  - [x] 创建 `DevModeBase.cs` 开发者功能抽象基类
+  - [x] 创建 `FastForwardDevMode.cs` 按住空格快进（松开停止）
+  - [x] `DevModeBase.DisableAllDevModes()` 一键禁用所有开发模式
+  - [x] 运行时自动查找 FungusVNController，完全独立不影响其他系统
+- [x] 居中字体调小（72→48）
+- [x] 给每关第一段剧情结尾加上居中大字（Dialogue3-1/4-1/5-1）
+- [x] 存档任务 先优化 再编写测试prefab 只要看一下数据是否被记录
+  - [x] `SaveLoadTestRunner.cs`：IMGUI 界面，支持模拟保存/读取/清除存档
+  - [x] `SaveLoadTester.prefab`：挂载测试脚本的预制体
+  - [x] 显示存档内容：关卡/时间/结局分支/卡牌使用/任务目标
+```
+统一为 JSON 单轨制（推荐）
+
+  改动点：
+  1. 弃用 Fungus SaveManager，剧情进度也存入 player_data.json
+  2. 扩展 PlayerDataFile：
+
+  public class PlayerDataFile
+  {
+      public List<JsonLevelRecord> records;
+      public StoryProgress storyProgress; // 新增：当前剧情进度
+  }
+
+  public class StoryProgress
+  {
+      public string currentStoryFile;
+      public int currentLineIndex;
+      public bool isOpeningDone;
+      // 可扩展：Flowchart 变量字典
+  }
+
+  3. 读档时不重载场景，直接恢复状态
+
+  优点：
+  - 一个文件、一个入口、一份真相
+  - 可随时保存"中途进度"（无需等关卡结束）
+  - 读档时不重载场景，内存状态不丢失
+  - 易于扩展（后续加情绪值、闭眼状态等都很自然）
+
+  缺点：
+  - 需要一次性替换 Fungus 存档的调用点（约 3~4 处）
+  - 需要手写状态恢复逻辑（替代 Fungus 的场景重载）
+```
+- [x] 继续编写一个完整的存档读档的prefab 包含简单ui（SaveLoadTester.prefab 已实现）
+
 
 ## 结局数据配置
 

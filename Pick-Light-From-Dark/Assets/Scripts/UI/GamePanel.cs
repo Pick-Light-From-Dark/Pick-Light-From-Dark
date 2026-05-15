@@ -54,6 +54,10 @@ public class GamePanel : BasePanel
     [Header("场景背景")]
     [SerializeField] private Image sceneBackgroundImage;
 
+    [Header("情绪进度条")]
+    [SerializeField] private Image panicBarFill;
+    [SerializeField] private Image exciteBarFill;
+
     [Header("老师巡查状态")]
     [SerializeField] private TextMeshProUGUI teacherStatusText;
 
@@ -84,6 +88,8 @@ public class GamePanel : BasePanel
     // 情绪值显示
     private TextMeshProUGUI chaosCountText;
     private TextMeshProUGUI happlyCountText;
+    private const int EMOTION_DISPLAY_MIN = 0;
+    private const int EMOTION_DISPLAY_MAX = 50;
 
     // 剩余时间显示
     private TextMeshProUGUI timeText;
@@ -129,8 +135,13 @@ public class GamePanel : BasePanel
     [Header("关卡配置（留空则使用 TestLevelConfig）")]
     [SerializeField] private Game.Config.LevelConfigSO overrideLevelConfig;
 
+    // 防止同一帧内对 GameFlowController 重复初始化（Awake + InitializeWithConfig 双重调用）
+    private static int lastGameFlowInitFrame = -1;
+
     public void InitializeWithConfig(Game.Config.LevelConfigSO config)
     {
+        if (Time.frameCount == lastGameFlowInitFrame) return;
+        lastGameFlowInitFrame = Time.frameCount;
         overrideLevelConfig = config;
         if (config != null)
             Game.Flow.GameFlowController.Instance.Initialize(config);
@@ -178,11 +189,18 @@ public class GamePanel : BasePanel
 
         cardManager = CardManager.Instance;
 
+        // 先订阅事件，确保 CardManager.Initialize 触发 OnSelectionChanged 时
+        // RefreshSelectionArea 已在监听列表中，不会错过首次刷新
+        CardManager.OnSelectionChanged += RefreshSelectionArea;
+
         if (!Game.Flow.GameFlowController.Instance.IsInitialized)
         {
             var config = overrideLevelConfig ?? Resources.Load<Game.Config.LevelConfigSO>("TestData/TestLevelConfig");
-            if (config != null)
+            if (config != null && Time.frameCount != lastGameFlowInitFrame)
+            {
+                lastGameFlowInitFrame = Time.frameCount;
                 Game.Flow.GameFlowController.Instance.Initialize(config);
+            }
         }
 
         // 初始化生命值显示
@@ -195,7 +213,6 @@ public class GamePanel : BasePanel
         CardSlot.OnCardClicked += OnCardClicked;
         CardSlot.OnCardDragStarted += OnCardDragStarted;
         CardSlot.OnCardDragEnded += OnCardDragEnded;
-        CardManager.OnSelectionChanged += RefreshSelectionArea;
 
         if (cardLoadingBarBg != null) cardLoadingBarBg.transform.parent.gameObject.SetActive(false);
         if (LoadingCount != null) LoadingCount.gameObject.SetActive(false);
@@ -258,8 +275,12 @@ public class GamePanel : BasePanel
         var emo = EmotionSystem.Instance;
         if (emo == null) return;
         var info = emo.GetEmotionInfo();
-        if (chaosCountText != null) chaosCountText.text = info.panicValue.ToString();
-        if (happlyCountText != null) happlyCountText.text = info.exciteValue.ToString();
+        if (chaosCountText != null) chaosCountText.text = $"{info.panicValue}/{EMOTION_DISPLAY_MAX}";
+        if (happlyCountText != null) happlyCountText.text = $"{info.exciteValue}/{EMOTION_DISPLAY_MAX}";
+        if (panicBarFill != null)
+            panicBarFill.fillAmount = (info.panicValue - EMOTION_DISPLAY_MIN) / (float)(EMOTION_DISPLAY_MAX - EMOTION_DISPLAY_MIN);
+        if (exciteBarFill != null)
+            exciteBarFill.fillAmount = (info.exciteValue - EMOTION_DISPLAY_MIN) / (float)(EMOTION_DISPLAY_MAX - EMOTION_DISPLAY_MIN);
     }
 
     private void SetupTeacherStatus()
@@ -1206,8 +1227,9 @@ public class GamePanel : BasePanel
         if (cardManager != null && cardManager.GetAvailableCardCount() == 0)
         {
             var config = overrideLevelConfig ?? Resources.Load<LevelConfigSO>("TestData/TestLevelConfig");
-            if (config != null)
+            if (config != null && Time.frameCount != lastGameFlowInitFrame)
             {
+                lastGameFlowInitFrame = Time.frameCount;
                 Game.Flow.GameFlowController.Instance.Initialize(config);
                 return; // Initialize 已触发了 RefreshSelectionArea
             }
