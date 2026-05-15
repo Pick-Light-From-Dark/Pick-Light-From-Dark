@@ -26,9 +26,11 @@ namespace Game.Test
 
         // ========== 区域一：死亡结局测试（随时触发） ==========
         [Header("【区域一】死亡结局测试 — 随时触发")]
-        [Tooltip("当场剩余血量（测试用标注，不影响直接触发）")]
+        [Tooltip("当场剩余血量（默认2，拖到0自动触发死亡结局）")]
         [Range(0, 5)]
-        public int currentLives = 0;
+        public int currentLives = 2;
+
+        private bool isValidating;
 
         // ========== 区域二：结局一 — 太阳照常升起（第一关触发） ==========
         [Header("【区域二】结局一：太阳照常升起 — 第一关触发")]
@@ -68,6 +70,19 @@ namespace Game.Test
         }
 
         // ========== 生命周期 ==========
+
+        void OnValidate()
+        {
+            if (!Application.isPlaying) return;
+            if (isValidating) return;
+            if (currentLives == 0)
+            {
+                isValidating = true;
+                TriggerDeadEnd(0);
+                currentLives = 2;
+                isValidating = false;
+            }
+        }
 
         void Update()
         {

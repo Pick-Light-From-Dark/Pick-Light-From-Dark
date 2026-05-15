@@ -54,11 +54,7 @@ namespace Game.Test.Editor
 
             EditorGUILayout.LabelField("【区域一】死亡结局测试 — 随时触发", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(serializedObject.FindProperty("currentLives"));
-
-            if (GUILayout.Button("触发死亡结局", GUILayout.Height(28)))
-            {
-                tester.TriggerDeadEndFromInspector();
-            }
+            EditorGUILayout.HelpBox("将血量拖到 0 即可自动触发死亡结局（触发后自动恢复为 2）", MessageType.Info);
 
             EditorGUILayout.EndVertical();
         }
