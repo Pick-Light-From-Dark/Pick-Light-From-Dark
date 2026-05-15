@@ -145,6 +145,9 @@ public class GamePanel : BasePanel
         overrideLevelConfig = config;
         if (config != null)
             Game.Flow.GameFlowController.Instance.Initialize(config);
+
+        // 初始化时立即设置初始背景（避免 ImgBk 显示默认占位图）
+        SetSceneBackground(currentBackgroundId);
     }
 
     protected override void Awake()
