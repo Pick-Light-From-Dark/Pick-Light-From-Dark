@@ -26,6 +26,10 @@ namespace Game.Flow
         [Header("下一关预制体（NextLevel 分支时实例化）")]
         public GameObject nextLevelPrefab;
 
+        [Header("结局预制体")]
+        public GameObject ending1Prefab;
+        public GameObject deathEndingPrefab;
+
         private bool isGameOver = false;
         private Game.AI.TeacherAI teacherAI;
 
@@ -80,8 +84,15 @@ namespace Game.Flow
             switch (exitType)
             {
                 case VNExitType.Ending:
-                    // 直接进入结局流程（跳过游玩）
-                    StartEndingStory();
+                    // 第一关"不吃"→结局一
+                    if (levelId == 1 && ending1Prefab != null)
+                    {
+                        ShowEnding(ending1Prefab);
+                    }
+                    else
+                    {
+                        StartEndingStory();
+                    }
                     break;
                 case VNExitType.NextLevel:
                     // 接下一个预制体
@@ -119,8 +130,13 @@ namespace Game.Flow
             // 先初始化 GameFlowController，避免 GamePanel.Awake 用 TestLevelConfig 自初始化
             GameFlowController.Instance.Initialize(levelConfig);
 
-            var teacherObj = new GameObject("TeacherAI");
-            teacherAI = teacherObj.AddComponent<Game.AI.TeacherAI>();
+            var teacherAI = FindFirstObjectByType<Game.AI.TeacherAI>();
+            if (teacherAI == null)
+            {
+                var teacherObj = new GameObject("TeacherAI");
+                teacherAI = teacherObj.AddComponent<Game.AI.TeacherAI>();
+            }
+            this.teacherAI = teacherAI;
 
             UIMgr.Instance.ShowPanel<GamePanel>(
                 E_UILayer.Middle,
@@ -156,7 +172,15 @@ namespace Game.Flow
             CleanupTeacherAI();
             UIMgr.Instance.HidePanel<GamePanel>();
             UnsubscribeGameEvents();
-            UIMgr.Instance.ShowPanel<TipPanel>();
+
+            if (reason == "生命值耗尽" && deathEndingPrefab != null)
+            {
+                ShowEnding(deathEndingPrefab);
+            }
+            else
+            {
+                UIMgr.Instance.ShowPanel<TipPanel>();
+            }
         }
 
         void StartEndingStory()
@@ -220,6 +244,15 @@ namespace Game.Flow
         void ShowVictoryPanel()
         {
             UIMgr.Instance.ShowPanel<EndingContentPanel>();
+        }
+
+        void ShowEnding(GameObject prefab)
+        {
+            if (prefab == null) return;
+            var canvas = FindFirstObjectByType<Canvas>();
+            if (canvas == null) return;
+            var instance = Instantiate(prefab, canvas.transform, false);
+            Debug.Log($"[LevelFlowCoordinator] 显示结局: {prefab.name}");
         }
 
         void UnsubscribeGameEvents()

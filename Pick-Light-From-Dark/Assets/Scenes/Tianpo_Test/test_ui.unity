@@ -402,7 +402,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &2084609199
 RectTransform:
   m_ObjectHideFlags: 0
@@ -468,10 +468,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 897703617}
     m_Modifications:
-    - target: {fileID: 2512239833556889447, guid: 3116f563635c576438499fd0d35b1a04, type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: -50.2
-      objectReference: {fileID: 0}
     - target: {fileID: 4563681799277515177, guid: 3116f563635c576438499fd0d35b1a04, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -555,10 +551,6 @@ PrefabInstance:
     - target: {fileID: 5046128886078943303, guid: 3116f563635c576438499fd0d35b1a04, type: 3}
       propertyPath: m_Name
       value: GamePanel
-      objectReference: {fileID: 0}
-    - target: {fileID: 7483739027573776572, guid: 3116f563635c576438499fd0d35b1a04, type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: -2.5
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

@@ -154,19 +154,17 @@ namespace Game.UI
             RefreshStackDisplay();
         }
 
-        private Image stackBgImage;
+        private GameObject stackCountRoot;
 
         private void RefreshStackDisplay()
         {
             if (stackText == null) return;
             bool show = CardData != null && CardData.cardType == CardType.Stackable;
 
-            // 找到数量背景图（和 stackText 同节点或父节点上）
-            if (stackBgImage == null)
-                stackBgImage = stackText.GetComponent<Image>() ?? stackText.GetComponentInParent<Image>();
+            if (stackCountRoot == null)
+                stackCountRoot = stackText.transform.parent != null ? stackText.transform.parent.gameObject : stackText.gameObject;
 
-            stackText.gameObject.SetActive(show);
-            if (stackBgImage != null) stackBgImage.enabled = show;
+            stackCountRoot.SetActive(show);
             if (show) stackText.text = $"{StackCount}";
         }
 

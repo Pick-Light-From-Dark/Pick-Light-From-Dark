@@ -178,10 +178,6 @@ namespace Game.Emotion
                 {
                     ChangePanic(-decrease);
                 }
-                if (exciteValue > minExcite)
-                {
-                    ChangeExcite(-decrease);
-                }
             }
         }
     }

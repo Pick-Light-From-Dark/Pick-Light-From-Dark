@@ -158,6 +158,9 @@ MonoBehaviour:
   vnController: {fileID: 788662738}
   nextLevelSceneName: Level2
   currentLevelSceneName: Level1
+  nextLevelPrefab: {fileID: 0}
+  ending1Prefab: {fileID: 8761397556599405992, guid: 0989ced22c6a0d44aa308f836b6b657b, type: 3}
+  deathEndingPrefab: {fileID: 6000, guid: f5bd8a962e8242ff92f62f72052e2cbd, type: 3}
 --- !u!4 &283294897
 Transform:
   m_ObjectHideFlags: 0
