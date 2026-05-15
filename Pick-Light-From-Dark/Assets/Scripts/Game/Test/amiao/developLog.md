@@ -749,3 +749,45 @@
 - 代码：`Assets/Scripts/Game/Test/amiao/SkipTestRunner.cs`、`CrossLevelSaveSystem.cs`
 - Prefab：`Assets/Scenes/Amiao_Test/TestPrefabs/EndingScreen.prefab`、`SkipTester.prefab`
 
+---
+
+## 2026-05-15 存档读档测试 Prefab（三层递进）
+
+**功能**：三层递进的存档读档测试系统，验证单段、两段串联、PlayerData JSON 变化。
+
+### Phase 1: 单段存档读档测试
+- `VNCheckpointTest.cs`：测试 day1-1 单段 VN 的存档读档
+  - 自动查找 VN 控制器、存档系统、Flowchart 设置
+  - F5=存档当前进度（Fungus + CrossLevelSaveSystem 双重存档）
+  - F9=读档回到当前 VN 开头（重置 Flowchart 变量 + RestartDialogue）
+  - GUI 面板显示存档状态和操作按钮
+- `VNCheckpointTest.prefab`：挂载脚本的预制体
+
+### Phase 2: 两段连贯剧情存档测试
+- `VNSequenceTest.cs`：串联 day1-1 和 day2-1
+  - 可配置多段 VN（segmentName + dialogueText + levelId）
+  - F5=存档 | F9=读档（自动匹配段名回到对应段开头） | F6=切换下一段
+  - 动态更换 vnController.dialogueText 实现段切换
+- `VNSequenceTest.prefab`：挂载脚本的预制体
+
+### Phase 3: PlayerData JSON 存档变化测试
+- `TestPlayerData.cs`：可序列化的玩家数据结构 + 管理器
+  - TestPlayerData：playerId, playerName, lives, emotion, currentLevel, currentSegment, hasSeenOpening
+  - TestPlayerDataManager：JSON 读写（Application.persistentDataPath/test_player_data.json）、变化追踪
+- `VNDataChangeTest.cs`：在 VN 段开头改变 player data，存档读档显示变化
+  - F7=应用当前段数据变化（day1-1: lives-1/emotion+10, day2-1: lives-2/emotion+20）
+  - F5=存档（VN + PlayerData） | F9=读档（恢复 VN + PlayerData）
+  - 控制台打印 BEFORE/AFTER JSON 对比
+- `VNDataChangeTest.prefab`：挂载脚本的预制体
+
+**测试方式**：
+1. Phase 1：场景放 day1-1.prefab + VNCheckpointTest.prefab，F5存档->F9读档
+2. Phase 2：场景放 VNSequenceTest.prefab（自动加载两段），F6切换->F5存档->F9读档
+3. Phase 3：场景放 VNDataChangeTest.prefab，F7改数据->F5存档->F9读档->观察控制台JSON
+
+**重要路径**：
+- Phase 1：`Assets/Scripts/Game/Test/amiao/VNCheckpointTest.cs`、`Assets/Scenes/Amiao_Test/TestPrefabs/VNCheckpointTest.prefab`
+- Phase 2：`Assets/Scripts/Game/Test/amiao/VNSequenceTest.cs`、`Assets/Scenes/Amiao_Test/TestPrefabs/VNSequenceTest.prefab`
+- Phase 3：`Assets/Scripts/Game/Test/amiao/TestPlayerData.cs`、`Assets/Scripts/Game/Test/amiao/VNDataChangeTest.cs`、`Assets/Scenes/Amiao_Test/TestPrefabs/VNDataChangeTest.prefab`
+
+---
