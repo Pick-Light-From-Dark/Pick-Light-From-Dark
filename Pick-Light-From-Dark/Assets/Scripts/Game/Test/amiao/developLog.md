@@ -1,5 +1,33 @@
 # 开发日志
 
+## 2026-05-15 SL.unity 存档读档测试场景
+
+**功能**：在 SL.unity 场景中实现第一关视觉小说剧情中间存档、读档测试，支持选关。
+
+**实现**：
+- `SLTestRunner.cs`：场景主控测试脚本
+  - `Start()` 自动初始化 CrossLevelSaveSystem、PlayerDataStore
+  - 自动加载第一关剧情 Dialogue1-1.txt 并启动 VN
+  - F5 = 存档当前进度（CrossLevelSaveSystem + PlayerDataStore 双路存档）
+  - F9 = 读档（回到存档关卡剧情开始）
+  - F1~F5 = 选关（加载 Dialogue1-1 ~ Dialogue5-1）
+  - F3 = 显隐 IMGUI 面板
+  - `levels` 列表支持 5 个关卡配置，Inspector 未配置时自动填充默认值
+- `SL.unity` 场景更新：添加 `SLTestRunner` GameObject（挂载脚本）
+
+**测试方式**：
+1. 打开 SL.unity 场景
+2. 运行后自动加载第一关剧情
+3. 按 F5 存档当前进度
+4. 按 F9 读档，回到当前存档关卡剧情开始
+5. 按 F2~F5 切换其他关卡
+
+**重要路径**：
+- 代码：`Assets/Scripts/Game/Test/amiao/SLTestRunner.cs`
+- 场景：`Assets/Scenes/Amiao_Test/SL.unity`
+
+---
+
 ## 2026-05-15 EndingConditionBridge — Fungus 结局条件后端
 
 **功能**：为 Fungus 剧情提供可调用后端，记录/查询结局分支前置条件。
