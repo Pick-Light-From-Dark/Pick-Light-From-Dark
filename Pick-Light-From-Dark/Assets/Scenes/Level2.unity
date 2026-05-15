@@ -332,6 +332,8 @@ MonoBehaviour:
   nextLevelSceneName: 
   currentLevelSceneName: Level2
   nextLevelPrefab: {fileID: 0}
+  ending1Prefab: {fileID: 1000, guid: cc00867e852a29a4ab3ba525b44f5c54, type: 3}
+  deathEndingPrefab: {fileID: 6000, guid: f5bd8a962e8242ff92f62f72052e2cbd, type: 3}
 --- !u!4 &1500532621
 Transform:
   m_ObjectHideFlags: 0
