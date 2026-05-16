@@ -31,6 +31,7 @@ namespace Game.Flow
         public GameObject deathEndingPrefab;
 
         private bool isGameOver = false;
+        private bool choseEatBranch = false;
         private Game.AI.TeacherAI teacherAI;
 
         public string NextLevelSceneName => nextLevelSceneName;
@@ -99,9 +100,11 @@ namespace Game.Flow
                     LoadNextPrefab();
                     break;
                 case VNExitType.Gameplay:
+                    choseEatBranch = true;
+                    OnOpeningStoryEnd();
+                    break;
                 case VNExitType.None:
                 default:
-                    // 默认进入游玩
                     OnOpeningStoryEnd();
                     break;
             }
@@ -208,7 +211,7 @@ namespace Game.Flow
             switch (exitType)
             {
                 case VNExitType.NextLevel:
-                    LoadNextPrefab();
+                    TryAdvanceToNextLevel();
                     break;
                 case VNExitType.Ending:
                 case VNExitType.Gameplay:
@@ -221,7 +224,35 @@ namespace Game.Flow
 
         void OnEndingStoryEnd()
         {
+            // 第一关「吃」线：通关后播完 Dialogue1-2eat，应进第二关，不能走结局面板（预制体默认文案是结局一）
+            if (levelId == 1 && choseEatBranch)
+            {
+                TryAdvanceToNextLevel();
+                return;
+            }
+
             ShowVictoryPanel();
+        }
+
+        /// <summary>通关后进入下一关场景（优先）或实例化下一关预制体</summary>
+        void TryAdvanceToNextLevel()
+        {
+            if (!string.IsNullOrEmpty(nextLevelSceneName))
+            {
+                AdvanceToNextLevelScene();
+                return;
+            }
+
+            LoadNextPrefab();
+        }
+
+        void AdvanceToNextLevelScene()
+        {
+            Debug.Log($"[LevelFlowCoordinator] 进入下一关场景: {nextLevelSceneName}");
+            UIMgr.Instance.HideAllPanels();
+            if (vnController != null && vnController.vnCanvas != null)
+                vnController.vnCanvas.gameObject.SetActive(false);
+            SceneMgr.Instance.LoadScene(nextLevelSceneName);
         }
 
 
