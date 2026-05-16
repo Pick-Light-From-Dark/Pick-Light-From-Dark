@@ -132,21 +132,8 @@ namespace Game.Test
             }
             if (saveSystem.HasSave() && GUILayout.Button("继续游戏", GUILayout.Height(40)))
             {
-                var cp = saveSystem.LoadCheckpoint();
-                // 找到对应关卡索引
-                for (int i = 0; i < levelConfigs.Count; i++)
-                {
-                    if (levelConfigs[i].levelId == cp.currentLevelId)
-                    {
-                        currentLevelIndex = i;
-                        break;
-                    }
-                }
-                if (string.IsNullOrEmpty(cp.storyFileName))
-                    currentPhase = Phase.Gameplay;
-                else
-                    StartOpeningDialogue();
-                statusMsg = $"继续 Lv.{cp.currentLevelId}";
+                LoadCheckpoint();
+                statusMsg = $"继续 Lv.{GetCurrentLevelId()}";
             }
         }
 
@@ -290,6 +277,48 @@ namespace Game.Test
             statusMsg = $"播放结尾剧情: {config.endingStory}";
         }
 
+        /// <summary>通用剧情加载 — 根据任意文件名加载并播放</summary>
+        void StartStoryDialogue(string storyFileName)
+        {
+            var textAsset = Resources.Load<TextAsset>($"Dialogue/{storyFileName}");
+            if (textAsset == null)
+            {
+                statusMsg = $"错误: 未找到 {storyFileName}";
+                Debug.LogWarning($"[Demo] 未找到剧情文件: Dialogue/{storyFileName}");
+                return;
+            }
+
+            vnController.dialogueText = textAsset;
+            vnController.OnDialogueExit = OnGenericDialogueExit;
+            vnController.OnDialogueComplete = OnGenericDialogueEnd;
+            vnController.RestartDialogue();
+            currentPhase = Phase.OpeningDialogue;
+            statusMsg = $"播放剧情: {storyFileName}";
+            Debug.Log($"[Demo] 开始播放剧情: {storyFileName}");
+        }
+
+        void OnGenericDialogueExit(VNExitType exitType)
+        {
+            Debug.Log($"[Demo] 剧情分支: {exitType}");
+            OnGenericDialogueEnd();
+        }
+
+        void OnGenericDialogueEnd()
+        {
+            var config = levelConfigs[currentLevelIndex];
+            saveSystem.SaveStoryProgress(config.levelId, vnController.dialogueText.name);
+
+            if (config.hasGameplay)
+            {
+                currentPhase = Phase.Gameplay;
+                statusMsg = $"Lv.{config.levelId} 进入游玩";
+            }
+            else
+            {
+                StartEndingDialogue();
+            }
+        }
+
         void OnEndingDialogueExit(VNExitType exitType)
         {
             switch (exitType)
@@ -424,7 +453,10 @@ namespace Game.Test
                 statusMsg = "无存档";
                 return;
             }
+
             var cp = saveSystem.LoadCheckpoint();
+
+            // 1. 找到关卡索引
             for (int i = 0; i < levelConfigs.Count; i++)
             {
                 if (levelConfigs[i].levelId == cp.currentLevelId)
@@ -433,12 +465,58 @@ namespace Game.Test
                     break;
                 }
             }
-            if (string.IsNullOrEmpty(cp.storyFileName))
-                currentPhase = Phase.Gameplay;
+            var config = levelConfigs[currentLevelIndex];
+
+            // 2. 重置 saveFlowchart，避免 RestartDialogue() 直接跳过
+            if (vnController != null && vnController.saveFlowchart != null)
+            {
+                vnController.saveFlowchart.SetBooleanVariable("VN_IsOpeningDone", false);
+            }
+
+            // 3. 恢复 LevelResult 状态（血量 / 卡牌）
+            var result = saveSystem.GetLevelResult(config.levelId);
+            if (result != null)
+            {
+                selectedLives = Mathf.Clamp(result.finalLives, 1, 3);
+                useCard2017 = result.usedCard2017;
+                useCard2026 = result.usedCard2026;
+            }
             else
+            {
+                selectedLives = 3;
+                useCard2017 = false;
+                useCard2026 = false;
+            }
+
+            // 4. 读取 PlayerData
+            var playerRecord = PlayerDataStore.Instance?.GetLastRecord(config.levelId);
+            string playerDataInfo = playerRecord != null
+                ? $" PlayerData: time={playerRecord.timeUsed:F1}s win={playerRecord.isWin}"
+                : " PlayerData: 无记录";
+
+            // 5. 根据 storyFileName 决定进入哪个阶段
+            if (string.IsNullOrEmpty(cp.storyFileName))
+            {
+                currentPhase = Phase.Gameplay;
+                statusMsg = $"读档到 Lv.{config.levelId} 游玩中{playerDataInfo}";
+            }
+            else if (cp.storyFileName == config.openingStory)
+            {
                 StartOpeningDialogue();
-            statusMsg = $"读档到 Lv.{cp.currentLevelId}";
-            Debug.Log($"[Demo] 读档: Lv.{cp.currentLevelId}, {cp.storyFileName}");
+                statusMsg = $"读档到 Lv.{config.levelId} 开场剧情{playerDataInfo}";
+            }
+            else if (cp.storyFileName == config.endingStory)
+            {
+                StartEndingDialogue();
+                statusMsg = $"读档到 Lv.{config.levelId} 结尾剧情{playerDataInfo}";
+            }
+            else
+            {
+                StartStoryDialogue(cp.storyFileName);
+                statusMsg = $"读档到 Lv.{config.levelId} 剧情 {cp.storyFileName}{playerDataInfo}";
+            }
+
+            Debug.Log($"[Demo] 读档: Lv.{config.levelId}, {cp.storyFileName}{playerDataInfo}");
         }
 
         void ClearAll()
@@ -461,7 +539,8 @@ namespace Game.Test
                     break;
                 case Phase.Gameplay:
                     saveSystem.SaveGameplayProgress(config.levelId);
-                    statusMsg = $"已存档: Lv.{config.levelId} 游玩中";
+                    SavePlayerData(config.levelId);
+                    statusMsg = $"已存档: Lv.{config.levelId} 游玩中 + PlayerData";
                     break;
                 case Phase.EndingDialogue:
                     saveSystem.SaveStoryProgress(config.levelId, config.endingStory);
@@ -472,6 +551,16 @@ namespace Game.Test
                     break;
             }
             Debug.Log($"[Demo] {statusMsg}");
+        }
+
+        void SavePlayerData(int levelId)
+        {
+            var record = new JsonLevelRecord(levelId)
+            {
+                timeUsed = Time.time,
+                isWin = false
+            };
+            PlayerDataStore.Instance?.SaveLevelRecord(record);
         }
 
         void PrintSaveSummary()
