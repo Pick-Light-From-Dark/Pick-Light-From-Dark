@@ -493,6 +493,13 @@ public class GamePanel : BasePanel
             return;
         }
 
+        // 离开走廊(5010)时恢复老师巡逻
+        if (currentBackgroundId == 5010 && bgId != 5010 && Game.AI.TeacherAI.IsPatrolPaused)
+        {
+            Game.AI.TeacherAI.IsPatrolPaused = false;
+            Debug.Log("[GamePanel] 离开走廊，恢复老师巡逻");
+        }
+
         if (fadeDuration > 0f && currentBackgroundId != bgId)
         {
             if (backgroundFadeRoutine != null) StopCoroutine(backgroundFadeRoutine);
