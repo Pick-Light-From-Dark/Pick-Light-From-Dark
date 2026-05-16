@@ -83,8 +83,14 @@ public class SaveGamePanel : BasePanel
         var cp = saveSystem.currentSave?.checkpoint;
         if (cp == null || cp.currentLevelId <= 0)
         {
-            Debug.LogWarning("[SaveGamePanel] 无存档信息可保存");
-            return;
+            // checkpoint 为空，尝试从场景名自动推断关卡并创建初始存档
+            saveSystem.SaveCurrentProgress();
+            cp = saveSystem.currentSave?.checkpoint;
+            if (cp == null || cp.currentLevelId <= 0)
+            {
+                Debug.LogWarning("[SaveGamePanel] 无存档信息可保存");
+                return;
+            }
         }
 
         MusicMgr.Instance?.PlaySound("按钮点击音效");

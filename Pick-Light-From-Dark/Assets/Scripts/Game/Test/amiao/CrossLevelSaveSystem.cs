@@ -71,6 +71,20 @@ namespace Game.Test
             return currentSave.checkpoint;
         }
 
+        /// <summary>自动保存当前关卡进度（从场景名推断，供 UI 存档按钮兜底用）</summary>
+        public void SaveCurrentProgress()
+        {
+            string sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+            if (sceneName.StartsWith("Level"))
+            {
+                string levelStr = sceneName.Substring(5);
+                if (int.TryParse(levelStr, out int levelId))
+                {
+                    SaveGameplayProgress(levelId);
+                }
+            }
+        }
+
         // ========== 卡牌记录（全局快速查询） ==========
 
         /// <summary>记录卡牌使用</summary>
