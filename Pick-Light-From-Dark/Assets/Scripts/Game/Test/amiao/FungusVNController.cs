@@ -973,17 +973,7 @@ namespace Game.Test
         {
             if (vnCanvas == null) return;
 
-            // === 存档按钮（右上角）===
-            var saveBtn = CreateButton("SaveBtn", vnCanvas.transform,
-                new Vector2(-80, -30), new Vector2(100, 45), "存档",
-                () => SaveProgress());
-            saveBtn.GetComponent<RectTransform>().anchorMin = new Vector2(1, 1);
-            saveBtn.GetComponent<RectTransform>().anchorMax = new Vector2(1, 1);
-            saveBtn.GetComponent<RectTransform>().pivot = new Vector2(1, 1);
-            saveBtn.GetComponent<RectTransform>().anchoredPosition = new Vector2(-80, -30);
-            EnsureButtonOnTop(saveBtn);
-
-            // === 跳过按钮（存档按钮左侧，开场剧情时显示）===
+            // === 跳过按钮（右上角，开场剧情时显示）===
             skipButton = CreateButton("SkipBtn", vnCanvas.transform,
                 new Vector2(-190, -30), new Vector2(100, 45), "跳过",
                 () => OnSkipStory());
