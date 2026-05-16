@@ -744,13 +744,29 @@ public class GamePanel : BasePanel
         if (teacherImg != null) teacherImg.SetActive(false);
     }
 
+    private Sprite redeyeClose;
+    private Sprite redeyeOpen;
+
     public void UpdateHpDisplay(int currentLives)
     {
         if (hpImages == null) return;
+
+        if (redeyeClose == null) redeyeClose = Resources.Load<Sprite>("UI/Icon/redeye_close");
+        if (redeyeOpen == null) redeyeOpen = Resources.Load<Sprite>("UI/Icon/redeye_open");
+
+        int maxLives = hpImages.Length;
+        int lostLives = maxLives - currentLives;
+
         for (int i = 0; i < hpImages.Length; i++)
         {
-            if (hpImages[i] != null)
-                hpImages[i].SetActive(i < currentLives);
+            if (hpImages[i] == null) continue;
+            var img = hpImages[i].GetComponent<Image>();
+            if (img == null) continue;
+
+            // 从末尾开始，丢失的生命显示 open，剩余显示 close
+            bool isLost = (maxLives - 1 - i) < lostLives;
+            img.sprite = isLost ? redeyeOpen : redeyeClose;
+            img.enabled = true;
         }
     }
 
@@ -946,6 +962,8 @@ public class GamePanel : BasePanel
 
     public override void ShowMe()
     {
+        Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto);
+        MusicMgr.Instance.StopBKMusic();
         RefreshSelectionArea();
     }
 

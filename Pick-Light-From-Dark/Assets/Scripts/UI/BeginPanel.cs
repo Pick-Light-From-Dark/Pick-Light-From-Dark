@@ -4,13 +4,18 @@ public class BeginPanel : BasePanel
 {
     public override void HideMe() { }
 
-    public override void ShowMe() { }
+    public override void ShowMe()
+    {
+        Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto);
+        MusicMgr.Instance.PlayBKMusic("BGM/Blind Spot");
+    }
 
     protected override void ClickBtn(string btnName)
     {
         switch (btnName)
         {
             case "StartBtn":
+                MusicMgr.Instance.StopBKMusic();
                 UIMgr.Instance.HidePanel<BeginPanel>(true);
                 SceneMgr.Instance.LoadScene("Level1");
                 break;
