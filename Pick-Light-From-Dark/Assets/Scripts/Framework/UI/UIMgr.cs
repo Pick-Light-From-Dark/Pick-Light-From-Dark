@@ -200,6 +200,9 @@ public class UIMgr : BaseManager<UIMgr>
         ResMgr.Instance.LoadAsync<GameObject>(path + "/" + panelName, (res) =>
         {
             //ȡ���ֵ����Ѿ�ռ��λ�õ�����
+            if (!panelDic.ContainsKey(panelName))
+                return;
+
             PanelInfo<T> panelInfo = panelDic[panelName] as PanelInfo<T>;
             //��ʾ�첽���ؽ���ǰ ����Ҫ���ظ������ 
             if(panelInfo.isHide)

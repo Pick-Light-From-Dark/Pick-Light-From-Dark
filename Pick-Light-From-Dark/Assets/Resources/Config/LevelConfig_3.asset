@@ -22,8 +22,8 @@ MonoBehaviour:
   eyeClosePanicDecreasePerSec: 1
   eyeCloseAccelerationThreshold: 20
   eyeCloseAccelerationMultiplier: 1.5
-  patrolIntervals: {x: 15, y: 25}
-  patrolTime: {x: 8, y: 10}
+  patrolIntervals: {x: 20, y: 30}
+  patrolTime: {x: 12, y: 16}
   eyeCheckDuration: {x: 3, y: 3}
   flashCheckDuration: {x: 3, y: 3}
   flashPanicPerSec: 2

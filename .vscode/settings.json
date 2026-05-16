@@ -1,5 +1,6 @@
 {
     "dotnet.defaultSolution": "Pick-Light-From-Dark/Pick-Light-From-Dark.sln",
     "nuget.suppressRestoreOnBuild": true,
-    "omnisharp.enableRoslynAnalyzers": false
+    "omnisharp.enableRoslynAnalyzers": false,
+    "dotnet.preferCSharpExtension": true
 }

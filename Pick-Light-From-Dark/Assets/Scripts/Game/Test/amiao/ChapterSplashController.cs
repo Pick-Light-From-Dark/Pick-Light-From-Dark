@@ -57,7 +57,8 @@ namespace Game.Test
             bool skipped = false;
             while (elapsed < displayDuration && !skipped)
             {
-                if (allowClickToSkip && (Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return)))
+                if (allowClickToSkip && (Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.Space)
+                    || Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.F8)))
                     skipped = true;
                 elapsed += Time.unscaledDeltaTime;
                 yield return null;

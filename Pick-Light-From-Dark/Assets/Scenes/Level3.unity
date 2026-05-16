@@ -305,6 +305,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1500532621}
   - component: {fileID: 1500532620}
+  - component: {fileID: 1500532623}
   m_Layer: 0
   m_Name: LevelFlowCoordinator
   m_TagString: Untagged
@@ -334,6 +335,19 @@ MonoBehaviour:
   nextLevelPrefab: {fileID: 0}
   ending1Prefab: {fileID: 3000, guid: 5213c12601f14a8d87110fadd69eb648, type: 3}
   deathEndingPrefab: {fileID: 6000, guid: f5bd8a962e8242ff92f62f72052e2cbd, type: 3}
+  showChapterSplash: 1
+--- !u!114 &1500532623
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1500532619}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a3c7e9f1b2d44e6f8a0b5c3d7e9f1a2b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!4 &1500532621
 Transform:
   m_ObjectHideFlags: 0

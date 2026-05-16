@@ -6,7 +6,7 @@ namespace Game.Test
 {
     /// <summary>
     /// 结局一预制体（Ending1_SunRises）按钮绑定：Prefab 上 Button 的 OnClick 为空时使用。
-    /// LoadSaveButton → 从头开始（重载关卡）；ReturnButton → 返回主界面。
+    /// LoadSaveButton → 打开存档面板；ReturnButton → 返回主界面。
     /// </summary>
     public class Ending1SunRisesButtonBinder : MonoBehaviour
     {
@@ -17,8 +17,8 @@ namespace Game.Test
         {
             WireButton("LoadSaveButton", () =>
             {
-                if (!string.IsNullOrEmpty(restartSceneName))
-                    SceneManager.LoadScene(restartSceneName);
+                gameObject.SetActive(false);
+                UIMgr.Instance.ShowPanel<SaveGamePanel>();
             });
 
             WireButton("ReturnButton", () =>

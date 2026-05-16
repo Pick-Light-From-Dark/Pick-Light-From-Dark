@@ -154,16 +154,17 @@ namespace Game.AI
                     PerformInspectionCheck();
                 }
 
-                // 脚步声根据接近进度调整音量
+                // 脚步声根据接近/离开进度调整音量
                 if (footstepSource != null)
                 {
                     float sv = MusicMgr.Instance.SoundValue;
-                    float targetVol;
+                    float targetVol = 0f;
                     if (currentState == TeacherState.Approaching)
                         targetVol = Mathf.Lerp(0.2f * sv, sv, approachProgress);
-                    else // Leaving
+                    else if (currentState == TeacherState.Leaving)
                         targetVol = Mathf.Lerp(sv, 0.1f * sv, 1f - approachProgress);
-                    footstepSource.volume = Mathf.Lerp(footstepSource.volume, targetVol, Time.deltaTime * 4f);
+                    if (targetVol > 0f)
+                        footstepSource.volume = Mathf.Lerp(footstepSource.volume, targetVol, Time.deltaTime * 4f);
                 }
 
                 if (stateTimer <= 0)
@@ -251,11 +252,12 @@ namespace Game.AI
             // 停止脚步声
             StopFootstep();
 
-            // 手电筒检查时显示老师画面 + 手电动画
+            // 根据检查类型显示不同动画
             if (currentInspectType == InspectType.Flash)
             {
+                // 手电筒检查：显示老师画面 + 视线视频动画
                 GamePanel.Instance?.ShowTeacherImage();
-                GamePanel.Instance?.ShowFlashlightOverlay(2f);
+                GamePanel.Instance?.ShowEyeGazeOverlay(2f);
             }
 
             // 触发检查开始事件
