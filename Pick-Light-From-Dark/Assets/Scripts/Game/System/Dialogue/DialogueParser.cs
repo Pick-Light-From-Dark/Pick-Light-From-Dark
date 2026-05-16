@@ -215,16 +215,25 @@ public static class DialogueParser
                 }
 
                 string result = ReadUntilBreak(rawLines, i + 1);
+                // 结果正文已并入选项行，避免主循环再次解析相同行（否则会选「吃」后仍顺序播放「不吃」等后续文本）
+                int afterResultBlock = IndexAfterChoiceResultBlock(rawLines, i + 1);
+                i = afterResultBlock - 1;
+
                 for (int j = list.Count - 1; j >= 0; j--)
                 {
                     if (list[j].type == "选项")
                     {
                         // 兼容格式：按顺序绑定，第一个结果→choice1，第二个→choice2
                         // 同时也兼容带数字后缀的格式（如 吃1/吃2）
+                        // 注意：仅「跳转」无内联正文时 choice1Result 为空，但 choice1Id 已占用，第二条必须落到 choice2，否则会覆盖导致选项结果反了
                         bool bindToChoice2 = choiceId.EndsWith("2");
+                        if (!bindToChoice2 && !string.IsNullOrEmpty(list[j].choice1Id) && list[j].choice1Id != choiceId)
+                        {
+                            bindToChoice2 = true;
+                        }
                         if (!bindToChoice2 && !string.IsNullOrEmpty(list[j].choice1Result) && list[j].choice1Id != choiceId)
                         {
-                            bindToChoice2 = true; // choice1 已被占用，自动分配到 choice2
+                            bindToChoice2 = true;
                         }
 
                         if (bindToChoice2)
@@ -287,11 +296,30 @@ public static class DialogueParser
             string next = rawLines[k].Trim();
             if (string.IsNullOrEmpty(next)) continue;
 
+            // 策划备忘行（# 开头）不并入对白，且与主循环一致地结束结果块
+            if (next.StartsWith("#")) break;
+
             if (next.StartsWith("选项") || next.StartsWith("【卡牌") || next.StartsWith("【选项") || next.StartsWith("[block:") || next.StartsWith("[action:"))
                 break;
 
             result += next + "\n";
         }
         return result.Trim();
+    }
+
+    /// <summary>与 ReadUntilBreak 相同分界：返回第一个不并入选项结果的 raw 行下标（或数组长度）。</summary>
+    private static int IndexAfterChoiceResultBlock(string[] rawLines, int startIndex)
+    {
+        for (int k = startIndex; k < rawLines.Length; k++)
+        {
+            string next = rawLines[k].Trim();
+            if (string.IsNullOrEmpty(next)) continue;
+
+            if (next.StartsWith("#")) return k;
+
+            if (next.StartsWith("选项") || next.StartsWith("【卡牌") || next.StartsWith("【选项") || next.StartsWith("[block:") || next.StartsWith("[action:"))
+                return k;
+        }
+        return rawLines.Length;
     }
 }

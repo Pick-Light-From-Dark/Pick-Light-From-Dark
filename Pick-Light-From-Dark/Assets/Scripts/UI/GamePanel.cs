@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -356,15 +357,17 @@ public class GamePanel : BasePanel
     {
         var eventTexts = new[] { firstEventText, secondEventText, thirdEventText };
         var goals = Game.Task.TaskManager.Instance.GetActiveGoals();
+        // 过滤掉隐藏（Pending）任务
+        var visibleGoals = goals?.Where(g => g.state != TaskState.Pending).ToList();
 
         for (int i = 0; i < eventTexts.Length; i++)
         {
             var tmp = eventTexts[i];
             if (tmp == null) continue;
 
-            if (goals != null && i < goals.Count)
+            if (visibleGoals != null && i < visibleGoals.Count)
             {
-                var goal = goals[i];
+                var goal = visibleGoals[i];
                 string stateIcon = goal.state == TaskState.Completed ? "<color=#64DC64>✓ </color>" : "";
                 tmp.text = $"{stateIcon}{goal.taskName}  {goal.currentCount}/{goal.targetCount}";
                 tmp.gameObject.SetActive(true);
@@ -491,6 +494,13 @@ public class GamePanel : BasePanel
         {
             Debug.LogWarning($"[GamePanel] 背景画面资源未找到: UI/Background/Bg_{bgId}");
             return;
+        }
+
+        // 离开走廊(5010)时恢复老师巡逻
+        if (currentBackgroundId == 5010 && bgId != 5010 && Game.AI.TeacherAI.IsPatrolPaused)
+        {
+            Game.AI.TeacherAI.IsPatrolPaused = false;
+            Debug.Log("[GamePanel] 离开走廊，恢复老师巡逻");
         }
 
         if (fadeDuration > 0f && currentBackgroundId != bgId)
@@ -780,7 +790,8 @@ public class GamePanel : BasePanel
         }
         isReading = true;
         IsCardReading = true;
-        IsInUninterruptibleSegment = card.CardData.segments.Count > 0 && !card.CardData.segments[0].isInterruptible;
+        int curSegClamped = Mathf.Clamp(currentSegmentIndex, 0, card.CardData.segments.Count - 1);
+        IsInUninterruptibleSegment = card.CardData.segments.Count > 0 && !card.CardData.segments[curSegClamped].isInterruptible;
 
         // 将卡牌移入思考框
         var dropRt = cardDropZoneObj != null ? cardDropZoneObj.GetComponent<RectTransform>() : null;
@@ -816,30 +827,31 @@ public class GamePanel : BasePanel
         }
 
         BuildReadingSegmentBar();
+        float startProgress = totalReadTime > 0f ? readTime / totalReadTime : 0f;
         if (cardLoadingBarFill != null)
         {
             cardLoadingBarFill.sprite = loadingFillSprite;
             cardLoadingBarFill.type = Image.Type.Filled;
             cardLoadingBarFill.fillMethod = Image.FillMethod.Horizontal;
             cardLoadingBarFill.fillOrigin = 0;
-            cardLoadingBarFill.fillAmount = 0f;
+            cardLoadingBarFill.fillAmount = startProgress;
             cardLoadingBarFill.color = Color.black;
         }
         if (LoadingCount != null)
         {
             LoadingCount.gameObject.SetActive(true);
-            LoadingCount.text = $"0.0s / {totalReadTime:F1}s";
+            LoadingCount.text = $"{readTime:F1}s / {totalReadTime:F1}s";
         }
 
         // 卡牌已放入放置区，隐藏拖拽时显示的思考框
         HideThinkingText();
 
-        // 初始片段是否可打断
-        bool firstInterruptible = readingCardData.segments != null
+        // 当前片段是否可打断（恢复进度时可能不在第一段）
+        bool currentInterruptible = readingCardData.segments != null
             && readingCardData.segments.Count > 0
-            && readingCardData.segments[0].isInterruptible;
+            && readingCardData.segments[curSegClamped].isInterruptible;
         if (ClearBtn != null)
-            ClearBtn.gameObject.SetActive(firstInterruptible);
+            ClearBtn.gameObject.SetActive(currentInterruptible);
 
         // 播放卡牌音效
         if (!string.IsNullOrEmpty(readingCardData.sfxName))
@@ -983,15 +995,17 @@ public class GamePanel : BasePanel
         if (readingCardData.backgroundJumpId != 0)
             SetSceneBackground(readingCardData.backgroundJumpId, 0.5f);
 
-        // 播放卡牌动作音效
-        if (!string.IsNullOrEmpty(readingCardData.sfxName))
-            MusicMgr.Instance.PlaySound(readingCardData.sfxName);
+        // 停止卡牌音效
+        if (cardSfxSource != null)
+        {
+            MusicMgr.Instance.StopSound(cardSfxSource);
+            cardSfxSource = null;
+        }
 
         // 播放读条完成通用音效
         MusicMgr.Instance.PlaySound("DXH_SOUND/SOUND2/24.读条完成音效");
 
         preReadSnapshot = null;
-        cardSfxSource = null;
         RefreshSelectionArea();
         Debug.Log($"[GamePanel] 读条完成: {readingCardData.cardName}");
     }

@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 namespace Game.Data
 {
@@ -18,6 +19,8 @@ namespace Game.Data
         public int targetCount;
         public int currentCount;
         public TaskState state;
+        [SerializeField] private bool isHidden = false;
+        public bool IsHidden { get => isHidden; set => isHidden = value; }
 
         public TaskGoal() { }
 

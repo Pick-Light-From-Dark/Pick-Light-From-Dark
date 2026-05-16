@@ -127,7 +127,7 @@ namespace Game.Data.Editor
                 "得先倒掉水才能加入调料……", CardType.NonStackable, 1,
                 new[] { new Segment(10f, true) },
                 0, 6, 1, RelatedType.NonPersistent, new[] { 2010, 2011, 2013, 2014 }, 0,
-                "1002", BedStateChange.None, false, "无",
+                "1002", BedStateChange.None, true, "无",
                 0, 0, "");
 
             // 2013 加入酱包

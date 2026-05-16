@@ -485,6 +485,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1137032863733514006}
   - component: {fileID: 5222030259641183232}
+  - component: {fileID: 8771397556599405993}
   m_Layer: 5
   m_Name: Ending1_SunRises
   m_TagString: Untagged
@@ -522,3 +523,17 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8761397556599405992}
   m_CullTransparentMesh: 1
+--- !u!114 &8771397556599405993
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8761397556599405992}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f3e2a1c9b4d8e6f5041321f0a9b8c7d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  restartSceneName: Level1
+  mainMenuSceneName: GameScene

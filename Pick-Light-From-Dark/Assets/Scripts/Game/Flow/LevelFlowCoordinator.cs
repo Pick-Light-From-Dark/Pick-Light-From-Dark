@@ -30,6 +30,10 @@ namespace Game.Flow
         public GameObject ending1Prefab;
         public GameObject deathEndingPrefab;
 
+        [Header("章节开场图")]
+        [Tooltip("每关开始前展示 night1~4 章节图")]
+        public bool showChapterSplash = true;
+
         private bool isGameOver = false;
         private Game.AI.TeacherAI teacherAI;
 
@@ -55,7 +59,26 @@ namespace Game.Flow
                 }
             }
 
-            StartOpeningStory();
+            BeginLevelFlow();
+        }
+
+        void BeginLevelFlow()
+        {
+            if (showChapterSplash)
+            {
+                ChapterSplashController.ShowForChapter(levelId, OnChapterSplashFinished);
+                return;
+            }
+
+            OnChapterSplashFinished();
+        }
+
+        void OnChapterSplashFinished()
+        {
+            if (openingStory == null)
+                StartGameplay();
+            else
+                StartOpeningStory();
         }
 
         void StartOpeningStory()
@@ -99,9 +122,10 @@ namespace Game.Flow
                     LoadNextPrefab();
                     break;
                 case VNExitType.Gameplay:
+                    OnOpeningStoryEnd();
+                    break;
                 case VNExitType.None:
                 default:
-                    // 默认进入游玩
                     OnOpeningStoryEnd();
                     break;
             }
@@ -208,7 +232,7 @@ namespace Game.Flow
             switch (exitType)
             {
                 case VNExitType.NextLevel:
-                    LoadNextPrefab();
+                    TryAdvanceToNextLevel();
                     break;
                 case VNExitType.Ending:
                 case VNExitType.Gameplay:
@@ -221,7 +245,36 @@ namespace Game.Flow
 
         void OnEndingStoryEnd()
         {
+            // 中间关通关：播完 post 剧情后进入下一关场景（与第一关「吃」线相同，不靠 EndingContentPanel）
+            if (!string.IsNullOrEmpty(nextLevelSceneName))
+            {
+                TryAdvanceToNextLevel();
+                return;
+            }
+
+            // 最后一关或无下一关配置：结局面板 / 回主菜单
             ShowVictoryPanel();
+        }
+
+        /// <summary>通关后进入下一关场景（优先）或实例化下一关预制体</summary>
+        void TryAdvanceToNextLevel()
+        {
+            if (!string.IsNullOrEmpty(nextLevelSceneName))
+            {
+                AdvanceToNextLevelScene();
+                return;
+            }
+
+            LoadNextPrefab();
+        }
+
+        void AdvanceToNextLevelScene()
+        {
+            Debug.Log($"[LevelFlowCoordinator] 进入下一关场景: {nextLevelSceneName}");
+            UIMgr.Instance.HideAllPanels();
+            if (vnController != null && vnController.vnCanvas != null)
+                vnController.vnCanvas.gameObject.SetActive(false);
+            SceneMgr.Instance.LoadScene(nextLevelSceneName);
         }
 
 
