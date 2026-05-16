@@ -329,7 +329,7 @@ MonoBehaviour:
   levelConfig: {fileID: 11400000, guid: 84c2870b59bc97f4faaaa27cd4ee41db, type: 2}
   levelId: 3
   vnController: {fileID: 500000002}
-  nextLevelSceneName: 
+  nextLevelSceneName: Level5
   currentLevelSceneName: Level3
   nextLevelPrefab: {fileID: 0}
   ending1Prefab: {fileID: 3000, guid: 5213c12601f14a8d87110fadd69eb648, type: 3}

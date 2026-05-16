@@ -31,7 +31,6 @@ namespace Game.Flow
         public GameObject deathEndingPrefab;
 
         private bool isGameOver = false;
-        private bool choseEatBranch = false;
         private Game.AI.TeacherAI teacherAI;
 
         public string NextLevelSceneName => nextLevelSceneName;
@@ -100,7 +99,6 @@ namespace Game.Flow
                     LoadNextPrefab();
                     break;
                 case VNExitType.Gameplay:
-                    choseEatBranch = true;
                     OnOpeningStoryEnd();
                     break;
                 case VNExitType.None:
@@ -224,13 +222,14 @@ namespace Game.Flow
 
         void OnEndingStoryEnd()
         {
-            // 第一关「吃」线：通关后播完 Dialogue1-2eat，应进第二关，不能走结局面板（预制体默认文案是结局一）
-            if (levelId == 1 && choseEatBranch)
+            // 中间关通关：播完 post 剧情后进入下一关场景（与第一关「吃」线相同，不靠 EndingContentPanel）
+            if (!string.IsNullOrEmpty(nextLevelSceneName))
             {
                 TryAdvanceToNextLevel();
                 return;
             }
 
+            // 最后一关或无下一关配置：结局面板 / 回主菜单
             ShowVictoryPanel();
         }
 
