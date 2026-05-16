@@ -127,25 +127,46 @@ Assets/Scripts/Game/
   VNExitType.cs
  Task/TaskManager.cs
  Test/amiao/
+  AmiaoDemoRunner.cs
   BgFadeTest.cs
+  ChapterSplashController.cs
+  CrossLevelSaveSystem.cs
+  CrossLevelSaveTestRunner.cs
   DevModeBase.cs
   DialogueTest.cs
   DialogueVNTest.cs
+  EndDeadPanel.cs
+  Ending1SunRisesButtonBinder.cs
+  Ending2Panel.cs
+  EndingBranchSystem.cs
+  EndingBranchSystemTester.cs
   EndingBranchTestRunner.cs
+  EndingConditionBridge.cs
+  EndingConditionTester.cs
+  EndingScreenController.cs
+  EndingScreenTester.cs
   EndingTestRunner.cs
+  EndingTriggerTester.cs
   FastForwardDevMode.cs
   FungusVNBranchTest.cs
   FungusVNController.cs
+  LoadingScreenController.cs
   PlaceholderDisplay.cs
   PlaceholderTestRunner.cs
   SaveLoadTestRunner.cs
   SaveSystemTestRunner.cs
   SimpleSkipButton.cs
   SkipButtonTest.cs
+  SkipTestRunner.cs
+  SLTestRunner.cs
   SoundTestRunner.cs
   StoryChainTestRunner.cs
   StorySaveTest.cs
+  TestPlayerData.cs
+  VNCheckpointTest.cs
+  VNDataChangeTest.cs
   VNSaveDiagnostics.cs
+  VNSequenceTest.cs
   VN_SaveFlowchartSetup.cs
  Test/
   DataTest.cs
@@ -192,6 +213,9 @@ Assets/Scripts/
   EndingContentPanel.cs
   ExperiencePanel.cs
   GamePanel.cs
+  LuYingAnimTestPanel.cs
+  LuYingCharacterController.cs
+  LuYingCharacterManager.cs
   Prefabs/CardSlot.cs
   SaveGamePanel.cs
   SettingPanel.cs
