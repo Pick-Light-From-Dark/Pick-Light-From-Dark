@@ -4,6 +4,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using UnityEngine.Video;
 using TMPro;
 using Game.Data;
 using Game.Config;
@@ -79,9 +80,14 @@ public class GamePanel : BasePanel
 
     [Header("失败UI — 生命耗尽时显示")]
     [SerializeField] private GameObject failOverlay;
+    [SerializeField] private GameObject endDeadPrefab;
+    private GameObject endDeadInstance;
 
     [Header("手电筒动画 — Bg5005")]
     [SerializeField] private GameObject flashlightOverlay;
+
+    [Header("视线动画 — Bg5006")]
+    [SerializeField] private GameObject eyeGazeOverlay;
 
     public static GamePanel Instance { get; private set; }
 
@@ -193,14 +199,12 @@ public class GamePanel : BasePanel
             caughtOverlay = transform.Find("ImgBk/Bg5003")?.gameObject;
         if (failOverlay == null)
             failOverlay = transform.Find("ImgBk/Bg5004")?.gameObject;
-        if (flashlightOverlay == null)
-            flashlightOverlay = transform.Find("ImgBk/Bg5005")?.gameObject;
-
         // 初始隐藏
         if (teacherImg != null) teacherImg.SetActive(false);
         if (caughtOverlay != null) caughtOverlay.SetActive(false);
         if (failOverlay != null) failOverlay.SetActive(false);
         if (flashlightOverlay != null) flashlightOverlay.SetActive(false);
+        if (eyeGazeOverlay != null) eyeGazeOverlay.SetActive(false);
 
         cardManager = CardManager.Instance;
 
@@ -490,6 +494,33 @@ public class GamePanel : BasePanel
 
         EventCenter.Instance.AddEventListener<string>(E_EventType.GameDialogueStart, OnGameDialogueStart);
         EventCenter.Instance.AddEventListener(E_EventType.GameDialogueEnd, OnGameDialogueEnd);
+        EventCenter.Instance.AddEventListener<string>(E_EventType.GameLose, OnGameLose);
+    }
+
+    private void OnGameLose(string reason)
+    {
+        Debug.Log($"[GamePanel] 游戏失败: {reason}");
+
+        // 主动退出时不显示EndDead
+        if (reason == "主动退出")
+            return;
+
+        // 隐藏游戏UI，避免遮挡EndDead的射线检测
+        if (gameplayUIRoot != null)
+            gameplayUIRoot.SetActive(false);
+
+        // 显示EndDead面板
+        if (endDeadPrefab != null && endDeadInstance == null)
+        {
+            var canvas = GetComponentInParent<Canvas>();
+            if (canvas == null) canvas = FindObjectOfType<Canvas>();
+            endDeadInstance = Instantiate(endDeadPrefab, canvas != null ? canvas.transform : transform, false);
+            // 放到Canvas最顶层
+            if (endDeadInstance != null)
+                endDeadInstance.transform.SetAsLastSibling();
+        }
+        if (endDeadInstance != null)
+            endDeadInstance.SetActive(true);
     }
 
     /// <summary>对话背景画面覆盖值（0=使用默认5004）</summary>
@@ -697,6 +728,7 @@ public class GamePanel : BasePanel
         EventCenter.Instance.RemoveEventListener<int>(E_EventType.ExciteChanged, OnEmotionChanged);
         EventCenter.Instance.RemoveEventListener<int>(E_EventType.TaskProgressChanged, OnTaskProgressChanged);
         EventCenter.Instance.RemoveEventListener<int>(E_EventType.TaskGoalCompleted, OnTaskGoalCompleted);
+        EventCenter.Instance.RemoveEventListener<string>(E_EventType.GameLose, OnGameLose);
         if (Instance == this) Instance = null;
     }
 
@@ -789,19 +821,127 @@ public class GamePanel : BasePanel
 
     public void ShowFlashlightOverlay(float duration)
     {
-        if (flashlightOverlay != null)
+        EnsureVideoOverlay(ref flashlightOverlay, "手电筒", "Bg_5005");
+        ShowVideoOverlay(flashlightOverlay, duration);
+    }
+
+    public void ShowEyeGazeOverlay(float duration)
+    {
+        EnsureVideoOverlay(ref eyeGazeOverlay, "视线", null);
+        ShowVideoOverlay(eyeGazeOverlay, duration);
+    }
+
+    /// <summary>动态创建视频遮罩（RawImage + VideoPlayer），若视频不存在则回退到静态图片</summary>
+    private void EnsureVideoOverlay(ref GameObject overlay, string videoName, string fallbackBgName)
+    {
+        if (overlay != null) return;
+
+        var videoClip = Resources.Load<VideoClip>(videoName);
+        if (videoClip != null)
         {
-            flashlightOverlay.transform.SetAsLastSibling();
-            flashlightOverlay.SetActive(true);
-            StartCoroutine(HideFlashlightAfterDelay(duration));
+            Debug.Log($"[GamePanel] 加载视频 {videoName} 成功, 时长={videoClip.length:F1}s");
+
+            // 创建 RawImage（视频渲染目标）
+            overlay = new GameObject($"Video_{videoName}", typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage), typeof(VideoPlayer));
+            overlay.transform.SetParent(transform, false);
+            var rt = overlay.GetComponent<RectTransform>();
+            rt.anchorMin = Vector2.zero;
+            rt.anchorMax = Vector2.one;
+            rt.sizeDelta = Vector2.zero;
+            rt.anchoredPosition = Vector2.zero;
+
+            var rawImg = overlay.GetComponent<RawImage>();
+            rawImg.raycastTarget = false;
+
+            var vp = overlay.GetComponent<VideoPlayer>();
+            vp.source = VideoSource.VideoClip;
+            vp.clip = videoClip;
+            vp.renderMode = VideoRenderMode.RenderTexture;
+            vp.targetTexture = new RenderTexture(1920, 1080, 24);
+            vp.isLooping = false;
+            vp.playOnAwake = false;
+            vp.waitForFirstFrame = true;
+            vp.audioOutputMode = VideoAudioOutputMode.Direct;
+            vp.aspectRatio = VideoAspectRatio.FitInside;
+            rawImg.texture = vp.targetTexture;
+
+            overlay.SetActive(false);
+        }
+        else
+        {
+            Debug.LogWarning($"[GamePanel] Resources.Load<VideoClip>(\"{videoName}\") 返回 null，请确认视频文件在 Resources 目录下且导入格式正确");
+        }
+
+        if (overlay == null && !string.IsNullOrEmpty(fallbackBgName))
+        {
+            // 回退：静态图片
+            var sprite = Resources.Load<Sprite>($"UI/Background/{fallbackBgName}");
+            if (sprite == null)
+            {
+                Debug.LogWarning($"[GamePanel] 遮罩资源未找到: {fallbackBgName}");
+                return;
+            }
+            overlay = new GameObject(fallbackBgName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            overlay.transform.SetParent(transform, false);
+            var rt = overlay.GetComponent<RectTransform>();
+            rt.anchorMin = Vector2.zero;
+            rt.anchorMax = Vector2.one;
+            rt.sizeDelta = Vector2.zero;
+            rt.anchoredPosition = Vector2.zero;
+            var img = overlay.GetComponent<Image>();
+            img.sprite = sprite;
+            img.raycastTarget = false;
+            overlay.SetActive(false);
+        }
+        else
+        {
+            Debug.LogWarning($"[GamePanel] 视频 {videoName} 和回退图片均未找到");
         }
     }
 
-    private System.Collections.IEnumerator HideFlashlightAfterDelay(float delay)
+    private void ShowVideoOverlay(GameObject overlay, float duration)
+    {
+        if (overlay == null) return;
+        overlay.transform.SetAsLastSibling();
+        overlay.SetActive(true);
+
+        var vp = overlay.GetComponent<VideoPlayer>();
+        if (vp != null)
+        {
+            vp.Prepare();
+            StartCoroutine(PlayWhenReady(vp, overlay, duration));
+        }
+        else
+        {
+            StartCoroutine(HideOverlayAfterDelay(overlay, duration));
+        }
+    }
+
+    private System.Collections.IEnumerator PlayWhenReady(VideoPlayer vp, GameObject overlay, float maxDuration)
+    {
+        while (vp != null && !vp.isPrepared)
+            yield return null;
+        if (vp != null)
+        {
+            vp.Play();
+            Debug.Log($"[GamePanel] 视频开始播放: {vp.clip?.name}");
+        }
+        float elapsed = 0f;
+        while (elapsed < maxDuration && vp != null && vp.isPlaying)
+        {
+            yield return null;
+            elapsed += Time.unscaledDeltaTime;
+        }
+        Debug.Log($"[GamePanel] 视频播放结束, 实际耗时={elapsed:F1}s");
+        if (overlay != null)
+            overlay.SetActive(false);
+    }
+
+    private System.Collections.IEnumerator HideOverlayAfterDelay(GameObject overlay, float delay)
     {
         yield return new WaitForSecondsRealtime(delay);
-        if (flashlightOverlay != null)
-            flashlightOverlay.SetActive(false);
+        if (overlay != null)
+            overlay.SetActive(false);
     }
 
     public override void ShowMe()
@@ -810,6 +950,8 @@ public class GamePanel : BasePanel
     }
 
     public override void HideMe() { }
+
+    protected override bool EnableButtonSounds => false;
 
     // ==================== 读条生命周期 ====================
 

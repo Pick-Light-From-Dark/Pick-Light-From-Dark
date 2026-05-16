@@ -301,16 +301,12 @@ namespace Game.Flow
                 cardReadingSystem.ForceClearReading();
             }
 
-            // 生命值耗尽 → 显示失败UI，5秒后游戏失败
+            // 生命值耗尽 → 立即游戏失败
             if (currentLives <= 0)
             {
-                PauseGame();
                 if (gamePanel != null)
-                {
-                    gamePanel.ShowFailOverlay();
                     gamePanel.UpdateHpDisplay(0);
-                }
-                StartCoroutine(GameLoseAfterDelay(5f));
+                GameLose("生命值耗尽");
                 return;
             }
 
@@ -357,15 +353,6 @@ namespace Game.Flow
             {
                 ResumeGame();
             }
-        }
-
-        /// <summary>
-        /// 生命耗尽后延迟触发GameLose：等Bg5004展示5秒后再切到TipPanel
-        /// </summary>
-        private System.Collections.IEnumerator GameLoseAfterDelay(float delay)
-        {
-            yield return new WaitForSecondsRealtime(delay);
-            GameLose("生命值耗尽");
         }
 
         /// <summary>

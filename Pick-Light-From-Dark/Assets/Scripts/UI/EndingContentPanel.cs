@@ -186,22 +186,18 @@ public class EndingContentPanel : BasePanel
         switch (btnName)
         {
             case "ContinueBtn":
-                MusicMgr.Instance?.PlaySound("按钮点击音效");
                 ContinueGame();
                 break;
 
             case "BackBtn":
-                MusicMgr.Instance?.PlaySound("按钮点击音效");
                 BackToMenu();
                 break;
 
             case "ReturnToMenuBtn":
-                MusicMgr.Instance?.PlaySound("按钮点击音效");
                 ReturnToMainMenu();
                 break;
 
             case "LoadSaveBtn":
-                MusicMgr.Instance?.PlaySound("按钮点击音效");
                 GoToLoadSave();
                 break;
         }

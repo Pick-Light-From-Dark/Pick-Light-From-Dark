@@ -86,6 +86,9 @@ mono_crash.*
 *.unitypackage.meta
 *.app
 
+# Unity 导出的可执行游戏目录（本地 Build 输出，勿提交）
+Pick-Light-From-Dark/Output/
+
 # Crashlytics generated file
 crashlytics-build.properties
 

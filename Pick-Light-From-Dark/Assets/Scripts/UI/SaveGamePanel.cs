@@ -1,7 +1,6 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
-using TMPro;
 using Game.Test;
 
 [UIPath("UI/MainFlow")]
@@ -16,7 +15,8 @@ public class SaveGamePanel : BasePanel
         EnsureSaveSystem();
         DetermineMode();
         RefreshButtonState();
-        RefreshTitle();
+
+        Debug.Log($"[SaveGamePanel] ShowMe 调用: isSaveMode={isSaveMode}, 激活场景={SceneManager.GetActiveScene().name}");
     }
 
     void DetermineMode()
@@ -27,14 +27,17 @@ public class SaveGamePanel : BasePanel
     /// <summary>判断当前是否处于游戏内（关卡中），兼容多场景加载</summary>
     bool IsInGameplay()
     {
-        // 如果有主菜单场景在加载中，一定不是游戏内
+        Debug.Log($"[SaveGamePanel] IsInGameplay 检测开始: 场景数={SceneManager.sceneCount}, 激活场景={SceneManager.GetActiveScene().name}");
         for (int i = 0; i < SceneManager.sceneCount; i++)
         {
-            if (SceneManager.GetSceneAt(i).name == "GameScene")
+            string sceneName = SceneManager.GetSceneAt(i).name;
+            Debug.Log($"[SaveGamePanel]   场景[{i}]: {sceneName}");
+            if (sceneName == "GameScene")
                 return false;
         }
-        // 否则根据当前激活场景判断
-        return SceneManager.GetActiveScene().name.StartsWith("Level");
+        bool result = SceneManager.GetActiveScene().name.StartsWith("Level");
+        Debug.Log($"[SaveGamePanel] IsInGameplay 结果: {result}");
+        return result;
     }
 
     CrossLevelSaveSystem EnsureSaveSystem()
@@ -46,13 +49,6 @@ public class SaveGamePanel : BasePanel
             Debug.Log("[SaveGamePanel] 自动创建 CrossLevelSaveSystem");
         }
         return CrossLevelSaveSystem.Instance;
-    }
-
-    void RefreshTitle()
-    {
-        var title = transform.Find("Text (TMP)")?.GetComponent<TextMeshProUGUI>();
-        if (title != null)
-            title.text = isSaveMode ? "存档" : "读档";
     }
 
     void RefreshButtonState()

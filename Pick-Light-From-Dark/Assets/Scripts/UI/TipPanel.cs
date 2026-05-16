@@ -12,7 +12,6 @@ public class TipPanel : BasePanel
         switch (btnName)
         {
             case "RetryBtn":
-                MusicMgr.Instance.PlaySound("按钮点击音效");
                 UIMgr.Instance.HideAllPanels();
                 if (coordinator != null && !string.IsNullOrEmpty(coordinator.CurrentLevelSceneName))
                     SceneMgr.Instance.LoadScene(coordinator.CurrentLevelSceneName);
@@ -21,7 +20,6 @@ public class TipPanel : BasePanel
                 break;
 
             case "BackBtn":
-                MusicMgr.Instance.PlaySound("按钮点击音效");
                 UIMgr.Instance.HideAllPanels();
                 SceneMgr.Instance.LoadScene("GameScene");
                 break;
