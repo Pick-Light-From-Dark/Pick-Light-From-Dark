@@ -7,8 +7,9 @@ using Game.Backend;
 namespace Game.Test
 {
     /// <summary>
-    /// 跨关卡读档测试器 — 验证两路存储方案
-    /// 测试场景：Dialogue1 -> Level1 -> Dialogue1-1 -> Dialogue2 流程中的存档/读档
+    /// 跨关卡读档测试器 — 验证精简版存档结构
+    /// 只测试读档定位与结局判定必需数据（血量/卡牌）
+    /// 6001 由剧情选项直接触发，不在本存档系统中测试
     /// </summary>
     public class CrossLevelSaveTestRunner : MonoBehaviour
     {
@@ -26,11 +27,10 @@ namespace Game.Test
 
         CrossLevelSaveSystem saveSystem;
         bool showUI = true;
-        Rect uiRect = new Rect(10, 10, 450, 580);
+        Rect uiRect = new Rect(10, 10, 450, 520);
         Vector2 scrollPos;
         List<string> logLines = new List<string>();
 
-        // 模拟状态
         int simulatedLevel = 0;
         string simulatedPhase = "未开始";
 
@@ -76,16 +76,16 @@ namespace Game.Test
 
         void DrawUIWindow(int id)
         {
-            scrollPos = GUILayout.BeginScrollView(scrollPos, GUILayout.Height(520));
+            scrollPos = GUILayout.BeginScrollView(scrollPos, GUILayout.Height(460));
 
             GUILayout.Label("=== 模拟状态 ===", GUI.skin.box);
             GUILayout.Label($"当前阶段: {simulatedPhase}");
             GUILayout.Label($"模拟关卡: {simulatedLevel}");
 
             GUILayout.Space(5);
-            GUILayout.Label("=== 两路存档操作 ===", GUI.skin.box);
+            GUILayout.Label("=== 存档操作 ===", GUI.skin.box);
 
-            GUILayout.Label("第一路：关卡进度", GUI.skin.label);
+            GUILayout.Label("关卡进度", GUI.skin.label);
             if (GUILayout.Button("1. 模拟：存档到 Dialogue2 开始处", GUILayout.Height(28)))
             {
                 SimulateSaveAtDialogue2();
@@ -96,34 +96,43 @@ namespace Game.Test
             }
 
             GUILayout.Space(3);
-            GUILayout.Label("第二路：结局累积数据", GUI.skin.label);
-            if (GUILayout.Button("3. 记录分支选择 'eat'", GUILayout.Height(24)))
+            GUILayout.Label("结局数据", GUI.skin.label);
+            if (GUILayout.Button("3. 记录卡牌使用 2017", GUILayout.Height(24)))
             {
-                saveSystem?.RecordBranchChoice("eat");
-                Log("[Test] 记录分支: eat");
+                saveSystem?.RecordCardUsed(2017);
+                Log("[Test] 记录卡牌: 2017");
             }
-            if (GUILayout.Button("4. 记录卡牌使用 101", GUILayout.Height(24)))
+            if (GUILayout.Button("4. 记录卡牌使用 2026", GUILayout.Height(24)))
             {
-                saveSystem?.RecordCardUsed(101);
-                Log("[Test] 记录卡牌: 101");
+                saveSystem?.RecordCardUsed(2026);
+                Log("[Test] 记录卡牌: 2026");
             }
-            if (GUILayout.Button("5. 记录道具 'rooftop_key'", GUILayout.Height(24)))
+            if (GUILayout.Button("5. 记录 Lv.1 结果(1血,有2017)", GUILayout.Height(24)))
             {
-                saveSystem?.RecordItemCollected("rooftop_key");
-                Log("[Test] 记录道具: rooftop_key");
+                saveSystem?.RecordLevelResult(1, finalLives: 1, card2017: true);
+                Log("[Test] 记录 Lv.1 结果: 1血, 2017=true");
+            }
+            if (GUILayout.Button("6. 记录 Lv.5 结果(2血,有2026)", GUILayout.Height(24)))
+            {
+                saveSystem?.RecordLevelResult(5, finalLives: 2, card2026: true);
+                Log("[Test] 记录 Lv.5 结果: 2血, 2026=true");
             }
 
             GUILayout.Space(5);
             GUILayout.Label("=== 读档与验证 ===", GUI.skin.box);
-            if (GUILayout.Button("6. 读档并显示结果", GUILayout.Height(30)))
+            if (GUILayout.Button("7. 读档并显示结果", GUILayout.Height(30)))
             {
                 LoadAndDisplay();
             }
-            if (GUILayout.Button("7. 执行完整跨关卡流程测试", GUILayout.Height(30)))
+            if (GUILayout.Button("8. 测试结局判定", GUILayout.Height(30)))
+            {
+                TestEndingEvaluation();
+            }
+            if (GUILayout.Button("9. 执行完整跨关卡流程测试", GUILayout.Height(30)))
             {
                 StartCoroutine(FullFlowTest());
             }
-            if (GUILayout.Button("8. 清除所有存档", GUILayout.Height(24)))
+            if (GUILayout.Button("10. 清除所有存档", GUILayout.Height(24)))
             {
                 saveSystem?.ClearAll();
                 simulatedLevel = 0;
@@ -137,12 +146,13 @@ namespace Game.Test
             {
                 var cp = saveSystem.currentSave.checkpoint;
                 var ed = saveSystem.currentSave.endingData;
-                GUILayout.Label($"关卡: {cp.currentLevelId} | 游玩中: {cp.isInGameplay}");
-                GUILayout.Label($"剧情: {cp.storyFileName} | 行: {cp.storyLineIndex}");
-                GUILayout.Label($"分支: {string.Join(", ", ed.branchChoices)}");
+                GUILayout.Label($"关卡: {cp.currentLevelId} | 剧情: {cp.storyFileName}");
                 GUILayout.Label($"卡牌: {string.Join(", ", ed.cardsUsed)}");
-                GUILayout.Label($"道具: {string.Join(", ", ed.itemsCollected)}");
-                GUILayout.Label($"生命: {ed.lastLives} | 情绪: {ed.lastEmotion}");
+                GUILayout.Label("关卡结果:", GUI.skin.label);
+                foreach (var r in saveSystem.currentSave.levelResults)
+                {
+                    GUILayout.Label($"  Lv.{r.levelId}: 血量={r.finalLives} 2017={r.usedCard2017} 2026={r.usedCard2026}");
+                }
             }
             else
             {
@@ -160,8 +170,6 @@ namespace Game.Test
             GUI.DragWindow();
         }
 
-        // ========== 模拟存档操作 ==========
-
         void SimulateSaveAtDialogue2()
         {
             EnsureSaveSystem();
@@ -177,8 +185,8 @@ namespace Game.Test
             EnsureSaveSystem();
             simulatedLevel = 1;
             simulatedPhase = "Level1 游玩中";
-            saveSystem.SaveGameplayProgress(1, 2, 60);
-            Log("[Test] 已存档到 Level1 游玩中 (Lives=2, Emotion=60)");
+            saveSystem.SaveGameplayProgress(1);
+            Log("[Test] 已存档到 Level1 游玩中");
         }
 
         void LoadAndDisplay()
@@ -191,19 +199,20 @@ namespace Game.Test
             }
 
             var cp = saveSystem.LoadCheckpoint();
-            var ed = saveSystem.LoadEndingData();
+            var ed = saveSystem.currentSave.endingData;
 
             Log("[Test] === 读档结果 ===");
             Log($"  关卡: {cp.currentLevelId}");
             Log($"  模式: {(cp.isInGameplay ? "游玩" : "剧情")}");
             Log($"  剧情文件: {cp.storyFileName}");
             Log($"  剧情行: {cp.storyLineIndex}");
-            Log($"  分支记录: {ed.branchChoices.Count} 条");
             Log($"  卡牌记录: {ed.cardsUsed.Count} 张");
-            Log($"  道具记录: {ed.itemsCollected.Count} 个");
-            Log($"  生命/情绪: {ed.lastLives}/{ed.lastEmotion}");
 
-            // 验证读档后是否能正确恢复
+            foreach (var r in saveSystem.currentSave.levelResults)
+            {
+                Log($"  Lv.{r.levelId}: 血量={r.finalLives} 2017={r.usedCard2017} 2026={r.usedCard2026}");
+            }
+
             if (!cp.isInGameplay && !string.IsNullOrEmpty(cp.storyFileName))
             {
                 Log($"[Test] 验证：读档后应加载剧情 '{cp.storyFileName}' 从第 {cp.storyLineIndex} 行开始");
@@ -214,59 +223,57 @@ namespace Game.Test
             }
         }
 
-        // ========== 完整流程测试 ==========
+        void TestEndingEvaluation()
+        {
+            EnsureSaveSystem();
+            int none = saveSystem.EvaluateEnding(0);
+            int alone = saveSystem.EvaluateEnding(1);
+            int friend = saveSystem.EvaluateEnding(2);
+            Log($"[Test] 结局判定 — 未选:{none} 独自:{alone} 邀请:{friend}");
+        }
 
         IEnumerator FullFlowTest()
         {
             Log("[Test] ====== 开始完整跨关卡流程测试 ======");
 
-            // Step 1: 从 Dialogue1 开始
             simulatedLevel = 1;
             simulatedPhase = "Dialogue1 剧情";
             Log("[Test] Step 1: 播放 Dialogue1...");
             yield return new WaitForSeconds(0.5f);
 
-            // Step 2: 进入 Level1 游玩
             simulatedPhase = "Level1 游玩";
             Log("[Test] Step 2: 进入 Level1 游玩...");
-            saveSystem.SaveGameplayProgress(1, 3, 50);
+            saveSystem.SaveGameplayProgress(1);
+            saveSystem.RecordLevelResult(1, finalLives: 1, card2017: true);
             yield return new WaitForSeconds(0.5f);
 
-            // Step 3: 游玩结束，进入 Dialogue1-1
             simulatedPhase = "Dialogue1-1 剧情";
             Log("[Test] Step 3: 进入 Dialogue1-1...");
             saveSystem.SaveStoryProgress(1, "Dialogue1-1", 0);
             yield return new WaitForSeconds(0.5f);
 
-            // Step 4: 记录分支选择
-            Log("[Test] Step 4: 记录分支选择 'eat'...");
-            saveSystem.RecordBranchChoice("eat");
-            yield return new WaitForSeconds(0.3f);
-
-            // Step 5: 进入 Dialogue2
             simulatedLevel = 2;
             simulatedPhase = "Dialogue2 剧情（存档点）";
-            Log("[Test] Step 5: 进入 Dialogue2，在此处存档...");
+            Log("[Test] Step 4: 进入 Dialogue2，在此处存档...");
             saveSystem.SaveStoryProgress(2, "Dialogue2", 0);
             yield return new WaitForSeconds(0.5f);
 
-            // Step 6: 模拟继续玩到 Dialogue3
             simulatedLevel = 3;
             simulatedPhase = "Dialogue3 剧情（新进度）";
-            Log("[Test] Step 6: 继续到 Dialogue3（新进度）...");
+            Log("[Test] Step 5: 继续到 Dialogue3（新进度）...");
             yield return new WaitForSeconds(0.3f);
 
-            // Step 7: 读档回到 Dialogue2
-            Log("[Test] Step 7: 读档，应回到 Dialogue2...");
+            Log("[Test] Step 6: 读档，应回到 Dialogue2...");
             var cp = saveSystem.LoadCheckpoint();
             simulatedLevel = cp.currentLevelId;
             simulatedPhase = $"读档回到 {cp.storyFileName}";
             Log($"[Test] 读档成功: Level={cp.currentLevelId}, Story={cp.storyFileName}");
 
-            // Step 8: 验证结局数据是否保留
-            var ed = saveSystem.LoadEndingData();
-            bool hasBranch = ed.branchChoices.Contains("eat");
-            Log($"[Test] Step 8: 验证结局数据保留: 分支='eat' {(hasBranch ? "通过" : "失败")}");
+            bool hasCard = saveSystem.HasUsedCard(2017);
+            Log($"[Test] Step 7: 验证卡牌保留: 2017={(hasCard ? "通过" : "失败")}");
+
+            var r1 = saveSystem.GetLevelResult(1);
+            Log($"[Test] Step 8: 验证关卡结果保留: Lv.1 血量={(r1?.finalLives.ToString() ?? "无数据")}");
 
             Log("[Test] ====== 测试完成 ======");
         }

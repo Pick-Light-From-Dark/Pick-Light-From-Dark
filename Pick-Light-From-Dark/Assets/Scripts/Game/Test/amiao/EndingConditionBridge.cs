@@ -79,8 +79,7 @@ namespace Game.Test
         {
             if (CrossLevelSaveSystem.Instance != null)
             {
-                var data = CrossLevelSaveSystem.Instance.LoadEndingData();
-                return data != null && data.cardsUsed.Contains(cardId);
+                return CrossLevelSaveSystem.Instance.HasUsedCard(cardId);
             }
 
             return fallbackCardsUsed.Contains(cardId);

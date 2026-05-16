@@ -6,9 +6,9 @@ using Game.Backend;
 namespace Game.Test
 {
     /// <summary>
-    /// 跨关卡全局存档系统 — 两路存储方案
-    /// 第一路：关卡进度（时间线定位）
-    /// 第二路：结局相关累积数据（分支/卡牌/道具/状态）
+    /// 跨关卡全局存档系统 — 精简版
+    /// 只保留结局判定与读档定位必需数据
+    /// 6001(太阳照常升起)由剧情选项直接触发，与本存档无关
     /// </summary>
     public class CrossLevelSaveSystem : MonoBehaviour
     {
@@ -20,7 +20,7 @@ namespace Game.Test
         [Header("调试")]
         public bool logOperations = true;
 
-        const string SAVE_KEY = "CrossLevelSave_v1";
+        const string SAVE_KEY = "CrossLevelSave_v2";
 
         void Awake()
         {
@@ -33,7 +33,7 @@ namespace Game.Test
             if (Instance == this) Instance = null;
         }
 
-        // ========== 第一路：关卡进度操作 ==========
+        // ========== 关卡进度操作 ==========
 
         /// <summary>保存当前剧情进度</summary>
         public void SaveStoryProgress(int levelId, string storyFileName, int lineIndex = 0)
@@ -44,15 +44,14 @@ namespace Game.Test
                 currentLevelId = levelId,
                 storyFileName = storyFileName,
                 storyLineIndex = lineIndex,
-                saveTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
-                isInGameplay = false
+                saveTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
             };
             SaveToDisk();
-            Log($"[Save] 剧情进度存档: Level={levelId}, Story={storyFileName}, Line={lineIndex}");
+            Log($"[Save] 剧情进度存档: Level={levelId}, Story={storyFileName}");
         }
 
         /// <summary>保存当前游玩进度</summary>
-        public void SaveGameplayProgress(int levelId, int lives, int emotion)
+        public void SaveGameplayProgress(int levelId)
         {
             EnsureData();
             currentSave.checkpoint = new LevelCheckpoint
@@ -61,10 +60,8 @@ namespace Game.Test
                 saveTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
                 isInGameplay = true
             };
-            currentSave.endingData.lastLives = lives;
-            currentSave.endingData.lastEmotion = emotion;
             SaveToDisk();
-            Log($"[Save] 游玩进度存档: Level={levelId}, Lives={lives}, Emotion={emotion}");
+            Log($"[Save] 游玩进度存档: Level={levelId}");
         }
 
         /// <summary>读取关卡进度</summary>
@@ -74,19 +71,7 @@ namespace Game.Test
             return currentSave.checkpoint;
         }
 
-        // ========== 第二路：结局数据操作 ==========
-
-        /// <summary>记录分支选择</summary>
-        public void RecordBranchChoice(string choiceId)
-        {
-            EnsureData();
-            if (!currentSave.endingData.branchChoices.Contains(choiceId))
-            {
-                currentSave.endingData.branchChoices.Add(choiceId);
-                SaveToDisk();
-                Log($"[Save] 记录分支: {choiceId}");
-            }
-        }
+        // ========== 卡牌记录（全局快速查询） ==========
 
         /// <summary>记录卡牌使用</summary>
         public void RecordCardUsed(int cardId)
@@ -100,32 +85,89 @@ namespace Game.Test
             }
         }
 
-        /// <summary>记录道具收集</summary>
-        public void RecordItemCollected(string itemId)
+        /// <summary>是否使用过指定卡牌</summary>
+        public bool HasUsedCard(int cardId)
         {
             EnsureData();
-            if (!currentSave.endingData.itemsCollected.Contains(itemId))
+            return currentSave.endingData.cardsUsed.Contains(cardId);
+        }
+
+        // ========== 关卡结果记录（结局判定用） ==========
+
+        /// <summary>记录关卡结果（供 LevelFlowCoordinator 等游玩部分调用）</summary>
+        public void RecordLevelResult(int levelId, int finalLives, bool card2017 = false, bool card2026 = false)
+        {
+            EnsureData();
+            var result = currentSave.levelResults.Find(r => r.levelId == levelId);
+            if (result == null)
             {
-                currentSave.endingData.itemsCollected.Add(itemId);
-                SaveToDisk();
-                Log($"[Save] 记录道具: {itemId}");
+                result = new LevelResult { levelId = levelId };
+                currentSave.levelResults.Add(result);
             }
-        }
-
-        /// <summary>更新最终状态</summary>
-        public void UpdateFinalState(int lives, int emotion)
-        {
-            EnsureData();
-            currentSave.endingData.lastLives = lives;
-            currentSave.endingData.lastEmotion = emotion;
+            result.finalLives = finalLives;
+            result.usedCard2017 = card2017;
+            result.usedCard2026 = card2026;
             SaveToDisk();
+            Log($"[Save] 记录关卡结果: Lv.{levelId}, Lives={finalLives}, 2017={card2017}, 2026={card2026}");
         }
 
-        /// <summary>读取结局累积数据</summary>
-        public EndingAccumulatedData LoadEndingData()
+        /// <summary>获取指定关卡结果</summary>
+        public LevelResult GetLevelResult(int levelId)
         {
             EnsureData();
-            return currentSave.endingData;
+            return currentSave.levelResults.Find(r => r.levelId == levelId);
+        }
+
+        // ========== 结局判定接口（供游玩部分调用） ==========
+
+        /// <summary>
+        /// 判定第五关结局（6002/6004/6005）
+        /// 6001 由第一关剧情选项直接触发，不经过本接口
+        /// </summary>
+        /// <param name="rooftopChoice">0=未选择, 1=独自前往(6004), 2=邀请宋明月(6005)</param>
+        public int EvaluateEnding(int rooftopChoice = 0)
+        {
+            var r1 = GetLevelResult(1);
+            var r2 = GetLevelResult(2);
+            var r3 = GetLevelResult(3);
+            var r5 = GetLevelResult(5);
+
+            bool HasResult(LevelResult r) => r != null;
+
+            // P0: 6002 莫比乌斯环 — 1/2/3/5关 finalLives 全=1
+            if (HasResult(r1) && HasResult(r2) && HasResult(r3) && HasResult(r5) &&
+                r1.finalLives == 1 && r2.finalLives == 1 && r3.finalLives == 1 && r5.finalLives == 1)
+            {
+                Log("[Ending] 判定结果: 6002 莫比乌斯环");
+                return 6002;
+            }
+
+            // P1: 基础条件 — 至少一关>1
+            bool anyGreaterThanOne = (r1?.finalLives > 1) || (r2?.finalLives > 1) || (r3?.finalLives > 1) || (r5?.finalLives > 1);
+            if (!anyGreaterThanOne) return 0;
+
+            bool bothCards = (r2?.usedCard2017 == true) && (r5?.usedCard2026 == true);
+
+            if (!bothCards)
+            {
+                Log("[Ending] 判定结果: 6004 星垂之夜（未全卡）");
+                return 6004;
+            }
+
+            // 两卡都用，根据木门选项
+            if (rooftopChoice == 1)
+            {
+                Log("[Ending] 判定结果: 6004 星垂之夜（独自）");
+                return 6004;
+            }
+            if (rooftopChoice == 2)
+            {
+                Log("[Ending] 判定结果: 6005 北极星");
+                return 6005;
+            }
+
+            Log("[Ending] 条件满足但未选择木门选项");
+            return 0; // 需要弹出选项
         }
 
         // ========== 整档操作 ==========
@@ -151,8 +193,7 @@ namespace Game.Test
             if (!HasSave()) return "无存档";
             var cp = currentSave.checkpoint;
             var time = DateTimeOffset.FromUnixTimeMilliseconds(cp.saveTime).LocalDateTime;
-            string mode = cp.isInGameplay ? "游玩中" : "剧情中";
-            return $"Lv.{cp.currentLevelId} {mode} | {cp.storyFileName} | {time:MM-dd HH:mm}";
+            return $"Lv.{cp.currentLevelId} | {cp.storyFileName} | {time:MM-dd HH:mm}";
         }
 
         // ========== 内部 ==========
@@ -165,6 +206,8 @@ namespace Game.Test
                 currentSave.checkpoint = new LevelCheckpoint();
             if (currentSave.endingData == null)
                 currentSave.endingData = new EndingAccumulatedData();
+            if (currentSave.levelResults == null)
+                currentSave.levelResults = new List<LevelResult>();
         }
 
         void SaveToDisk()
@@ -203,42 +246,46 @@ namespace Game.Test
     {
         public LevelCheckpoint checkpoint;
         public EndingAccumulatedData endingData;
+        public List<LevelResult> levelResults;
 
         public CrossLevelSaveData()
         {
             checkpoint = new LevelCheckpoint();
             endingData = new EndingAccumulatedData();
+            levelResults = new List<LevelResult>();
         }
     }
 
-    /// <summary>第一路：关卡进度检查点</summary>
+    /// <summary>关卡进度检查点</summary>
     [Serializable]
     public class LevelCheckpoint
     {
-        public int currentLevelId;        // 当前关卡ID
-        public string storyFileName;      // 当前剧情文件名
-        public int storyLineIndex;        // 剧情行索引
-        public long saveTime;             // 存档时间戳
-        public bool isInGameplay;         // true=游玩中, false=剧情中
+        public int currentLevelId;
+        public string storyFileName;
+        public int storyLineIndex;
+        public long saveTime;
+        public bool isInGameplay;
     }
 
-    /// <summary>第二路：结局相关累积数据</summary>
+    /// <summary>结局相关累积数据（精简：仅保留全局卡牌记录）</summary>
     [Serializable]
     public class EndingAccumulatedData
     {
-        public List<string> branchChoices;
         public List<int> cardsUsed;
-        public List<string> itemsCollected;
-        public int lastLives;
-        public int lastEmotion;
 
         public EndingAccumulatedData()
         {
-            branchChoices = new List<string>();
             cardsUsed = new List<int>();
-            itemsCollected = new List<string>();
-            lastLives = 3;
-            lastEmotion = 50;
         }
+    }
+
+    /// <summary>单关卡结果（用于跨关卡结局判定）</summary>
+    [Serializable]
+    public class LevelResult
+    {
+        public int levelId;
+        public int finalLives;
+        public bool usedCard2017;
+        public bool usedCard2026;
     }
 }
