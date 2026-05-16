@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using TMPro;
 using Game.Test;
 
 [UIPath("UI/MainFlow")]
@@ -15,6 +16,7 @@ public class SaveGamePanel : BasePanel
         EnsureSaveSystem();
         DetermineMode();
         RefreshButtonState();
+        RefreshTitle();
     }
 
     void DetermineMode()
@@ -44,6 +46,13 @@ public class SaveGamePanel : BasePanel
             Debug.Log("[SaveGamePanel] 自动创建 CrossLevelSaveSystem");
         }
         return CrossLevelSaveSystem.Instance;
+    }
+
+    void RefreshTitle()
+    {
+        var title = transform.Find("Text (TMP)")?.GetComponent<TextMeshProUGUI>();
+        if (title != null)
+            title.text = isSaveMode ? "存档" : "读档";
     }
 
     void RefreshButtonState()
