@@ -150,6 +150,9 @@ Assets/Scripts/Game/
   FastForwardDevMode.cs
   FungusVNBranchTest.cs
   FungusVNController.cs
+  Level2QuickWinHotkey.cs
+  Level2VictoryStoryRunner.cs
+  LevelEntrySplashOverride.cs
   LoadingScreenController.cs
   PlaceholderDisplay.cs
   PlaceholderTestRunner.cs
