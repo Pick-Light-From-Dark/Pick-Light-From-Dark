@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -353,15 +354,17 @@ public class GamePanel : BasePanel
     {
         var eventTexts = new[] { firstEventText, secondEventText, thirdEventText };
         var goals = Game.Task.TaskManager.Instance.GetActiveGoals();
+        // 过滤掉隐藏（Pending）任务
+        var visibleGoals = goals?.Where(g => g.state != TaskState.Pending).ToList();
 
         for (int i = 0; i < eventTexts.Length; i++)
         {
             var tmp = eventTexts[i];
             if (tmp == null) continue;
 
-            if (goals != null && i < goals.Count)
+            if (visibleGoals != null && i < visibleGoals.Count)
             {
-                var goal = goals[i];
+                var goal = visibleGoals[i];
                 string stateIcon = goal.state == TaskState.Completed ? "<color=#64DC64>✓ </color>" : "";
                 tmp.text = $"{stateIcon}{goal.taskName}  {goal.currentCount}/{goal.targetCount}";
                 tmp.gameObject.SetActive(true);
@@ -982,15 +985,17 @@ public class GamePanel : BasePanel
         if (readingCardData.backgroundJumpId != 0)
             SetSceneBackground(readingCardData.backgroundJumpId, 0.5f);
 
-        // 播放卡牌动作音效
-        if (!string.IsNullOrEmpty(readingCardData.sfxName))
-            MusicMgr.Instance.PlaySound(readingCardData.sfxName);
+        // 停止卡牌音效
+        if (cardSfxSource != null)
+        {
+            MusicMgr.Instance.StopSound(cardSfxSource);
+            cardSfxSource = null;
+        }
 
         // 播放读条完成通用音效
         MusicMgr.Instance.PlaySound("DXH_SOUND/SOUND2/24.读条完成音效");
 
         preReadSnapshot = null;
-        cardSfxSource = null;
         RefreshSelectionArea();
         Debug.Log($"[GamePanel] 读条完成: {readingCardData.cardName}");
     }

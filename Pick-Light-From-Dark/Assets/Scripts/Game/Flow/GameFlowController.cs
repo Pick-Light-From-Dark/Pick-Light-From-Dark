@@ -352,11 +352,6 @@ namespace Game.Flow
             // 重置背景画面为被窝里（初始背景）
             EventCenter.Instance.EventTrigger(E_EventType.BackgroundJump, 5001);
 
-            // 重置情绪值到初始值
-            if (levelConfig != null && emotionSystem != null)
-            {
-                emotionSystem.Initialize(levelConfig);
-            }
 
             if (!isGameOver)
             {

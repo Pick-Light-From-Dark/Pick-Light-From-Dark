@@ -59,10 +59,11 @@ namespace Game.Task
                     {
                         taskId = taskId,
                         taskName = taskName,
-                        state = TaskState.InProgress
+                        IsHidden = goal.IsHidden,
+                        state = goal.IsHidden ? TaskState.Pending : TaskState.InProgress
                     };
                     _activeGoals.Add(taskGoal);
-                    Debug.Log($"[TaskManager] 任务: id={taskGoal.taskId} name={taskGoal.taskName} cardId={taskGoal.targetCardId} count={taskGoal.currentCount}/{taskGoal.targetCount}");
+                    Debug.Log($"[TaskManager] 任务: id={taskGoal.taskId} name={taskGoal.taskName} cardId={taskGoal.targetCardId} count={taskGoal.currentCount}/{taskGoal.targetCount} hidden={goal.IsHidden}");
                 }
                 Debug.Log($"[TaskManager] 初始化完成，共 {_activeGoals.Count} 个任务目标");
             }
@@ -97,6 +98,23 @@ namespace Game.Task
             CheckLevelComplete();
         }
 
+        /// <summary>
+        /// 揭示隐藏任务（从Pending转为InProgress），在卡牌使用后调用
+        /// </summary>
+        public void RevealHiddenTask(int cardId)
+        {
+            foreach (var goal in _activeGoals)
+            {
+                if (goal.targetCardId == cardId && goal.IsHidden && goal.state == TaskState.Pending)
+                {
+                    goal.state = TaskState.InProgress;
+                    EventCenter.Instance.EventTrigger(E_EventType.TaskProgressChanged, cardId);
+                    Debug.Log($"[TaskManager] 隐藏任务已揭示: id={goal.taskId} name={goal.taskName}");
+                    return;
+                }
+            }
+        }
+
         private void OnCardReadComplete(int cardId)
         {
             if (!isInitialized)
@@ -114,6 +132,9 @@ namespace Game.Task
 
             foreach (var goal in _activeGoals)
             {
+                // 隐藏未揭示的任务不参与关卡完成判定
+                if (goal.state == TaskState.Pending)
+                    continue;
                 if (goal.state != TaskState.Completed)
                     return;
             }
@@ -134,7 +155,8 @@ namespace Game.Task
         public (int completed, int total) GetOverallProgress()
         {
             int completed = _activeGoals.Count(g => g.state == TaskState.Completed);
-            return (completed, _activeGoals.Count);
+            int total = _activeGoals.Count(g => g.state != TaskState.Pending);
+            return (completed, total);
         }
     }
 }

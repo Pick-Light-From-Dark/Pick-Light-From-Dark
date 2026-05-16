@@ -605,6 +605,8 @@ namespace Game.Card
 
                 case 2017: // 分享拌面：2018由关联列表生成；特殊效果处理2016减少+暂停+对话
                 {
+                    // 揭示隐藏任务（请宋明月吃泡面）
+                    Task.TaskManager.Instance.RevealHiddenTask(2017);
                     AddKeepOnly(2003, 2018); // 2018仅属于2003视角，切换回来后保留
                     if (globalPool.TryGetValue(2016, out var pooled2016))
                     {
@@ -655,6 +657,8 @@ namespace Game.Card
 
                 case 2026:
                 {
+                    // 揭示隐藏任务
+                    Task.TaskManager.Instance.RevealHiddenTask(2026);
                     if (levelConfig != null && levelConfig.levelId == 1005)
                     {
                         // 第五夜：寻求宋明月帮助 → 将2038(前往厕所)加入2005(下床)的运行时关联
@@ -666,7 +670,7 @@ namespace Game.Card
                         GamePanel.PostDialogueBackgroundOverride = 5011;
 
                         // 触发局内对话
-                        EventCenter.Instance.EventTrigger(E_EventType.GameDialogueStart, "Dialogue/Dialogue5-1");
+                        EventCenter.Instance.EventTrigger(E_EventType.GameDialogueStart, "Dialogue/Dialogue5-3");
                     }
                     else
                     {
