@@ -56,7 +56,39 @@ public class SaveGamePanel : BasePanel
         var btn = transform.Find("SaveGameBtn1")?.GetComponent<Button>();
         if (btn == null) return;
 
+        var text = btn.GetComponentInChildren<Text>(true);
+        if (text == null)
+        {
+            var textObj = new GameObject("SaveText");
+            textObj.transform.SetParent(btn.transform, false);
+            var rt = textObj.AddComponent<RectTransform>();
+            rt.anchorMin = Vector2.zero;
+            rt.anchorMax = Vector2.one;
+            rt.offsetMin = Vector2.zero;
+            rt.offsetMax = Vector2.zero;
+            text = textObj.AddComponent<Text>();
+            text.alignment = TextAnchor.MiddleCenter;
+            text.color = Color.black;
+            text.fontSize = 28;
+            var font = Resources.Load<Font>("Font/LXGWWenKaiScreen");
+            if (font == null)
+                font = Resources.Load<Font>("Font/SourceHanSansHWSC-Regular");
+            if (font != null)
+                text.font = font;
+        }
+
         var saveSystem = CrossLevelSaveSystem.Instance;
+        if (saveSystem != null && saveSystem.HasSave())
+        {
+            var cp = saveSystem.currentSave.checkpoint;
+            var time = System.DateTimeOffset.FromUnixTimeMilliseconds(cp.saveTime).LocalDateTime;
+            text.text = $"Lv.{cp.currentLevelId} {time:MM-dd HH:mm}";
+        }
+        else
+        {
+            text.text = isSaveMode ? "存档" : "无存档";
+        }
+
         if (!isSaveMode)
         {
             // 读档模式：无存档时禁用按钮
@@ -131,6 +163,7 @@ public class SaveGamePanel : BasePanel
             saveSystem.SaveStoryProgress(cp.currentLevelId, cp.storyFileName, 0);
 
         Debug.Log($"[SaveGamePanel] 已保存 Lv.{cp.currentLevelId}");
+        RefreshButtonState();
     }
 
     void DoLoad()
