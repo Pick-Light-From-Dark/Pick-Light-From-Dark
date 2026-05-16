@@ -45,8 +45,8 @@ namespace Game.Editor
             config.eyeClosePanicDecreasePerSec = 1f;
             config.eyeCloseAccelerationThreshold = 20f;
             config.eyeCloseAccelerationMultiplier = 1.5f;
-            config.patrolIntervals = new Vector2(15f, 25f);
-            config.patrolTime = new Vector2(8f, 10f);
+            config.patrolIntervals = new Vector2(20f, 30f);
+            config.patrolTime = new Vector2(12f, 16f);
             config.eyeCheckDuration = new Vector2(3f, 3f);
             config.flashCheckDuration = new Vector2(3f, 3f);
             config.flashPanicPerSec = 2;
@@ -83,8 +83,8 @@ namespace Game.Editor
             config.eyeClosePanicDecreasePerSec = 1f;
             config.eyeCloseAccelerationThreshold = 20f;
             config.eyeCloseAccelerationMultiplier = 1.5f;
-            config.patrolIntervals = new Vector2(15f, 25f);
-            config.patrolTime = new Vector2(8f, 10f);
+            config.patrolIntervals = new Vector2(20f, 30f);
+            config.patrolTime = new Vector2(12f, 16f);
             config.eyeCheckDuration = new Vector2(3f, 3f);
             config.flashCheckDuration = new Vector2(3f, 3f);
             config.flashPanicPerSec = 2;
@@ -120,8 +120,8 @@ namespace Game.Editor
             config.eyeClosePanicDecreasePerSec = 1f;
             config.eyeCloseAccelerationThreshold = 20f;
             config.eyeCloseAccelerationMultiplier = 1.5f;
-            config.patrolIntervals = new Vector2(15f, 25f);
-            config.patrolTime = new Vector2(8f, 10f);
+            config.patrolIntervals = new Vector2(20f, 30f);
+            config.patrolTime = new Vector2(12f, 16f);
             config.eyeCheckDuration = new Vector2(3f, 3f);
             config.flashCheckDuration = new Vector2(3f, 3f);
             config.flashPanicPerSec = 2;
@@ -155,8 +155,8 @@ namespace Game.Editor
             config.eyeClosePanicDecreasePerSec = 1f;
             config.eyeCloseAccelerationThreshold = 20f;
             config.eyeCloseAccelerationMultiplier = 1.5f;
-            config.patrolIntervals = new Vector2(15f, 25f);
-            config.patrolTime = new Vector2(8f, 10f);
+            config.patrolIntervals = new Vector2(20f, 30f);
+            config.patrolTime = new Vector2(12f, 16f);
             config.eyeCheckDuration = new Vector2(3f, 3f);
             config.flashCheckDuration = new Vector2(3f, 3f);
             config.flashPanicPerSec = 2;
