@@ -33,7 +33,7 @@ MonoBehaviour:
     - 1002
     bedStateChange: 0
     specialEffect: "\u65E0"
-    saveProgressOnInterrupt: 0
+    saveProgressOnInterrupt: 1
     cardBackgroundType: 0
     backgroundJumpId: 0
     sfxName: DXH_SOUND/SOUND2/18.倒水声

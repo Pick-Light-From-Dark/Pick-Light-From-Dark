@@ -33,7 +33,7 @@ MonoBehaviour:
     - 1001
     bedStateChange: 0
     specialEffect: "\u5F53\u6B64\u5361\u724C\u88AB\u624B\u52A8\u6253\u65AD\u65F6\uFF0C\u4E0D\u4F1A\u56E0\u4E3A\u6253\u65AD\u5361\u724C\u800C\u91CD\u7F6E\u8BFB\u6761\u8FDB\u5EA6"
-    saveProgressOnInterrupt: 1
+    saveProgressOnInterrupt: 0
     cardBackgroundType: 0
     backgroundJumpId: 0
     sfxName: "DXH_SOUND/03.\u5403\u85AF\u7247"

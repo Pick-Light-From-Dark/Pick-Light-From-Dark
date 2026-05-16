@@ -35,5 +35,5 @@ MonoBehaviour:
     specialEffect: "\u65E0"
     saveProgressOnInterrupt: 0
     cardBackgroundType: 1
-    backgroundJumpId: 5006
+    backgroundJumpId: 5004
     sfxName: 
