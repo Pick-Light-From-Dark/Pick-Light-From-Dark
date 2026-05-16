@@ -233,7 +233,7 @@ namespace Game.Test
                 vnController.SaveProgress();
 
             // 3. CrossLevelSave 存档
-            saveSystem.SaveStoryProgress(segmentLevels[currentSegmentIndex], segName, 0);
+            saveSystem.SaveStoryProgress(segmentLevels[currentSegmentIndex], segName);
 
             statusLog = $"已存档: {segName} + PlayerData";
             Debug.Log($"[VNDataChangeTest] 存档完成: {segName}");

@@ -207,7 +207,7 @@ namespace Game.Test
             }
 
             // 2. CrossLevelSave 存档（保存段名作为 storyFileName）
-            saveSystem.SaveStoryProgress(segment.levelId, segment.segmentName, 0);
+            saveSystem.SaveStoryProgress(segment.levelId, segment.segmentName);
 
             statusLog = $"已存档: 段 {currentSegmentIndex} ({segment.segmentName})";
             Debug.Log($"[VNSequenceTest] 存档完成: {segment.segmentName}");

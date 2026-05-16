@@ -1,222 +1,130 @@
-# CrossLevelSaveSystem 接入接口说明
-
-> 本文档面向接入存档/结局系统的游戏逻辑层（LevelFlowCoordinator、CardManager 等）。
-> 6001（太阳照常升起）由第一关剧情选项直接触发，**不经过本系统判定**。
+这里是将原文转换为 Markdown 格式后的内容，在保证内容完全不变的前提下，优化了换行引起的分段，并使用了标准的 Markdown 语法（如代码块、表格、列表等）进行排版：
 
 ---
 
-## 一、接口清单
+# CrossLevelSaveSystem（跨关卡进度存档）
 
-### 1. 关卡进度（读档定位）
+* **文件**：`Assets/Scripts/Game/Test/amiao/CrossLevelSaveSystem.cs`
+* **存储**：`PlayerPrefs`（键名 `CrossLevelSave_v2`），JSON 序列化
+* **单例访问**：`CrossLevelSaveSystem.Instance`
 
-```csharp
-// 剧情节点存档 — 进入/离开剧情时调用
-public void SaveStoryProgress(int levelId, string storyFileName, int lineIndex = 0)
+---
 
-// 游玩进度存档 — 进入 gameplay 时调用（参数已简化）
-public void SaveGameplayProgress(int levelId)
+## 核心数据结构
 
-// 读档 — 返回检查点数据
-public LevelCheckpoint LoadCheckpoint()
-```
+```text
+CrossLevelSaveData
+├── checkpoint: LevelCheckpoint        // 关卡进度定位
+│   ├── currentLevelId                 // 当前关卡
+│   ├── storyFileName                  // 剧情文件名（如 Dialogue2-1）
+├── endingData: EndingAccumulatedData  // 结局累积数据
+│   └── cardsUsed: List<int>           // 全局卡牌使用记录（去重）
+└── levelResults: List<LevelResult>    // 每关最终结果
+    ├── levelId
+    ├── finalLives                     // 通关剩余血量
+    ├── usedCard2017                   // 是否使用卡牌2017（分享泡面）
+    └── usedCard2026                   // 是否使用卡牌2026（寻求帮助）
 
-### 2. 卡牌记录（全局快速查询）
-
-```csharp
-// 记录卡牌使用 — 卡牌生效时调用
-public void RecordCardUsed(int cardId)
-
-// 查询是否使用过指定卡牌
-public bool HasUsedCard(int cardId)
-```
-
-### 3. 关卡结果（跨关卡结局判定用）
-
-```csharp
-// 关卡结束时调用，写入本关最终数据
-public void RecordLevelResult(
-    int levelId,
-    int finalLives,      // 通关时剩余血量
-    float timeUsed,      // 本关耗时（秒）
-    bool card2017,       // 本关是否使用了分享泡面
-    bool card2026        // 本关是否使用了寻求帮助
-)
-
-// 获取指定关卡结果（判定前读取）
-public LevelResult GetLevelResult(int levelId)
-```
-
-### 4. 结局判定（第五关专用）
-
-```csharp
-/// <summary>
-/// 判定 6002/6004/6005。
-/// 6001 由剧情选项直接触发，不调用本接口。
-/// </summary>
-/// <param name="rooftopChoice">
-/// 0 = 未选择（返回 0 表示需弹出木门选项）
-/// 1 = 独自前往 → 6004
-/// 2 = 邀请宋明月 → 6005
-/// </param>
-/// <returns>结局 ID（6002/6004/6005），0 表示条件不足或未选择</returns>
-public int EvaluateEnding(int rooftopChoice = 0)
-```
-
-### 5. 整档操作
-
-```csharp
-public void ClearAll()
-public bool HasSave()
-public string GetSaveSummary()
 ```
 
 ---
 
-## 二、数据结构
+## 后端接口
+
+* **接口**: `SaveStoryProgress`
+* **参数**: `int levelId, string storyFile, int lineIndex=0`
+* **说明**: 保存剧情进度（剧情→游玩切换时调用）
+
+
+* **接口**: `SaveGameplayProgress`
+* **参数**: `int levelId`
+* **说明**: 保存游玩进度（游玩中存档）
+
+
+* **接口**: `LoadCheckpoint`
+* **参数**: 无
+* **说明**: 返回 `LevelCheckpoint`，读档定位用
+
+
+* **接口**: `RecordCardUsed`
+* **参数**: `int cardId`
+* **说明**: 记录卡牌使用（全局去重）
+
+
+* **接口**: `HasUsedCard`
+* **参数**: `int cardId`
+* **说明**: 查询是否使用过某卡牌
+
+
+* **接口**: `RecordLevelResult`
+* **参数**: `int levelId, int lives, bool card2017, bool card2026`
+* **说明**: 记录关卡结果（通关后调用）
+
+
+* **接口**: `GetLevelResult`
+* **参数**: `int levelId`
+* **说明**: 获取指定关卡结果
+
+
+* **接口**: `EvaluateEnding`
+* **参数**: `int rooftopChoice=0`
+* **说明**: 结局判定：0=未选, 1=独自(6004), 2=邀请(6005)
+
+
+* **接口**: `HasSave`
+* **参数**: 无
+* **说明**: 是否有有效存档
+
+
+* **接口**: `ClearAll`
+* **参数**: 无
+* **说明**: 清除所有跨关卡存档
+
+
+
+---
+
+## 结局判定规则（EvaluateEnding）
+
+| 优先级 | 条件 | 结局 |
+| --- | --- | --- |
+| **P0** | 1/2/3/5关 finalLives 全=1 | 6002 莫比乌斯环 |
+| **P1** | 至少一关 finalLives > 1，但未全用卡 | 6004 星垂之夜 |
+| **P2** | 两卡全用 + 独自前往 | 6004 星垂之夜 |
+| **P3** | 两卡全用 + 邀请宋明月 | 6005 北极星 |
+
+> ▎ 6001（太阳照常升起）由第一关剧情选项直接触发，不经过本接口。
+
+---
+
+## 使用示例（来自 AmiaoDemoRunner）
 
 ```csharp
-[Serializable]
-public class LevelCheckpoint
-{
-    public int currentLevelId;    // 当前关卡ID
-    public string storyFileName;  // 当前剧情文件名
-    public int storyLineIndex;    // 剧情行索引（固定 0 = 回到开头）
-    public long saveTime;         // 存档时间戳
-    public bool isInGameplay;     // true=游玩中, false=剧情中
-}
+// 剧情结束时存档
+saveSystem.SaveStoryProgress(2, "Dialogue2-1", 0);
 
-[Serializable]
-public class LevelResult
-{
-    public int levelId;
-    public int finalLives;        // 通关时剩余血量
-    public float timeUsed;        // 耗时
-    public bool usedCard2017;     // 是否使用分享泡面
-    public bool usedCard2026;     // 是否使用寻求帮助
-}
+// 记录卡牌使用
+saveSystem.RecordCardUsed(2017);
+
+// 通关后记录结果
+saveSystem.RecordLevelResult(2, selectedLives, card2017: true, card2026: false);
+
+// 第五关结束后判定结局
+int endingId = saveSystem.EvaluateEnding(rooftopChoice: 2); // 6005
+
+// 读档
+var cp = saveSystem.LoadCheckpoint();
+// cp.currentLevelId, cp.storyFileName, cp.isInGameplay
+
 ```
 
 ---
 
-## 三、接入流程
+## 与 PlayerDataStore 的区别
 
-### 3.1 场景初始化
-
-在任意场景（或持久化场景如 `TitleScreen`）中创建空物体，挂载 `CrossLevelSaveSystem` 组件。
-
-```csharp
-// 自动单例访问
-var save = CrossLevelSaveSystem.Instance;
-```
-
-### 3.2 剧情节点存档
-
-在 `LevelFlowCoordinator.StartOpeningStory()` / `StartEndingStory()` 中：
-
-```csharp
-CrossLevelSaveSystem.Instance.SaveStoryProgress(
-    levelId: 1,
-    storyFileName: openingStory.name,
-    lineIndex: 0
-);
-```
-
-### 3.3 卡牌使用记录
-
-卡牌生效时（如 CardManager 的卡牌处理逻辑中）：
-
-```csharp
-// 分享泡面（第二关）
-CrossLevelSaveSystem.Instance.RecordCardUsed(2017);
-
-// 寻求宋明月帮助（第五关）
-CrossLevelSaveSystem.Instance.RecordCardUsed(2026);
-```
-
-### 3.4 关卡结束存档
-
-在 `GameWin` / `GameLose` 回调中（如 `LevelFlowCoordinator.OnGameWin()`）：
-
-```csharp
-CrossLevelSaveSystem.Instance.RecordLevelResult(
-    levelId: currentLevelId,
-    finalLives: GameFlowController.Instance.GetCurrentLives(),
-    timeUsed: elapsedTime,
-    card2017: CrossLevelSaveSystem.Instance.HasUsedCard(2017),
-    card2026: CrossLevelSaveSystem.Instance.HasUsedCard(2026)
-);
-```
-
-### 3.5 第五关结局判定
-
-在玩家使用"前往厕所"卡后调用：
-
-```csharp
-int endingId = CrossLevelSaveSystem.Instance.EvaluateEnding(rooftopChoice: 0);
-
-if (endingId == 0)
-{
-    // 条件满足且两卡全用，需弹出木门选项
-    ShowRooftopMenu(); // 【独自前往】 / 【邀请宋明月】
-}
-else if (endingId == 6002)
-{
-    // 莫比乌斯环 — 四关血量全为 1
-    TriggerEnding(6002);
-}
-else if (endingId == 6004)
-{
-    // 星垂之夜 — 未全卡 或 选择独自前往
-    TriggerEnding(6004);
-}
-```
-
-玩家做出木门选择后：
-
-```csharp
-// 独自前往
-int endingId = CrossLevelSaveSystem.Instance.EvaluateEnding(rooftopChoice: 1); // → 6004
-
-// 邀请宋明月
-int endingId = CrossLevelSaveSystem.Instance.EvaluateEnding(rooftopChoice: 2); // → 6005
-```
-
-### 3.6 读档流程
-
-主菜单点击"继续游戏"时：
-
-```csharp
-if (CrossLevelSaveSystem.Instance.HasSave())
-{
-    var cp = CrossLevelSaveSystem.Instance.LoadCheckpoint();
-    // 加载对应关卡场景
-    SceneManager.LoadScene($"Level{cp.currentLevelId}");
-    // 进入场景后，LevelFlowCoordinator 读取 cp.storyFileName 启动对应剧情
-}
-```
-
----
-
-## 四、判定规则速查
-
-| 结局 | 触发条件 | 数据依赖 |
-|------|----------|----------|
-| **6001 太阳照常升起** | 第一关剧情选项"不吃" | **剧情直接触发，存档不记录** |
-| **6002 莫比乌斯环** | 1/2/3/5关 `finalLives` **全=1** | `levelResults[1,2,3,5]` |
-| **6004 星垂之夜** | 至少一关>1 + 未全卡 或 独自前往 | `levelResults[1,2,3,5]` + `cardsUsed` |
-| **6005 北极星** | 至少一关>1 + 两卡全用 + 邀请宋明月 | `levelResults[1,2,3,5]` + `rooftopChoice` |
-
----
-
-## 五、Fungus 桥接（可选）
-
-若剧情需要通过 Fungus 命令调用，场景中挂载 `EndingConditionBridge` 组件：
-
-| Fungus 命令 | 目标对象 | 方法名 | 返回值变量 |
-|-------------|----------|--------|------------|
-| Call Method | EndingBridge | `RecordCard2017` | — |
-| Call Method | EndingBridge | `RecordCard2026` | — |
-| Invoke Method | EndingBridge | `HasUsedCard2017` | Boolean: `HasCard2017` |
-| Invoke Method | EndingBridge | `CanShowRooftopChoice` | Boolean: `CanShowRooftop` |
-
-> `EndingConditionBridge` 内部已适配新版 `CrossLevelSaveSystem`，通过 `HasUsedCard()` 查询。
+|  | CrossLevelSaveSystem | PlayerDataStore |
+| --- | --- | --- |
+| **用途** | 当前游戏进度（读档用） | 历史通关记录（统计用） |
+| **存储** | PlayerPrefs | player_data.json |
+| **时机** | 任意节点（剧情中/游玩中） | 关卡结束后 |
+| **数据** | 检查点 + 结局累积 | 每次游玩的完整明细 |

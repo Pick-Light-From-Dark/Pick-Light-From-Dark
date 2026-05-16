@@ -231,7 +231,7 @@ namespace Game.Test
 
             var level = levels[currentLevelIndex];
 
-            saveSystem.SaveStoryProgress(level.levelId, level.storyFile, 0);
+            saveSystem.SaveStoryProgress(level.levelId, level.storyFile);
 
             int testLives = UnityEngine.Random.Range(1, 4);
             bool has2017 = saveSystem.HasUsedCard(2017);
@@ -311,29 +311,29 @@ namespace Game.Test
 
             // Lv.1: 1血通关（用于凑莫比乌斯环条件）
             saveSystem.RecordLevelResult(1, finalLives: 1);
-            saveSystem.SaveStoryProgress(1, "Dialogue1-1", 0);
+            saveSystem.SaveStoryProgress(1, "Dialogue1-1");
             PlayerDataStore.Instance.SaveLevelRecord(new JsonLevelRecord(1));
 
             // Lv.2: 1血通关 + 卡牌2017
             saveSystem.RecordCardUsed(2017);
             saveSystem.RecordLevelResult(2, finalLives: 1, card2017: true);
-            saveSystem.SaveStoryProgress(2, "Dialogue2-1", 0);
+            saveSystem.SaveStoryProgress(2, "Dialogue2-1");
             PlayerDataStore.Instance.SaveLevelRecord(new JsonLevelRecord(2));
 
             // Lv.3: 1血通关
             saveSystem.RecordLevelResult(3, finalLives: 1);
-            saveSystem.SaveStoryProgress(3, "Dialogue3-1", 0);
+            saveSystem.SaveStoryProgress(3, "Dialogue3-1");
             PlayerDataStore.Instance.SaveLevelRecord(new JsonLevelRecord(3));
 
             // Lv.4: 不参与结局判定，但保留记录
             saveSystem.RecordLevelResult(4, finalLives: 3);
-            saveSystem.SaveStoryProgress(4, "Dialogue4-1", 0);
+            saveSystem.SaveStoryProgress(4, "Dialogue4-1");
             PlayerDataStore.Instance.SaveLevelRecord(new JsonLevelRecord(4));
 
             // Lv.5: 2血（打破莫比乌斯环）+ 卡牌2026
             saveSystem.RecordCardUsed(2026);
             saveSystem.RecordLevelResult(5, finalLives: 2, card2026: true);
-            saveSystem.SaveStoryProgress(5, "Dialogue5-1", 0);
+            saveSystem.SaveStoryProgress(5, "Dialogue5-1");
             PlayerDataStore.Instance.SaveLevelRecord(new JsonLevelRecord(5));
 
             Debug.Log("[SL] 测试数据已注入: Lv.1~5 各带不同血量/卡牌");

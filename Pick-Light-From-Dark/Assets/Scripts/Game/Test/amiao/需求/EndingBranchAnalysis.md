@@ -31,10 +31,6 @@
 | 第2关通关血量 | `records[i].levelId=2` 的 `isWin=true` 时的 `finalLives` | 同上 |
 | 第3关通关血量 | `records[i].levelId=3` 的 `isWin=true` 时的 `finalLives` | 同上 |
 | 第5关通关血量 | `records[i].levelId=5` 的 `isWin=true` 时的 `finalLives` | 同上 |
-| 第1关通关时间 | `records[i].levelId=1` 的 `timeUsed` | 秒，LevelRecordManager 已记录 |
-| 第2关通关时间 | `records[i].levelId=2` 的 `timeUsed` | 同上 |
-| 第3关通关时间 | `records[i].levelId=3` 的 `timeUsed` | 同上 |
-| 第5关通关时间 | `records[i].levelId=5` 的 `timeUsed` | 同上 |
 | 第二关是否使用分享泡面卡 | `records[i].levelId=2` 的 `cardUses` 中是否有 `cardId=2017` | CardManager case 2017 |
 | 第五关是否使用寻求宋明月帮助 | `records[i].levelId=5` 的 `cardUses` 中是否有 `cardId=2026` | CardManager case 2026 |
 
@@ -270,7 +266,7 @@ E_EventType.RooftopChoiceMade (string choiceId)
 | 6004 星垂之夜(B) | 至少一关>1 | 已用 | 已用 | 【独自前往】 | P1 |
 | 6005 北极星 | 至少一关>1 | 已用 | 已用 | 【邀请宋明月】 | P1 |
 | 6001 太阳照常升起 | — | — | — | — | 第一关剧情分支，独立 |
-| 6003 人心不足蛇吞象 | — | — | — | — | 当前规则未定义 |
+| 6003 人心不足蛇吞象 | — | — | — | — | 暂时不使用该结局 |
 
 ---
 
