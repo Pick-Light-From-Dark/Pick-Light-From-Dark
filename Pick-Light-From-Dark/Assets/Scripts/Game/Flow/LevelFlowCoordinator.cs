@@ -30,6 +30,10 @@ namespace Game.Flow
         public GameObject ending1Prefab;
         public GameObject deathEndingPrefab;
 
+        [Header("章节开场图")]
+        [Tooltip("每关开始前展示 night1~4 章节图")]
+        public bool showChapterSplash = true;
+
         private bool isGameOver = false;
         private Game.AI.TeacherAI teacherAI;
 
@@ -55,7 +59,26 @@ namespace Game.Flow
                 }
             }
 
-            StartOpeningStory();
+            BeginLevelFlow();
+        }
+
+        void BeginLevelFlow()
+        {
+            if (showChapterSplash)
+            {
+                ChapterSplashController.ShowForChapter(levelId, OnChapterSplashFinished);
+                return;
+            }
+
+            OnChapterSplashFinished();
+        }
+
+        void OnChapterSplashFinished()
+        {
+            if (openingStory == null)
+                StartGameplay();
+            else
+                StartOpeningStory();
         }
 
         void StartOpeningStory()
