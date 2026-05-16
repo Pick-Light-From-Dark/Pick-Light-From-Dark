@@ -24,8 +24,8 @@ public class SettingPanel : BasePanel
         {
             case "BackBtn":
                 UIMgr.Instance.HidePanel<SettingPanel>();
-                // 游戏中打开的设置 → 返回暂停面板；主菜单打开的 → 返回主菜单
-                if (Game.Flow.GameFlowController.Instance.IsInitialized)
+                // 游戏中打开的设置 → 返回暂停面板；主菜单打开的 → 返回开始界面
+                if (GamePanel.Instance != null && GamePanel.Instance.gameObject.activeInHierarchy)
                     UIMgr.Instance.ShowPanel<StopGamePanel>();
                 else
                     UIMgr.Instance.ShowPanel<BeginPanel>();

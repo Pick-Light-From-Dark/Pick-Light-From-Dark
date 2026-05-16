@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
@@ -50,20 +50,26 @@ public class StopGamePanel : BasePanel
         switch (btnName)
         {
             case "ContinueGameBtn":
+                MusicMgr.Instance.PlaySound("按钮点击音效");
                 Game.Flow.GameFlowController.Instance.ResumeGame();
                 UIMgr.Instance.HidePanel<StopGamePanel>();
                 break;
 
             case "SaveGameBtn":
+                MusicMgr.Instance.PlaySound("按钮点击音效");
+                UIMgr.Instance.HidePanel<StopGamePanel>();
                 UIMgr.Instance.ShowPanel<SaveGamePanel>();
                 break;
 
             case "SettingBtn":
+                MusicMgr.Instance.PlaySound("按钮点击音效");
+                UIMgr.Instance.HidePanel<StopGamePanel>();
                 UIMgr.Instance.ShowPanel<SettingPanel>();
                 break;
 
             case "QuitGameBtn":
-                Game.Flow.GameFlowController.Instance.ResumeGame();
+                MusicMgr.Instance.PlaySound("按钮点击音效");
+                Game.Flow.GameFlowController.Instance.GameLose("主动退出");
                 UIMgr.Instance.HideAllPanels();
                 UIMgr.Instance.ShowPanel<BeginPanel>();
                 break;

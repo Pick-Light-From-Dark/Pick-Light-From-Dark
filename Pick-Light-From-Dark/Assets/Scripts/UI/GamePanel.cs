@@ -59,6 +59,12 @@ public class GamePanel : BasePanel
     [SerializeField] private Image panicBarFill;
     [SerializeField] private Image exciteBarFill;
 
+    [Header("EmoImgBk 情绪图像（OrangeColor / GreenColor / RedColor / EmoCount）")]
+    [SerializeField] private Image greenEmoImg;
+    [SerializeField] private Image orangeEmoImg;
+    [SerializeField] private Image redEmoImg;
+    [SerializeField] private TextMeshProUGUI emoCountText;
+
     [Header("老师巡查状态")]
     [SerializeField] private TextMeshProUGUI teacherStatusText;
 
@@ -89,8 +95,10 @@ public class GamePanel : BasePanel
     // 情绪值显示
     private TextMeshProUGUI chaosCountText;
     private TextMeshProUGUI happlyCountText;
+    private TextMeshProUGUI panicEmoCount;
+    private TextMeshProUGUI exciteEmoCount;
     private const int EMOTION_DISPLAY_MIN = 0;
-    private const int EMOTION_DISPLAY_MAX = 50;
+    private const int EMOTION_DISPLAY_MAX = 100;
 
     // 剩余时间显示
     private TextMeshProUGUI timeText;
@@ -266,6 +274,29 @@ public class GamePanel : BasePanel
     {
         chaosCountText = transform.Find("ImgBk/PlayerMessage/ChaosCount")?.GetComponent<TextMeshProUGUI>();
         happlyCountText = transform.Find("ImgBk/PlayerMessage/HapplyCount")?.GetComponent<TextMeshProUGUI>();
+        panicEmoCount = transform.Find("ImgBk/PlayerMessage/PanicEmoCount")?.GetComponent<TextMeshProUGUI>();
+        exciteEmoCount = transform.Find("ImgBk/PlayerMessage/ExciteEmoCount")?.GetComponent<TextMeshProUGUI>();
+
+        // EmoImgBk 子物体
+        var emoImgBk = transform.Find("ImgBk/PlayerMessage/EmoImgBk");
+        if (emoImgBk != null)
+        {
+            greenEmoImg = emoImgBk.Find("GreenColor")?.GetComponent<Image>();
+            orangeEmoImg = emoImgBk.Find("OrangeColor")?.GetComponent<Image>();
+            redEmoImg = emoImgBk.Find("RedColor")?.GetComponent<Image>();
+            emoCountText = emoImgBk.Find("EmoCount")?.GetComponent<TextMeshProUGUI>();
+
+            // 将三个情绪图像配置为 Filled 模式（心形从底部向上填充）
+            foreach (var img in new[] { greenEmoImg, orangeEmoImg, redEmoImg })
+            {
+                if (img != null)
+                {
+                    img.type = Image.Type.Filled;
+                    img.fillMethod = Image.FillMethod.Vertical;
+                    img.fillOrigin = 0; // Bottom → 从下往上填充
+                }
+            }
+        }
 
         EventCenter.Instance.AddEventListener<int>(E_EventType.PanicChanged, OnEmotionChanged);
         EventCenter.Instance.AddEventListener<int>(E_EventType.ExciteChanged, OnEmotionChanged);
@@ -282,12 +313,36 @@ public class GamePanel : BasePanel
         var emo = EmotionSystem.Instance;
         if (emo == null) return;
         var info = emo.GetEmotionInfo();
-        if (chaosCountText != null) chaosCountText.text = $"{info.panicValue}/{EMOTION_DISPLAY_MAX}";
-        if (happlyCountText != null) happlyCountText.text = $"{info.exciteValue}/{EMOTION_DISPLAY_MAX}";
+        int totalValue = info.panicValue + info.exciteValue;
+        float panicRatio = info.panicValue / 50f;
+        float exciteRatio = info.exciteValue / 50f;
+        float totalRatio = totalValue / 100f;
+
+        // EmoImgBk 子物体：根据总情绪值区间显示对应颜色图像
+        if (greenEmoImg != null)  greenEmoImg.gameObject.SetActive(totalValue < 50);
+        if (orangeEmoImg != null) orangeEmoImg.gameObject.SetActive(totalValue >= 50 && totalValue < 80);
+        if (redEmoImg != null)    redEmoImg.gameObject.SetActive(totalValue >= 80);
+
+        // 给当前显示的图像设置填充量
+        Image activeEmoImg = totalValue < 50 ? greenEmoImg : (totalValue < 80 ? orangeEmoImg : redEmoImg);
+        if (activeEmoImg != null) activeEmoImg.fillAmount = totalRatio;
+
+        // EmoCount 显示总情绪值
+        if (emoCountText != null) emoCountText.text = $"{totalValue}";
+
+        // 更新计数文本
+        if (chaosCountText != null) chaosCountText.text = $"{info.panicValue}";
+        if (happlyCountText != null) happlyCountText.text = $"{info.exciteValue}";
+        if (panicEmoCount != null) panicEmoCount.text = $"{info.panicValue}";
+        if (exciteEmoCount != null) exciteEmoCount.text = $"{info.exciteValue}";
+
+        // 更新恐慌条填充
         if (panicBarFill != null)
-            panicBarFill.fillAmount = (info.panicValue - EMOTION_DISPLAY_MIN) / (float)(EMOTION_DISPLAY_MAX - EMOTION_DISPLAY_MIN);
+            panicBarFill.fillAmount = panicRatio;
+
+        // 更新兴奋条填充
         if (exciteBarFill != null)
-            exciteBarFill.fillAmount = (info.exciteValue - EMOTION_DISPLAY_MIN) / (float)(EMOTION_DISPLAY_MAX - EMOTION_DISPLAY_MIN);
+            exciteBarFill.fillAmount = exciteRatio;
     }
 
     private void SetupTeacherStatus()

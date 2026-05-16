@@ -65,6 +65,7 @@ Assets/Scripts/Game/
  Data/Editor/CardDataGenerator.cs
  Test/amiao/Editor/
   AmiaoVNTestPrefabBuilder.cs
+  EndingTriggerTesterEditor.cs
   GalDialoguePanelEditor.cs
   OneClickVNTestSetup.cs
 Assets/ThirdParty/Demigiant/DOTweenPro/Editor/
