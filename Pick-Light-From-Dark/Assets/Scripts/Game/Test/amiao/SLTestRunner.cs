@@ -1,12 +1,14 @@
 using UnityEngine;
+using System;
 using System.Collections.Generic;
 using Game.Backend;
 
 namespace Game.Test
 {
     /// <summary>
-    /// SL 场景存档读档测试主控器
-    /// 在场景中自动初始化第一关 VN，提供键盘存档/读档/选关测试
+    /// SL 场景存档读档测试主控器（精简版）
+    /// 测试存档数据结构、结局判定接口与读档定位
+    /// 6001 由剧情选项直接触发，不在本存档系统中测试
     /// </summary>
     public class SLTestRunner : MonoBehaviour
     {
@@ -37,17 +39,17 @@ namespace Game.Test
         [Header("调试")]
         public bool showGUI = true;
         public bool autoStartLevel1 = true;
+        public bool injectTestDataOnStart = true;
 
         int currentLevelIndex = 0;
         string statusLog = "就绪";
-        Rect uiRect = new Rect(10, 10, 460, 420);
+        Rect uiRect = new Rect(10, 10, 480, 440);
         Vector2 scrollPos;
 
         void Start()
         {
             EnsureComponents();
 
-            // 若 Inspector 未配置关卡，填充默认值
             if (levels == null || levels.Count == 0)
             {
                 levels = new List<LevelInfo>
@@ -60,12 +62,17 @@ namespace Game.Test
                 };
             }
 
+            if (injectTestDataOnStart)
+            {
+                InjectTestData();
+            }
+
             if (autoStartLevel1 && levels.Count > 0)
             {
                 LoadLevel(0);
             }
 
-            Debug.Log("[SLTestRunner] 存档读档测试启动 | F5=存档 | F9=读档 | F1~F5=选关 | F3=显隐面板");
+            Debug.Log("[SL] 测试启动 | F5=存档 | F9=读档 | F1~F5=选关 | F3=显隐面板 | F6=判定结局 | 注入=" + injectTestDataOnStart);
         }
 
         void Update()
@@ -79,7 +86,9 @@ namespace Game.Test
             if (Input.GetKeyDown(KeyCode.F9))
                 LoadCheckpoint();
 
-            // 数字键 1~5 选关
+            if (Input.GetKeyDown(KeyCode.F6))
+                TestEvaluateEnding();
+
             for (int i = 0; i < levels.Count && i < 5; i++)
             {
                 if (Input.GetKeyDown(KeyCode.Alpha1 + i))
@@ -112,12 +121,12 @@ namespace Game.Test
         void OnGUI()
         {
             if (!showGUI) return;
-            uiRect = GUILayout.Window(0, uiRect, DrawWindow, "SL 存档读档测试", GUILayout.Width(460));
+            uiRect = GUILayout.Window(0, uiRect, DrawWindow, "SL 存档读档测试", GUILayout.Width(480));
         }
 
         void DrawWindow(int id)
         {
-            scrollPos = GUILayout.BeginScrollView(scrollPos, GUILayout.Height(380));
+            scrollPos = GUILayout.BeginScrollView(scrollPos, GUILayout.Height(400));
 
             GUILayout.Label("=== 状态 ===", GUI.skin.box);
             GUILayout.Label(statusLog);
@@ -147,6 +156,9 @@ namespace Game.Test
             if (GUILayout.Button("F9 - 读档（回到剧情开始）", GUILayout.Height(30)))
                 LoadCheckpoint();
 
+            if (GUILayout.Button("F6 - 测试结局判定", GUILayout.Height(30)))
+                TestEvaluateEnding();
+
             if (GUILayout.Button("清除所有存档", GUILayout.Height(24)))
                 ClearAllSaves();
 
@@ -157,8 +169,13 @@ namespace Game.Test
                 var cp = saveSystem.currentSave.checkpoint;
                 GUILayout.Label($"关卡: {cp.currentLevelId}");
                 GUILayout.Label($"剧情: {cp.storyFileName}");
-                GUILayout.Label($"模式: {(cp.isInGameplay ? "游玩中" : "剧情中")}");
-                GUILayout.Label($"时间: {System.DateTimeOffset.FromUnixTimeMilliseconds(cp.saveTime):MM-dd HH:mm}");
+                GUILayout.Label($"时间: {DateTimeOffset.FromUnixTimeMilliseconds(cp.saveTime):MM-dd HH:mm}");
+
+                GUILayout.Label("关卡结果:", GUI.skin.box);
+                foreach (var r in saveSystem.currentSave.levelResults)
+                {
+                    GUILayout.Label($"  Lv.{r.levelId}: 血量={r.finalLives} 2017={r.usedCard2017} 2026={r.usedCard2026}");
+                }
             }
             else
             {
@@ -169,7 +186,6 @@ namespace Game.Test
             GUI.DragWindow();
         }
 
-        /// <summary>加载指定关卡剧情</summary>
         [ContextMenu("加载第一关")]
         public void LoadLevel(int index)
         {
@@ -198,11 +214,10 @@ namespace Game.Test
                 vnController.RestartDialogue();
             }
 
-            statusLog = $"已加载: {level.displayName} ({level.storyFile})";
-            Debug.Log($"[SLTestRunner] 加载关卡 {level.levelId}: {level.storyFile}");
+            statusLog = $"已加载: {level.displayName}";
+            Debug.Log($"[SL] 加载关卡 {level.levelId}: {level.storyFile}");
         }
 
-        /// <summary>存档当前进度</summary>
         [ContextMenu("存档当前进度")]
         public void SaveCheckpoint()
         {
@@ -216,21 +231,20 @@ namespace Game.Test
 
             var level = levels[currentLevelIndex];
 
-            // 1. CrossLevelSaveSystem 存档
             saveSystem.SaveStoryProgress(level.levelId, level.storyFile, 0);
 
-            // 2. 同时保存到 PlayerDataStore 作为关卡记录
-            var record = new JsonLevelRecord(level.levelId);
-            record.isWin = false;
-            record.timeUsed = Time.time;
-            record.endingBranch = level.storyFile;
-            PlayerDataStore.Instance.SaveLevelRecord(record);
+            int testLives = UnityEngine.Random.Range(1, 4);
+            bool has2017 = saveSystem.HasUsedCard(2017);
+            bool has2026 = saveSystem.HasUsedCard(2026);
+            saveSystem.RecordLevelResult(level.levelId, testLives, has2017, has2026);
+
+            PlayerDataStore.Instance.SaveLevelRecord(new JsonLevelRecord(level.levelId) { timeUsed = Time.time });
 
             statusLog = $"已存档: {level.displayName}";
-            Debug.Log($"[SLTestRunner] 存档完成: Level={level.levelId}, Story={level.storyFile}");
+            Debug.Log($"[SL] 存档完成 Lv.{level.levelId}");
+            PrintSaveSummary();
         }
 
-        /// <summary>读档：回到当前存档关卡的剧情开始</summary>
         [ContextMenu("读档回到剧情开始")]
         public void LoadCheckpoint()
         {
@@ -239,14 +253,13 @@ namespace Game.Test
             if (!saveSystem.HasSave())
             {
                 statusLog = "无存档可读取";
-                Debug.Log("[SLTestRunner] 无存档");
+                Debug.Log("[SL] 无存档");
                 return;
             }
 
             var cp = saveSystem.LoadCheckpoint();
-            Debug.Log($"[SLTestRunner] 读档: Level={cp.currentLevelId}, Story={cp.storyFileName}");
+            Debug.Log($"[SL] 读档 Lv.{cp.currentLevelId} {cp.storyFileName}");
 
-            // 根据存档的 storyFileName 找到对应关卡索引
             int targetIndex = -1;
             for (int i = 0; i < levels.Count; i++)
             {
@@ -261,14 +274,25 @@ namespace Game.Test
             if (targetIndex >= 0)
             {
                 LoadLevel(targetIndex);
-                statusLog = $"已读档: {levels[targetIndex].displayName} (剧情开始)";
+                statusLog = $"已读档: {levels[targetIndex].displayName}";
             }
             else
             {
-                // 未找到匹配关卡，默认回到第一关
                 LoadLevel(0);
-                statusLog = $"存档关卡 {cp.storyFileName} 未配置，默认回到第一关";
+                statusLog = "存档关卡未配置，默认回到第一关";
             }
+            PrintSaveSummary();
+        }
+
+        [ContextMenu("测试结局判定")]
+        public void TestEvaluateEnding()
+        {
+            EnsureComponents();
+            int endingNone = saveSystem.EvaluateEnding(0);
+            int endingAlone = saveSystem.EvaluateEnding(1);
+            int endingFriend = saveSystem.EvaluateEnding(2);
+            Debug.Log($"[SL] 结局判定 — 未选:{endingNone} | 独自:{endingAlone} | 邀请:{endingFriend}");
+            statusLog = $"结局: 未选={endingNone} 独自={endingAlone} 邀请={endingFriend}";
         }
 
         [ContextMenu("清除所有存档")]
@@ -277,7 +301,84 @@ namespace Game.Test
             saveSystem?.ClearAll();
             PlayerDataStore.Instance?.ClearAllRecords();
             statusLog = "已清除所有存档";
-            Debug.Log("[SLTestRunner] 已清除所有存档");
+            Debug.Log("[SL] 已清除所有存档");
+            Debug.Log($"[SL] 验证: HasSave={saveSystem?.HasSave()} | Records={PlayerDataStore.Instance?.GetAllRecords()?.Count}");
+        }
+
+        void InjectTestData()
+        {
+            if (saveSystem == null) EnsureComponents();
+
+            // Lv.1: 1血通关（用于凑莫比乌斯环条件）
+            saveSystem.RecordLevelResult(1, finalLives: 1);
+            saveSystem.SaveStoryProgress(1, "Dialogue1-1", 0);
+            PlayerDataStore.Instance.SaveLevelRecord(new JsonLevelRecord(1));
+
+            // Lv.2: 1血通关 + 卡牌2017
+            saveSystem.RecordCardUsed(2017);
+            saveSystem.RecordLevelResult(2, finalLives: 1, card2017: true);
+            saveSystem.SaveStoryProgress(2, "Dialogue2-1", 0);
+            PlayerDataStore.Instance.SaveLevelRecord(new JsonLevelRecord(2));
+
+            // Lv.3: 1血通关
+            saveSystem.RecordLevelResult(3, finalLives: 1);
+            saveSystem.SaveStoryProgress(3, "Dialogue3-1", 0);
+            PlayerDataStore.Instance.SaveLevelRecord(new JsonLevelRecord(3));
+
+            // Lv.4: 不参与结局判定，但保留记录
+            saveSystem.RecordLevelResult(4, finalLives: 3);
+            saveSystem.SaveStoryProgress(4, "Dialogue4-1", 0);
+            PlayerDataStore.Instance.SaveLevelRecord(new JsonLevelRecord(4));
+
+            // Lv.5: 2血（打破莫比乌斯环）+ 卡牌2026
+            saveSystem.RecordCardUsed(2026);
+            saveSystem.RecordLevelResult(5, finalLives: 2, card2026: true);
+            saveSystem.SaveStoryProgress(5, "Dialogue5-1", 0);
+            PlayerDataStore.Instance.SaveLevelRecord(new JsonLevelRecord(5));
+
+            Debug.Log("[SL] 测试数据已注入: Lv.1~5 各带不同血量/卡牌");
+            PrintSaveSummary();
+        }
+
+        void PrintSaveSummary()
+        {
+            if (saveSystem == null || saveSystem.currentSave == null)
+            {
+                Debug.Log("[SL] 存档摘要: 无数据");
+                return;
+            }
+
+            var cp = saveSystem.currentSave.checkpoint;
+            string timeStr = DateTimeOffset.FromUnixTimeMilliseconds(cp.saveTime).ToLocalTime().ToString("HH:mm:ss");
+
+            Debug.Log("[SL] ====== 存档摘要 ======");
+            Debug.Log($"[SL] 当前关卡: {cp.currentLevelId} | 剧情: {cp.storyFileName} | 存档时间: {timeStr}");
+
+            var results = saveSystem.currentSave.levelResults;
+            Debug.Log($"[SL] 关卡结果: {results.Count} 条");
+            foreach (var r in results)
+            {
+                Debug.Log($"[SL]   [Lv.{r.levelId}] 血量={r.finalLives} | 2017={r.usedCard2017} | 2026={r.usedCard2026}");
+            }
+
+            var cards = saveSystem.currentSave.endingData.cardsUsed;
+            Debug.Log($"[SL] 全局卡牌: {(cards.Count > 0 ? string.Join(", ", cards) : "无")}");
+
+            int endingId = saveSystem.EvaluateEnding();
+            Debug.Log($"[SL] 结局判定(未选): {endingId}");
+            endingId = saveSystem.EvaluateEnding(1);
+            Debug.Log($"[SL] 结局判定(独自): {endingId}");
+            endingId = saveSystem.EvaluateEnding(2);
+            Debug.Log($"[SL] 结局判定(邀请): {endingId}");
+
+            var records = PlayerDataStore.Instance.GetAllRecords();
+            Debug.Log($"[SL] 历史记录: {records.Count} 条");
+            for (int i = 0; i < records.Count; i++)
+            {
+                var r = records[i];
+                Debug.Log($"[SL]   [{i + 1}] Lv.{r.levelId}");
+            }
+            Debug.Log("[SL] ====================");
         }
     }
 }

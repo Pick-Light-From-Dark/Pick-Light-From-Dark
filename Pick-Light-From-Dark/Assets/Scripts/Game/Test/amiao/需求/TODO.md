@@ -3,7 +3,7 @@
 ```
 任务自动化执行流程：  
     读取与定位：
-    读取Pick-Light-From-Dark\Assets\Scripts\Game\Test\amiao\TODO.md，检索并定位第一个未勾选的任务项 [- ]。
+    读取Pick-Light-From-Dark\Assets\Scripts\Game\Test\amiao\需求\TODO.md，检索并定位第一个未勾选的任务项 [- ]。
     核心执行原则：
     目录限制（严格禁止越界）：
       - 允许修改：Assets/Scripts/Game/Test/amiao/、Assets/Scenes/Amiao_Test/、Assets/Resources/Dialogue/
@@ -35,5 +35,5 @@
 
 ## 存档读档测试程序
 - [x] Assets/Scenes/Amiao_Test/SL.unity 在场景中实现在第一关的视觉小说剧情中间存档，读档测试。同时，读档功能其实是选关和保存数据，读档位置就是回到这一关剧情开始。先不联动按钮，先使用键盘操作。
-
+- [x] Pick-Light-From-Dark\Assets\Scenes\Amiao_Test\amiaoDemo.unity 设计计划 把存档、结局的系统结合到剧情和游玩的流程中。先设计计划，然后做一个完整的demo.
 
