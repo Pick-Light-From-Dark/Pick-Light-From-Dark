@@ -51,6 +51,7 @@ namespace Game.Test
         bool useCard2017 = false;
         bool useCard2026 = false;
         int rooftopChoice = 0;
+        int currentEndingId = 0;
 
         Rect winRect = new Rect(20, 20, 500, 560);
         Vector2 scroll;
@@ -395,7 +396,7 @@ namespace Game.Test
         void DrawEnding()
         {
             GUILayout.Label("结局已触发", GUI.skin.box);
-            int endingId = saveSystem.EvaluateEnding(rooftopChoice);
+            int endingId = currentEndingId;
             string name = endingId switch
             {
                 6001 => "结局一：太阳照常升起",
@@ -418,18 +419,19 @@ namespace Game.Test
         void ShowEnding1()
         {
             currentPhase = Phase.Ending;
+            currentEndingId = 6001;
             statusMsg = "触发结局一（6001：太阳照常升起）";
             Debug.Log("[Demo] 结局一触发");
         }
 
         void TriggerEnding()
         {
-            int endingId = saveSystem.EvaluateEnding(rooftopChoice);
+            currentEndingId = saveSystem.EvaluateEnding(rooftopChoice);
             currentPhase = Phase.Ending;
-            statusMsg = $"触发结局 {endingId}";
-            Debug.Log($"[Demo] 结局判定: {endingId}");
+            statusMsg = $"触发结局 {currentEndingId}";
+            Debug.Log($"[Demo] 结局判定: {currentEndingId}");
 
-            GameObject prefab = endingId switch
+            GameObject prefab = currentEndingId switch
             {
                 6002 => endingPrefab6002,
                 6004 => endingPrefab6004,
