@@ -839,6 +839,8 @@ public class GamePanel : BasePanel
         var videoClip = Resources.Load<VideoClip>(videoName);
         if (videoClip != null)
         {
+            Debug.Log($"[GamePanel] 加载视频 {videoName} 成功, 时长={videoClip.length:F1}s");
+
             // 创建 RawImage（视频渲染目标）
             overlay = new GameObject($"Video_{videoName}", typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage), typeof(VideoPlayer));
             overlay.transform.SetParent(transform, false);
@@ -855,15 +857,22 @@ public class GamePanel : BasePanel
             vp.source = VideoSource.VideoClip;
             vp.clip = videoClip;
             vp.renderMode = VideoRenderMode.RenderTexture;
-            vp.targetTexture = new RenderTexture(1920, 1080, 0);
+            vp.targetTexture = new RenderTexture(1920, 1080, 24);
             vp.isLooping = false;
             vp.playOnAwake = false;
+            vp.waitForFirstFrame = true;
+            vp.audioOutputMode = VideoAudioOutputMode.Direct;
             vp.aspectRatio = VideoAspectRatio.FitInside;
             rawImg.texture = vp.targetTexture;
 
             overlay.SetActive(false);
         }
-        else if (!string.IsNullOrEmpty(fallbackBgName))
+        else
+        {
+            Debug.LogWarning($"[GamePanel] Resources.Load<VideoClip>(\"{videoName}\") 返回 null，请确认视频文件在 Resources 目录下且导入格式正确");
+        }
+
+        if (overlay == null && !string.IsNullOrEmpty(fallbackBgName))
         {
             // 回退：静态图片
             var sprite = Resources.Load<Sprite>($"UI/Background/{fallbackBgName}");
@@ -899,8 +908,8 @@ public class GamePanel : BasePanel
         var vp = overlay.GetComponent<VideoPlayer>();
         if (vp != null)
         {
-            vp.Play();
-            StartCoroutine(HideVideoAfterPlayback(vp, overlay, duration));
+            vp.Prepare();
+            StartCoroutine(PlayWhenReady(vp, overlay, duration));
         }
         else
         {
@@ -908,14 +917,22 @@ public class GamePanel : BasePanel
         }
     }
 
-    private System.Collections.IEnumerator HideVideoAfterPlayback(VideoPlayer vp, GameObject overlay, float maxDuration)
+    private System.Collections.IEnumerator PlayWhenReady(VideoPlayer vp, GameObject overlay, float maxDuration)
     {
+        while (vp != null && !vp.isPrepared)
+            yield return null;
+        if (vp != null)
+        {
+            vp.Play();
+            Debug.Log($"[GamePanel] 视频开始播放: {vp.clip?.name}");
+        }
         float elapsed = 0f;
         while (elapsed < maxDuration && vp != null && vp.isPlaying)
         {
             yield return null;
             elapsed += Time.unscaledDeltaTime;
         }
+        Debug.Log($"[GamePanel] 视频播放结束, 实际耗时={elapsed:F1}s");
         if (overlay != null)
             overlay.SetActive(false);
     }

@@ -1774,6 +1774,7 @@ MonoBehaviour:
   failOverlay: {fileID: 6000, guid: f5bd8a962e8242ff92f62f72052e2cbd, type: 3}
   endDeadPrefab: {fileID: 6000, guid: f5bd8a962e8242ff92f62f72052e2cbd, type: 3}
   flashlightOverlay: {fileID: 3961500333201444759}
+  eyeGazeOverlay: {fileID: 0}
   overrideLevelConfig: {fileID: 0}
 --- !u!1 &5343972839262305328
 GameObject:

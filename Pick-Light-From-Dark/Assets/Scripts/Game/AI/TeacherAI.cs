@@ -255,13 +255,8 @@ namespace Game.AI
             // 根据检查类型显示不同动画
             if (currentInspectType == InspectType.Flash)
             {
-                // 手电筒检查：显示老师画面 + 手电动画
+                // 手电筒检查：显示老师画面 + 视线视频动画
                 GamePanel.Instance?.ShowTeacherImage();
-                GamePanel.Instance?.ShowFlashlightOverlay(2f);
-            }
-            else
-            {
-                // 眼神检查：显示视线动画
                 GamePanel.Instance?.ShowEyeGazeOverlay(2f);
             }
 
