@@ -40,6 +40,9 @@ public class GalDialoguePanel : BasePanel, IDialoguePanel
     private Coroutine bgSlideRoutine;
     private Sprite pendingBgSprite;
 
+    // ===== 背景平移状态 =====
+    private Coroutine panRoutine;
+
     // ===== 运行时按钮创建标记 =====
     private bool buttonsCreated = false;
 
@@ -429,6 +432,108 @@ public class GalDialoguePanel : BasePanel, IDialoguePanel
         if (foregroundImage != null) { foregroundImage.sprite = null; foregroundImage.color = Color.clear; }
     }
 
+    public void PanLayer(string layer, string direction, float duration, float distance)
+    {
+        Image target = layer switch
+        {
+            "bg" => backgroundImage,
+            "mg" => midgroundImage,
+            "fg" => foregroundImage,
+            _ => null
+        };
+
+        if (target == null || target.sprite == null) return;
+
+        if (panRoutine != null) StopCoroutine(panRoutine);
+        panRoutine = StartCoroutine(DoPan(target, direction, duration, distance));
+    }
+
+    private IEnumerator DoPan(Image image, string direction, float duration, float distance)
+    {
+        RectTransform rt = image.rectTransform;
+        Vector2 startPos = rt.anchoredPosition;
+        Vector2 endPos;
+
+        float moveDist = distance;
+        if (moveDist < 0)
+        {
+            float imgH = rt.rect.height;
+            float screenH = Screen.height;
+            moveDist = Mathf.Max(0f, (imgH - screenH) * 0.5f);
+        }
+
+        switch (direction)
+        {
+            case "up":
+                if (distance < 0)
+                {
+                    startPos.y = -moveDist;
+                    endPos = startPos + Vector2.up * moveDist * 2f;
+                }
+                else
+                {
+                    endPos = startPos + Vector2.up * moveDist;
+                }
+                break;
+            case "down":
+                if (distance < 0)
+                {
+                    startPos.y = moveDist;
+                    endPos = startPos + Vector2.down * moveDist * 2f;
+                }
+                else
+                {
+                    endPos = startPos + Vector2.down * moveDist;
+                }
+                break;
+            case "left":
+                if (distance < 0)
+                {
+                    float imgW = rt.rect.width;
+                    float screenW = Screen.width;
+                    moveDist = Mathf.Max(0f, (imgW - screenW) * 0.5f);
+                    startPos.x = moveDist;
+                    endPos = startPos + Vector2.left * moveDist * 2f;
+                }
+                else
+                {
+                    endPos = startPos + Vector2.left * moveDist;
+                }
+                break;
+            case "right":
+                if (distance < 0)
+                {
+                    float imgW = rt.rect.width;
+                    float screenW = Screen.width;
+                    moveDist = Mathf.Max(0f, (imgW - screenW) * 0.5f);
+                    startPos.x = -moveDist;
+                    endPos = startPos + Vector2.right * moveDist * 2f;
+                }
+                else
+                {
+                    endPos = startPos + Vector2.right * moveDist;
+                }
+                break;
+            default:
+                endPos = startPos;
+                break;
+        }
+
+        rt.anchoredPosition = startPos;
+
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float t = Mathf.Clamp01(elapsed / duration);
+            rt.anchoredPosition = Vector2.Lerp(startPos, endPos, t);
+            yield return null;
+        }
+
+        rt.anchoredPosition = endPos;
+        panRoutine = null;
+    }
+
     private void ResetBgPosition()
     {
         if (backgroundImage != null)
@@ -505,6 +610,11 @@ public class GalDialoguePanel : BasePanel, IDialoguePanel
         {
             StopCoroutine(bgSlideRoutine);
             bgSlideRoutine = null;
+        }
+        if (panRoutine != null)
+        {
+            StopCoroutine(panRoutine);
+            panRoutine = null;
         }
     }
 }

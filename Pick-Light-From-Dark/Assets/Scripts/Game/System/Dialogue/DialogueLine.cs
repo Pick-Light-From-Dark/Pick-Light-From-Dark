@@ -29,4 +29,10 @@ public class DialogueLine
     public string action;         // [action:ending/gameplay/nextlevel] — 分支动作指令
     public string dialogAction;   // [hide_dialog] / [show_dialog] — 对话框显隐控制
     public string centerText;     // [center_text:xxx] — 居中大字显示
+
+    // 背景平移指令（Pan）
+    public string panLayer;       // [pan:bg,up,3] — 目标层: bg/mg/fg
+    public string panDirection;   // up / down / left / right
+    public float panDuration;     // 持续时间（秒）
+    public float panDistance;     // 移动距离（像素），-1 = 自动计算
 }

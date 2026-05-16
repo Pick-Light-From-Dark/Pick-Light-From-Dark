@@ -256,6 +256,8 @@ namespace Fungus
 
         protected virtual IEnumerator ProcessTokens(List<TextTagToken> tokens, bool stopAudio, System.Action onComplete)
         {
+            Debug.Log($"[ProcessTokens] ENTER tokens.Count={tokens.Count} stopAudio={stopAudio} onComplete={(onComplete != null ? "set" : "null")}");
+
             // Reset control members
             boldActive = false;
             italicActive = false;
@@ -521,16 +523,21 @@ namespace Fungus
 
             NotifyEnd(stopAudio);
 
+            Debug.Log($"[ProcessTokens] Calling onComplete. onComplete={(onComplete != null ? "set" : "null")}");
             if (onComplete != null)
             {
                 onComplete();
             }
+            Debug.Log("[ProcessTokens] EXIT");
         }
 
         protected virtual IEnumerator DoWords(List<string> paramList, TokenType previousTokenType)
         {
+            Debug.Log($"[DoWords] ENTER paramList[0]='{paramList[0].Substring(0, Mathf.Min(30, paramList[0].Length))}...' writeSpeed={currentWritingSpeed}");
+
             if (!CheckParamCount(paramList, 1))
             {
+                Debug.Log("[DoWords] CheckParamCount failed, yielding break");
                 yield break;
             }
 
@@ -654,6 +661,7 @@ namespace Fungus
                     }
                 }
             }
+            Debug.Log("[DoWords] EXIT");
         }
 
         protected virtual void PartitionString(bool wholeWords, string inputString, int i)
@@ -774,6 +782,7 @@ namespace Fungus
 
         protected virtual IEnumerator DoWaitForInput(bool clear)
         {
+            Debug.Log("[DoWaitForInput] ENTER waiting for input...");
             NotifyPause();
 
             inputFlag = false;
@@ -783,8 +792,8 @@ namespace Fungus
             {
                 yield return null;
             }
-        
-            isWaitingForInput = false;          
+
+            isWaitingForInput = false;
             inputFlag = false;
 
             if (clear)
@@ -794,6 +803,7 @@ namespace Fungus
             }
 
             NotifyResume();
+            Debug.Log("[DoWaitForInput] EXIT");
         }
         
         protected virtual bool IsPunctuation(char character)
@@ -947,6 +957,38 @@ namespace Fungus
         }
 
         /// <summary>
+        /// Sets the target text object and reinitializes the text adapter.
+        /// </summary>
+        public virtual void SetTargetTextObject(GameObject go)
+        {
+            targetTextObject = go;
+            if (go != null)
+            {
+                textAdapter.InitFromGameObject(go);
+            }
+        }
+
+        /// <summary>
+        /// Returns true if the text adapter has a valid text object.
+        /// </summary>
+        public virtual bool HasValidTextObject()
+        {
+            return textAdapter.HasTextObject();
+        }
+
+        /// <summary>
+        /// Force reset internal state flags. Use after StopAllCoroutines() to prevent dead flags.
+        /// </summary>
+        public virtual void ForceResetState()
+        {
+            isWriting = false;
+            isWaitingForInput = false;
+            exitFlag = false;
+            inputFlag = false;
+            visibleCharacterCount = 0;
+        }
+
+        /// <summary>
         /// Writes text using a typewriter effect to a UI text object.
         /// </summary>
         /// <param name="content">Text to be written</param>
@@ -958,14 +1000,21 @@ namespace Fungus
         /// <param name="onComplete">Callback to call when writing is finished.</param>
         public virtual IEnumerator Write(string content, bool clear, bool waitForInput, bool stopAudio, bool waitForVO, AudioClip audioClip, System.Action onComplete)
         {
+            Debug.Log($"[Writer.Write] ENTER content='{content.Substring(0, Mathf.Min(30, content.Length))}...' clear={clear} waitForInput={waitForInput} gameObject.active={gameObject.activeSelf}");
+
             if (clear)
             {
                 textAdapter.Text = "";
                 visibleCharacterCount = 0;
             }
 
-            if (!textAdapter.HasTextObject())
+            bool hasTextObj = textAdapter.HasTextObject();
+            Debug.Log($"[Writer.Write] textAdapter.HasTextObject()={hasTextObj} targetTextObject={(targetTextObject != null ? targetTextObject.name : "null")}");
+
+            if (!hasTextObj)
             {
+                Debug.LogError("[Writer.Write] CRITICAL: textAdapter.HasTextObject() is FALSE! Calling onComplete and yielding break.");
+                onComplete?.Invoke();
                 yield break;
             }
 
@@ -973,7 +1022,7 @@ namespace Fungus
             NotifyStart(audioClip);
 
             string tokenText = TextVariationHandler.SelectVariations(content);
-            
+
             if (waitForInput)
             {
                 tokenText += "{wi}";
@@ -986,10 +1035,13 @@ namespace Fungus
 
 
             List<TextTagToken> tokens = TextTagParser.Tokenize(tokenText);
+            Debug.Log($"[Writer.Write] Tokenized into {tokens.Count} tokens. First token: {(tokens.Count > 0 ? tokens[0].type.ToString() : "none")}");
 
             gameObject.SetActive(true);
 
+            Debug.Log("[Writer.Write] Starting ProcessTokens coroutine...");
             yield return StartCoroutine(ProcessTokens(tokens, stopAudio, onComplete));
+            Debug.Log("[Writer.Write] ProcessTokens coroutine COMPLETED");
         }
 
         public void SetTextColor(Color textColor)

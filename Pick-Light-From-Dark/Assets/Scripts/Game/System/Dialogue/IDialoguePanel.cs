@@ -7,6 +7,7 @@ public interface IDialoguePanel
     void SetBackground(Sprite sprite, string transition = null);
     void SetLayerBackground(string layer, Sprite sprite, string transition = null);
     void SetSolidBackground(Color color);
+    void PanLayer(string layer, string direction, float duration, float distance);
 
     void Show();
     void Hide();
