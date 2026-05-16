@@ -36,14 +36,13 @@ namespace Game.Test
         // ========== 关卡进度操作 ==========
 
         /// <summary>保存当前剧情进度</summary>
-        public void SaveStoryProgress(int levelId, string storyFileName, int lineIndex = 0)
+        public void SaveStoryProgress(int levelId, string storyFileName)
         {
             EnsureData();
             currentSave.checkpoint = new LevelCheckpoint
             {
                 currentLevelId = levelId,
                 storyFileName = storyFileName,
-                storyLineIndex = lineIndex,
                 saveTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
             };
             SaveToDisk();
@@ -57,8 +56,8 @@ namespace Game.Test
             currentSave.checkpoint = new LevelCheckpoint
             {
                 currentLevelId = levelId,
-                saveTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
-                isInGameplay = true
+                storyFileName = "",
+                saveTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
             };
             SaveToDisk();
             Log($"[Save] 游玩进度存档: Level={levelId}");
@@ -187,6 +186,13 @@ namespace Game.Test
             return currentSave != null && currentSave.checkpoint != null && currentSave.checkpoint.currentLevelId > 0;
         }
 
+        /// <summary>是否在游玩中（storyFileName 为空表示游玩中）</summary>
+        public bool IsInGameplay()
+        {
+            EnsureData();
+            return string.IsNullOrEmpty(currentSave.checkpoint.storyFileName);
+        }
+
         /// <summary>获取存档摘要（用于 UI 显示）</summary>
         public string GetSaveSummary()
         {
@@ -260,11 +266,9 @@ namespace Game.Test
     [Serializable]
     public class LevelCheckpoint
     {
-        public int currentLevelId;
-        public string storyFileName;
-        public int storyLineIndex;
-        public long saveTime;
-        public bool isInGameplay;
+        public int currentLevelId;        // 当前关卡
+        public string storyFileName;      // 当前剧情文件名（空字符串=游玩中）
+        public long saveTime;             // 存档时间戳
     }
 
     /// <summary>结局相关累积数据（精简：仅保留全局卡牌记录）</summary>

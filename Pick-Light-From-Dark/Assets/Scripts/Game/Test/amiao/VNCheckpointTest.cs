@@ -111,8 +111,8 @@ namespace Game.Test
             {
                 var cp = saveSystem.currentSave.checkpoint;
                 GUILayout.Label($"关卡: {cp.currentLevelId}");
-                GUILayout.Label($"剧情: {cp.storyFileName} | 行: {cp.storyLineIndex}");
-                GUILayout.Label($"模式: {(cp.isInGameplay ? "游玩" : "剧情")}");
+                GUILayout.Label($"剧情: {cp.storyFileName}");
+                GUILayout.Label($"模式: {(string.IsNullOrEmpty(cp.storyFileName) ? "游玩" : "剧情")}");
             }
             else
             {
@@ -153,7 +153,7 @@ namespace Game.Test
 
             // 2. 使用 CrossLevelSaveSystem 存档检查点
             string storyFile = vnController.dialogueText != null ? vnController.dialogueText.name : testStoryFile;
-            saveSystem.SaveStoryProgress(testLevelId, storyFile, 0);
+            saveSystem.SaveStoryProgress(testLevelId, storyFile);
 
             statusLog = $"已存档: Level={testLevelId}, Story={storyFile}";
             Debug.Log($"[VNCheckpointTest] 存档完成: {storyFile}");

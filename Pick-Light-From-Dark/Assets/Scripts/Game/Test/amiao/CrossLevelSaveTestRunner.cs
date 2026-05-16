@@ -176,7 +176,7 @@ namespace Game.Test
             simulatedLevel = 2;
             simulatedPhase = "Dialogue2 剧情开始";
             string storyFile = dialogue2 != null ? dialogue2.name : "Dialogue2";
-            saveSystem.SaveStoryProgress(2, storyFile, 0);
+            saveSystem.SaveStoryProgress(2, storyFile);
             Log($"[Test] 已存档到 Dialogue2 开始处 (Level=2, Story={storyFile})");
         }
 
@@ -203,9 +203,8 @@ namespace Game.Test
 
             Log("[Test] === 读档结果 ===");
             Log($"  关卡: {cp.currentLevelId}");
-            Log($"  模式: {(cp.isInGameplay ? "游玩" : "剧情")}");
+            Log($"  模式: {(string.IsNullOrEmpty(cp.storyFileName) ? "游玩" : "剧情")}");
             Log($"  剧情文件: {cp.storyFileName}");
-            Log($"  剧情行: {cp.storyLineIndex}");
             Log($"  卡牌记录: {ed.cardsUsed.Count} 张");
 
             foreach (var r in saveSystem.currentSave.levelResults)
@@ -213,11 +212,11 @@ namespace Game.Test
                 Log($"  Lv.{r.levelId}: 血量={r.finalLives} 2017={r.usedCard2017} 2026={r.usedCard2026}");
             }
 
-            if (!cp.isInGameplay && !string.IsNullOrEmpty(cp.storyFileName))
+            if (!string.IsNullOrEmpty(cp.storyFileName))
             {
-                Log($"[Test] 验证：读档后应加载剧情 '{cp.storyFileName}' 从第 {cp.storyLineIndex} 行开始");
+                Log($"[Test] 验证：读档后应加载剧情 '{cp.storyFileName}'");
             }
-            else if (cp.isInGameplay)
+            else
             {
                 Log($"[Test] 验证：读档后应进入 Level {cp.currentLevelId} 游玩");
             }
@@ -249,13 +248,13 @@ namespace Game.Test
 
             simulatedPhase = "Dialogue1-1 剧情";
             Log("[Test] Step 3: 进入 Dialogue1-1...");
-            saveSystem.SaveStoryProgress(1, "Dialogue1-1", 0);
+            saveSystem.SaveStoryProgress(1, "Dialogue1-1");
             yield return new WaitForSeconds(0.5f);
 
             simulatedLevel = 2;
             simulatedPhase = "Dialogue2 剧情（存档点）";
             Log("[Test] Step 4: 进入 Dialogue2，在此处存档...");
-            saveSystem.SaveStoryProgress(2, "Dialogue2", 0);
+            saveSystem.SaveStoryProgress(2, "Dialogue2");
             yield return new WaitForSeconds(0.5f);
 
             simulatedLevel = 3;

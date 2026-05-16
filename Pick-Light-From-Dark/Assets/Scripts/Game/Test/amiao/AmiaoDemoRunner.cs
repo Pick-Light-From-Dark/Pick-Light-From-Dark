@@ -141,7 +141,7 @@ namespace Game.Test
                         break;
                     }
                 }
-                if (cp.isInGameplay)
+                if (string.IsNullOrEmpty(cp.storyFileName))
                     currentPhase = Phase.Gameplay;
                 else
                     StartOpeningDialogue();
@@ -198,7 +198,7 @@ namespace Game.Test
         void OnOpeningDialogueEnd()
         {
             var config = levelConfigs[currentLevelIndex];
-            saveSystem.SaveStoryProgress(config.levelId, config.openingStory, 0);
+            saveSystem.SaveStoryProgress(config.levelId, config.openingStory);
 
             if (config.hasGameplay)
             {
@@ -432,7 +432,7 @@ namespace Game.Test
                     break;
                 }
             }
-            if (cp.isInGameplay)
+            if (string.IsNullOrEmpty(cp.storyFileName))
                 currentPhase = Phase.Gameplay;
             else
                 StartOpeningDialogue();
