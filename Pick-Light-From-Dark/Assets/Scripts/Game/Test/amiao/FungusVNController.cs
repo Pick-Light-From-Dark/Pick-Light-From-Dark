@@ -94,6 +94,7 @@ namespace Game.Test
         // UI 按钮
         private Button ffButton;
         private Button skipButton;
+        private Button advanceTapButton;
         private GameObject choicePanel;
         private Button choiceBtn1;
         private Button choiceBtn2;
@@ -115,6 +116,7 @@ namespace Game.Test
         private Coroutine bgTransitionRoutine;
         private Coroutine mgTransitionRoutine;
         private Coroutine fgTransitionRoutine;
+        private Coroutine sayWatchdogRoutine;
 
         /// <summary>剧情全部结束后的回调（供流程控制器订阅，兼容旧代码）</summary>
         public System.Action OnDialogueComplete;
@@ -139,7 +141,8 @@ namespace Game.Test
         /// <summary>
         /// 重新启动对话（供 LevelFlowCoordinator 在切换 opening/ending 文本时调用）
         /// </summary>
-        public void RestartDialogue()
+        /// <param name="forceFromStart">true=忽略 Flowchart 行号存档，从第 0 行开始（结尾剧情必须用）</param>
+        public void RestartDialogue(bool forceFromStart = false)
         {
             if (dialogueText == null)
             {
@@ -147,23 +150,24 @@ namespace Game.Test
                 return;
             }
 
+            EnsureSaveFlowchart();
+
             // 停止所有可能正在运行的协程，防止重入时状态污染
             StopAllCoroutines();
 
-            // 停止 Fungus Writer，避免旧的打字机回调与新流程交错
-            if (sayDialog != null)
-            {
-                var writer = sayDialog.GetComponent<Writer>();
-                if (writer != null && writer.IsWriting)
-                    writer.Stop();
-            }
+            ClearWriterAndDialogueUI();
 
             // 重置状态
             hasEnded = false;
             exitType = VNExitType.None;
             isProcessing = false;
             isChoosing = false;
+            isFastForwarding = false;
             currentChoiceLine = null;
+            HideCenterText();
+
+            if (sayDialog != null)
+                sayDialog.gameObject.SetActive(true);
 
             if (vnCanvas != null)
                 vnCanvas.gameObject.SetActive(true);
@@ -179,9 +183,12 @@ namespace Game.Test
             lines = DialogueParser.Parse(dialogueText);
             BuildBlockIndex();
 
-            // 保险：确保 SetupDialogMask 在 sayDialog 有效后再执行一次
+            // 保险：确保 SetupDialogMask / DialogInput 在 sayDialog 有效后再执行一次（结尾 Restart 时必需）
             if (sayDialog != null)
+            {
                 SetupDialogMask();
+                EnsureDialogInput();
+            }
 
             // 检查是否有 Fungus 存档需要恢复
             if (saveFlowchart != null)
@@ -190,7 +197,7 @@ namespace Game.Test
                 string savedFile = saveFlowchart.GetStringVariable("VN_StoryFile");
 
                 // 若开场剧情已看完且匹配当前文件，直接结束（由 LevelFlowCoordinator 进入 gameplay）
-                if (isOpeningDone && dialogueText.name == savedFile)
+                if (!forceFromStart && isOpeningDone && dialogueText.name == savedFile)
                 {
                     Debug.Log("[FungusVNController] 开场剧情已看完，跳过剧情");
                     EndDialogue();
@@ -198,7 +205,7 @@ namespace Game.Test
                 }
 
                 int savedLine = saveFlowchart.GetIntegerVariable("VN_LineIndex");
-                if (savedLine > 0 && dialogueText.name == savedFile)
+                if (!forceFromStart && savedLine > 0 && dialogueText.name == savedFile)
                 {
                     lineIndex = savedLine;
                     Debug.Log($"[FungusVNController] 从 Fungus 存档恢复，行号: {lineIndex}");
@@ -206,12 +213,18 @@ namespace Game.Test
                 else
                 {
                     lineIndex = 0;
+                    if (forceFromStart)
+                        Debug.Log($"[FungusVNController] 强制从头播放: {dialogueText.name}");
                 }
             }
             else
             {
                 lineIndex = 0;
             }
+
+            // 新剧本第 0 行：清掉上一段 solid:black 残留，避免黑屏只显示名牌
+            if (lineIndex == 0 && backgroundImage != null)
+                backgroundImage.color = Color.white;
 
             ShowNextLine();
         }
@@ -249,6 +262,35 @@ namespace Game.Test
             Debug.Log($"[FungusVNController] 快进: {isFastForwarding}");
         }
 
+        void Update()
+        {
+            if (lines == null || hasEnded || isChoosing) return;
+            if (!Input.GetMouseButtonDown(0) && !Input.GetKeyDown(KeyCode.Space) && !Input.GetKeyDown(KeyCode.Return))
+                return;
+
+            // 交给 Fungus DialogInput / Writer 处理，不绕过 Say 协程
+            ForwardDialogueInput();
+        }
+
+        /// <summary>把点击/空格转发给 SayDialog 上的 Fungus DialogInput（与预制体 clickMode 一致）</summary>
+        void ForwardDialogueInput()
+        {
+            if (sayDialog == null) return;
+
+            var dialogInput = sayDialog.GetComponent<DialogInput>();
+            if (dialogInput != null)
+            {
+                if (Input.GetMouseButtonDown(0))
+                    dialogInput.SetClickAnywhereClickedFlag();
+                else
+                    dialogInput.SetNextLineFlag();
+                return;
+            }
+
+            var writer = sayDialog.GetComponent<Writer>();
+            writer?.OnNextLineEvent();
+        }
+
         /// <summary>运行时自动查找/创建所有必需的组件</summary>
         void EnsureComponents()
         {
@@ -263,6 +305,10 @@ namespace Game.Test
                 scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
                 scaler.referenceResolution = new Vector2(1920, 1080);
                 canvasGo.AddComponent<GraphicRaycaster>();
+            }
+            else if (vnCanvas.transform.localScale.x == 0f || vnCanvas.transform.localScale.y == 0f)
+            {
+                vnCanvas.transform.localScale = Vector3.one;
             }
 
             // 2. SayDialog：如果 Inspector 未赋值，则实例化新的（不复用场景中已有的，避免遮罩设置到错误的对话框）
@@ -319,6 +365,21 @@ namespace Game.Test
 
             // 8. 对话文字位置下调
             SetupStoryTextPosition();
+
+            // 9. 确保 Fungus DialogInput 存在（负责把点击转给 Writer）
+            EnsureDialogInput();
+        }
+
+        void EnsureDialogInput()
+        {
+            if (sayDialog == null) return;
+            if (sayDialog.GetComponent<DialogInput>() == null)
+            {
+                sayDialog.gameObject.AddComponent<DialogInput>();
+                Debug.Log("[FungusVNController] 已为 SayDialog 添加 DialogInput");
+            }
+            if (sayDialog.GetComponent<Writer>() == null)
+                Debug.LogError("[FungusVNController] SayDialog 缺少 Writer 组件");
         }
 
         void SetupFont()
@@ -1167,6 +1228,12 @@ namespace Game.Test
             saveFlowchart.SetStringVariable("VN_StoryFile", dialogueText != null ? dialogueText.name : "");
         }
 
+        /// <summary>当前是否正在播放 VN 剧本（未 EndDialogue）</summary>
+        public bool IsStoryPlaying => lines != null && !hasEnded;
+
+        /// <summary>跳过当前剧情（供测试快捷键等外部调用）</summary>
+        public void SkipCurrentStory() => OnSkipStory();
+
         /// <summary>跳过当前剧情：优先跳到后续选项，无选项则结束并触发下一个 prefab</summary>
         void OnSkipStory()
         {
@@ -1192,8 +1259,56 @@ namespace Game.Test
                 return;
             }
 
-            // 无选项：结束当前剧情，由外部流程控制器接下一个 prefab
+            // 无选项：标记本段已结束并清零行号，避免之后 RestartDialogue 续播跳过前位置
+            FinalizeSkipProgress();
+            ClearWriterAndDialogueUI();
             EndDialogue();
+        }
+
+        /// <summary>跳过时写入 Flowchart：开场视为已看完，行号归零</summary>
+        void FinalizeSkipProgress()
+        {
+            if (saveFlowchart == null) return;
+            saveFlowchart.SetIntegerVariable("VN_LineIndex", 0);
+            if (!saveFlowchart.GetBooleanVariable("VN_IsOpeningDone"))
+                saveFlowchart.SetBooleanVariable("VN_IsOpeningDone", true);
+            if (dialogueText != null)
+                saveFlowchart.SetStringVariable("VN_StoryFile", dialogueText.name);
+        }
+
+        /// <summary>开场正常播完时由 LevelFlowCoordinator 调用</summary>
+        public void MarkOpeningStoryComplete()
+        {
+            EnsureSaveFlowchart();
+            if (saveFlowchart == null) return;
+            saveFlowchart.SetBooleanVariable("VN_IsOpeningDone", true);
+            saveFlowchart.SetIntegerVariable("VN_LineIndex", 0);
+            if (dialogueText != null)
+                saveFlowchart.SetStringVariable("VN_StoryFile", dialogueText.name);
+        }
+
+        void EnsureSaveFlowchart()
+        {
+            if (saveFlowchart != null) return;
+            var go = GameObject.Find("VN_SaveFlowchart");
+            if (go != null)
+                saveFlowchart = go.GetComponent<Flowchart>();
+        }
+
+        /// <summary>结束上一句 Say 协程并复位 Writer（不绕过 Fungus，避免 DoSay 在 while 里死等）</summary>
+        void StopActiveSayDialog()
+        {
+            if (sayDialog == null) return;
+            sayDialog.Stop();
+            sayDialog.StopAllCoroutines();
+        }
+
+        /// <summary>重开剧本前清空对白（仅用于 RestartDialogue / EndDialogue）</summary>
+        void ClearWriterAndDialogueUI()
+        {
+            if (sayDialog == null) return;
+            StopActiveSayDialog();
+            sayDialog.Clear();
         }
 
         /// <summary>为按钮添加独立 Canvas，确保在最上层显示</summary>
@@ -1220,6 +1335,13 @@ namespace Game.Test
             {
                 Debug.LogWarning("[FungusVNController] skipButton 为 null，无法设置显隐");
             }
+        }
+
+        /// <summary>替换剧本占位符等当前字体无法渲染的字符，避免 Writer 卡住</summary>
+        static string SanitizeDisplayText(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return text;
+            return text.Replace("▉", "*");
         }
 
         /// <summary>推进到下一行对话</summary>
@@ -1363,27 +1485,35 @@ namespace Game.Test
                     sayDialog.SetCharacter(charMapping.fungusCharacter);
                 else
                 {
+                    sayDialog.SetCharacter(null);
                     sayDialog.SetCharacterName(speaker, Color.white);
                     if (line.type == "对话")
                         ShowPlaceholder("Character", speaker);
                 }
 
                 sayDialog.gameObject.SetActive(true);
+                string displayText = SanitizeDisplayText(line.content);
+
+                // 仅在上一句仍在输出/等待时停止，避免 Clear 后首句 Say 被 Stop 掉导致黑屏无字
+                var writer = sayDialog.GetComponent<Writer>();
+                if (writer != null && (writer.IsWriting || writer.IsWaitingForInput))
+                    StopActiveSayDialog();
 
                 if (isFastForwarding)
                 {
-                    // 快进模式：瞬间显示，自动推进
-                    sayDialog.Say(line.content, true, false, false, true, false, null, null);
+                    sayDialog.Say(displayText, true, false, false, true, false, null, null);
                     StartCoroutine(FastForwardSkipRoutine());
                 }
                 else
                 {
-                    // 正常模式：打字机 + 等待输入
-                    sayDialog.Say(line.content, true, true, false, true, false, null, () =>
+                    sayDialog.Say(displayText, true, true, false, true, false, null, () =>
                     {
+                        CancelSayWatchdog();
                         isProcessing = false;
                         ShowNextLine();
                     });
+                    CancelSayWatchdog();
+                    sayWatchdogRoutine = StartCoroutine(SayWatchdog());
                 }
             }
             else
@@ -1525,16 +1655,34 @@ namespace Game.Test
 
         IEnumerator FastForwardSkipRoutine()
         {
-            yield return new WaitForSeconds(0.02f);
+            yield return new WaitForSecondsRealtime(0.02f);
 
-            var writer = sayDialog.GetComponent<Writer>();
+            var writer = sayDialog != null ? sayDialog.GetComponent<Writer>() : null;
             if (writer != null && writer.IsWriting)
-            {
                 writer.Stop();
+
+            yield return new WaitForSecondsRealtime(fastForwardInterval);
+
+            isProcessing = false;
+            ShowNextLine();
+        }
+
+        void CancelSayWatchdog()
+        {
+            if (sayWatchdogRoutine != null)
+            {
+                StopCoroutine(sayWatchdogRoutine);
+                sayWatchdogRoutine = null;
             }
+        }
 
-            yield return new WaitForSeconds(fastForwardInterval);
-
+        /// <summary>Say 回调丢失时超时自动推进（用 unscaled 避免 timeScale=0 卡死）</summary>
+        IEnumerator SayWatchdog()
+        {
+            yield return new WaitForSecondsRealtime(20f);
+            sayWatchdogRoutine = null;
+            if (!isProcessing || hasEnded) yield break;
+            Debug.LogWarning("[FungusVNController] Say 回调超时，强制推进下一行");
             isProcessing = false;
             ShowNextLine();
         }
@@ -1597,12 +1745,20 @@ namespace Game.Test
         void HideCenterText()
         {
             if (centerTextDisplay != null && centerTextDisplay.gameObject != null)
+            {
+                var canvasRoot = centerTextDisplay.transform.parent;
                 centerTextDisplay.gameObject.SetActive(false);
+                if (canvasRoot != null)
+                    canvasRoot.gameObject.SetActive(false);
+            }
         }
 
         /// <summary>执行分支动作指令</summary>
         void ExecuteAction(string action)
         {
+            isProcessing = false;
+            isChoosing = false;
+
             switch (action)
             {
                 case "ending":
@@ -1631,6 +1787,10 @@ namespace Game.Test
         {
             if (hasEnded) return;
             hasEnded = true;
+            isProcessing = false;
+            isChoosing = false;
+            ClearWriterAndDialogueUI();
+            HideCenterText();
 
             if (choicePanel != null)
                 choicePanel.SetActive(false);

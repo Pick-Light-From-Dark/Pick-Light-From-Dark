@@ -133,10 +133,8 @@ namespace Game.Flow
 
         void OnOpeningStoryEnd()
         {
-            if (vnController != null && vnController.saveFlowchart != null)
-            {
-                vnController.saveFlowchart.SetBooleanVariable("VN_IsOpeningDone", true);
-            }
+            if (vnController != null)
+                vnController.MarkOpeningStoryComplete();
 
             var saveManager = FungusManager.Instance.SaveManager;
             saveManager.AddSavePoint("OpeningComplete", "开场剧情结束自动存档");
@@ -220,8 +218,10 @@ namespace Game.Flow
             vnController.OnDialogueExit = OnEndingStoryExit;
             vnController.OnDialogueComplete = OnEndingStoryEnd;
             vnController.ClearPlaceholder();
+            if (vnController.vnCanvas != null)
+                vnController.vnCanvas.gameObject.SetActive(true);
             vnController.SetSkipButtonVisible(true);
-            vnController.RestartDialogue();
+            vnController.RestartDialogue(forceFromStart: true);
         }
 
         /// <summary>结尾剧情分支结束回调（带分支类型）</summary>
