@@ -17,8 +17,6 @@ CrossLevelSaveData
 ├── checkpoint: LevelCheckpoint        // 关卡进度定位
 │   ├── currentLevelId                 // 当前关卡
 │   ├── storyFileName                  // 剧情文件名（如 Dialogue2-1）
-│   ├── storyLineIndex                 // 剧情行号
-│   └── isInGameplay                   // true=游玩中 / false=剧情中
 ├── endingData: EndingAccumulatedData  // 结局累积数据
 │   └── cardsUsed: List<int>           // 全局卡牌使用记录（去重）
 └── levelResults: List<LevelResult>    // 每关最终结果

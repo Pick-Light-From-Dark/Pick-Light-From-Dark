@@ -108,8 +108,9 @@ namespace Game.Test
 
             GUILayout.Space(10);
             GUILayout.Label("=== 存档调试 ===", GUI.skin.box);
-            if (GUILayout.Button("打印存档摘要", GUILayout.Height(24))) PrintSaveSummary();
+            if (GUILayout.Button("存档当前进度", GUILayout.Height(24))) SaveCurrentProgress();
             if (GUILayout.Button("读档（回到存档点）", GUILayout.Height(24))) LoadCheckpoint();
+            if (GUILayout.Button("打印存档摘要", GUILayout.Height(24))) PrintSaveSummary();
             if (GUILayout.Button("清除所有存档", GUILayout.Height(24))) ClearAll();
 
             GUILayout.EndScrollView();
@@ -447,6 +448,30 @@ namespace Game.Test
             currentPhase = Phase.Menu;
             rooftopChoice = 0;
             statusMsg = "存档已清除";
+        }
+
+        void SaveCurrentProgress()
+        {
+            var config = levelConfigs[currentLevelIndex];
+            switch (currentPhase)
+            {
+                case Phase.OpeningDialogue:
+                    saveSystem.SaveStoryProgress(config.levelId, config.openingStory);
+                    statusMsg = $"已存档: Lv.{config.levelId} 开场剧情";
+                    break;
+                case Phase.Gameplay:
+                    saveSystem.SaveGameplayProgress(config.levelId);
+                    statusMsg = $"已存档: Lv.{config.levelId} 游玩中";
+                    break;
+                case Phase.EndingDialogue:
+                    saveSystem.SaveStoryProgress(config.levelId, config.endingStory);
+                    statusMsg = $"已存档: Lv.{config.levelId} 结尾剧情";
+                    break;
+                default:
+                    statusMsg = "当前阶段无需存档";
+                    break;
+            }
+            Debug.Log($"[Demo] {statusMsg}");
         }
 
         void PrintSaveSummary()
