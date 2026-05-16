@@ -19,9 +19,20 @@ public class SaveGamePanel : BasePanel
 
     void DetermineMode()
     {
-        // 在关卡场景中打开 → 存档模式；其他场景（主菜单/结局面板）→ 读档模式
-        string sceneName = SceneManager.GetActiveScene().name;
-        isSaveMode = sceneName.StartsWith("Level");
+        isSaveMode = IsInGameplay();
+    }
+
+    /// <summary>判断当前是否处于游戏内（关卡中），兼容多场景加载</summary>
+    bool IsInGameplay()
+    {
+        // 如果有主菜单场景在加载中，一定不是游戏内
+        for (int i = 0; i < SceneManager.sceneCount; i++)
+        {
+            if (SceneManager.GetSceneAt(i).name == "GameScene")
+                return false;
+        }
+        // 否则根据当前激活场景判断
+        return SceneManager.GetActiveScene().name.StartsWith("Level");
     }
 
     CrossLevelSaveSystem EnsureSaveSystem()
@@ -67,8 +78,8 @@ public class SaveGamePanel : BasePanel
             case "BackBtn":
                 MusicMgr.Instance?.PlaySound("按钮点击音效");
                 UIMgr.Instance.HidePanel<SaveGamePanel>();
-                // 在关卡场景中 → 返回暂停面板；其他场景 → 返回开始界面
-                if (SceneManager.GetActiveScene().name.StartsWith("Level"))
+                // 在游戏内 → 返回暂停面板；在主菜单/结局面板 → 返回开始界面
+                if (IsInGameplay())
                     UIMgr.Instance.ShowPanel<StopGamePanel>();
                 else
                     UIMgr.Instance.ShowPanel<BeginPanel>();
