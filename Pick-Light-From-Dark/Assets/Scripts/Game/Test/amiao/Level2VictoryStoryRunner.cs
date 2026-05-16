@@ -22,9 +22,6 @@ namespace Game.Test
         [Header("下一关")]
         public string nextSceneName = "Level3";
 
-        [Tooltip("接关时跳过下一关的「第 X 夜」章节图")]
-        public bool suppressNextLevelChapterSplash = true;
-
         [Header("章节图（本关）")]
         public bool showChapterSplash = false;
         public int chapterLevelId = 2;
@@ -81,10 +78,7 @@ namespace Game.Test
 
         IEnumerator TransitionToNextLevel()
         {
-            if (suppressNextLevelChapterSplash && nextSceneName == "Level3")
-                LevelEntrySplashOverride.SuppressChapterSplashForLevelId = 3;
-
-            // 遮住 EndDialogue 关 VN 后的空白帧，以及切场景瞬间
+            // 遮住 EndDialogue 关 VN 后的空白帧，以及切场景瞬间（Loading 在 Level3 Awake 关闭）
             LoadingScreenController.ShowImmediate();
             yield return null;
 
