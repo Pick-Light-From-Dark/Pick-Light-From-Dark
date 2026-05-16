@@ -302,7 +302,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3ccf659d409546deafce9a033b3bded4, type: 3}
   m_Name:
   m_EditorClassIdentifier:
-  dialogueText: {fileID: 0}
+  dialogueText: {fileID: 4900000, guid: ef31f84e501c30a4292d89fe06952242, type: 3}
   sayDialog: {fileID: 0}
   vnCanvas: {fileID: 0}
   backgroundImage: {fileID: 0}
