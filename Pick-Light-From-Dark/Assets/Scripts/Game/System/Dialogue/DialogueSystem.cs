@@ -347,6 +347,11 @@ public class DialogueSystem : MonoBehaviour
             panelUI.SetSolidBackground(c);
         }
 
+        if (!string.IsNullOrEmpty(line.panLayer))
+        {
+            panelUI.PanLayer(line.panLayer, line.panDirection, line.panDuration, line.panDistance);
+        }
+
         if (!string.IsNullOrEmpty(line.se))
         {
             MusicMgr.Instance.PlaySound(line.se);

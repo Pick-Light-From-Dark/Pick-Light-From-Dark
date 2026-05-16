@@ -8,6 +8,7 @@ namespace Game.Test
     /// 死亡结局面板 — 失败时显示
     /// ReturnButton: 重新开始本关
     /// ReturnGamePanel: 返回主界面
+    /// LoadSaveButton: 打开存档面板
     /// </summary>
     public class EndDeadPanel : MonoBehaviour
     {
@@ -15,6 +16,7 @@ namespace Game.Test
         [SerializeField] private Image endingImage;
         [SerializeField] private Button returnButton;
         [SerializeField] private Button returnGamePanelBtn;
+        [SerializeField] private Button loadSaveButton;
 
         void Start()
         {
@@ -30,6 +32,8 @@ namespace Game.Test
                 returnButton = transform.Find("ReturnButton")?.GetComponent<Button>();
             if (returnGamePanelBtn == null)
                 returnGamePanelBtn = transform.Find("ReturnGamePanel")?.GetComponent<Button>();
+            if (loadSaveButton == null)
+                loadSaveButton = transform.Find("LoadSaveButton")?.GetComponent<Button>();
         }
 
         void BindButtons()
@@ -39,6 +43,9 @@ namespace Game.Test
 
             if (returnGamePanelBtn != null)
                 returnGamePanelBtn.onClick.AddListener(OnReturnClick);
+
+            if (loadSaveButton != null)
+                loadSaveButton.onClick.AddListener(OnLoadSaveClick);
         }
 
         void OnRestartClick()
@@ -57,12 +64,21 @@ namespace Game.Test
             UIMgr.Instance.ShowPanel<BeginPanel>();
         }
 
+        void OnLoadSaveClick()
+        {
+            Debug.Log("[EndDeadPanel] 打开存档面板");
+            gameObject.SetActive(false);
+            UIMgr.Instance.ShowPanel<SaveGamePanel>();
+        }
+
         void OnDestroy()
         {
             if (returnButton != null)
                 returnButton.onClick.RemoveListener(OnRestartClick);
             if (returnGamePanelBtn != null)
                 returnGamePanelBtn.onClick.RemoveListener(OnReturnClick);
+            if (loadSaveButton != null)
+                loadSaveButton.onClick.RemoveListener(OnLoadSaveClick);
         }
     }
 }

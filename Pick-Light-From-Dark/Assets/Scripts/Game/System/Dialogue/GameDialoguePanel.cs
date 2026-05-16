@@ -70,6 +70,11 @@ public class GameDialoguePanel : BasePanel, IDialoguePanel
         if (foregroundImage != null) { foregroundImage.sprite = null; foregroundImage.color = Color.clear; }
     }
 
+    public void PanLayer(string layer, string direction, float duration, float distance)
+    {
+        // Game 模式暂不实现背景平移动画
+    }
+
     public void Show()
     {
         gameObject.SetActive(true);

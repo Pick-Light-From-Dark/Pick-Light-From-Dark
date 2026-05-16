@@ -47,7 +47,9 @@ namespace Game.Test
 
         void OnLoadSaveClick()
         {
-            Debug.Log("[Ending2Panel] 读取存档 - 待接入存档面板");
+            Debug.Log("[Ending2Panel] 打开存档面板");
+            gameObject.SetActive(false);
+            UIMgr.Instance.ShowPanel<SaveGamePanel>();
         }
 
         void OnDestroy()

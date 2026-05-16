@@ -11,6 +11,20 @@ public class StopGamePanel : BasePanel
         SetupButtonHover("SaveGameBtn");
         SetupButtonHover("SettingBtn");
         SetupButtonHover("QuitGameBtn");
+
+        // 手动绑定 SaveGameBtn 点击事件（兜底：防止 BasePanel 自动绑定失效）
+        var saveBtn = transform.Find("StopImgBk/SaveGameBtn")?.GetComponent<Button>();
+        if (saveBtn != null)
+        {
+            saveBtn.onClick.RemoveAllListeners();
+            saveBtn.onClick.AddListener(() =>
+            {
+                Debug.Log("[StopGamePanel] SaveGameBtn 被点击");
+                MusicMgr.Instance?.PlaySound("按钮点击音效");
+                UIMgr.Instance.HidePanel<StopGamePanel>();
+                UIMgr.Instance.ShowPanel<SaveGamePanel>();
+            });
+        }
     }
 
     public override void HideMe() { }
@@ -67,7 +81,7 @@ public class StopGamePanel : BasePanel
             case "QuitGameBtn":
                 Game.Flow.GameFlowController.Instance.GameLose("主动退出");
                 UIMgr.Instance.HideAllPanels();
-                UIMgr.Instance.ShowPanel<BeginPanel>();
+                SceneMgr.Instance.LoadScene("GameScene");
                 break;
         }
     }

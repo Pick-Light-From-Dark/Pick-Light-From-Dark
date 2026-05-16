@@ -478,15 +478,18 @@ namespace Fungus
         /// <param name="onComplete">Callback to execute when writing and player input have finished.</param>
         public virtual IEnumerator DoSay(string text, bool clearPrevious, bool waitForInput, bool fadeWhenDone, bool stopVoiceover, bool waitForVO, AudioClip voiceOverClip, Action onComplete)
         {
+            Debug.Log($"[SayDialog.DoSay] ENTER text='{text.Substring(0, Mathf.Min(30, text.Length))}...' clearPrevious={clearPrevious} waitForInput={waitForInput} fadeWhenDone={fadeWhenDone}");
             var writer = GetWriter();
 
             if (writer.IsWriting || writer.IsWaitingForInput)
             {
+                Debug.Log("[SayDialog.DoSay] Writer is busy, stopping first...");
                 writer.Stop();
                 while (writer.IsWriting || writer.IsWaitingForInput)
                 {
                     yield return null;
                 }
+                Debug.Log("[SayDialog.DoSay] Writer stopped.");
             }
 
             if (closeOtherDialogs)
@@ -519,7 +522,9 @@ namespace Fungus
 
             writer.AttachedWriterAudio = writerAudio;
 
+            Debug.Log("[SayDialog.DoSay] Starting writer.Write coroutine...");
             yield return StartCoroutine(writer.Write(text, clearPrevious, waitForInput, stopVoiceover, waitForVO, soundEffectClip, onComplete));
+            Debug.Log("[SayDialog.DoSay] writer.Write coroutine COMPLETED");
         }
 
         /// <summary>

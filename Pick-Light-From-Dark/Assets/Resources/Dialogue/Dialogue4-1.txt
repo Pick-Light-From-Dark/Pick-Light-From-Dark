@@ -1,6 +1,6 @@
 [bg:light_room,fade]
 #[se:DXH_SOUND/07.对话声]
-
+[bgm:Lovely Petals]
 陆萤：真没想到明天竟然会放假！
 
 陆萤：害得我晚自习都不想写作业了。
