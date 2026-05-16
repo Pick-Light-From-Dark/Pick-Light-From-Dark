@@ -152,6 +152,8 @@ Assets/Scripts/Game/
   FungusVNController.cs
   Level2QuickWinHotkey.cs
   Level2VictoryStoryRunner.cs
+  Level5EndingTester.cs
+  Level5PerfectSaveGenerator.cs
   LevelEntrySplashOverride.cs
   LoadingScreenController.cs
   PlaceholderDisplay.cs
