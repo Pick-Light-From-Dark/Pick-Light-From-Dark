@@ -4,6 +4,8 @@ using UnityEngine.UI;
 
 public class BeginPanel : BasePanel
 {
+    protected override bool EnableButtonSounds => false;
+
     public override void HideMe() { }
 
     public override void ShowMe()
@@ -52,6 +54,7 @@ public class BeginPanel : BasePanel
 
     protected override void ClickBtn(string btnName)
     {
+        MusicMgr.Instance.PlaySound("DXH_SOUND/SOUND3/33.钢笔敲击纸的声音");
         switch (btnName)
         {
             case "StartBtn":
