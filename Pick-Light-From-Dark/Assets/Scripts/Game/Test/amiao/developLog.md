@@ -1,5 +1,29 @@
 # amiaoDemo 开发日志
 
+## 2026-05-16 — 参考 GameScene 方式重写 amiaoDemo
+
+### 功能
+参考 `LevelFlowCoordinator` 架构改写 `AmiaoDemoRunner`，使其真正调用 VN 控制器播放剧情：
+- **剧情阶段**：设置 `vnController.dialogueText` 并调用 `RestartDialogue()` 真正播放剧情
+- **回调串联**：`OnDialogueExit` / `OnDialogueComplete` 回调推进到游玩/结尾剧情/结局
+- **预置 VN**：`amiaoDemo.unity` 场景中添加 `FungusVNController` GameObject
+- 保留 IMGUI 游玩模拟（血量滑块 + 卡牌勾选）
+- 第一关「不吃」分支通过 `VNExitType.Ending` 触发结局一
+
+### 修改文件
+- `Assets/Scripts/Game/Test/amiao/AmiaoDemoRunner.cs` — 重写
+- `Assets/Scenes/Amiao_Test/amiaoDemo.unity` — 添加 FungusVNController
+- `Assets/Scripts/Game/Test/amiao/需求/gameFlow.md` — 排版优化
+
+### 如何测试
+1. 打开 `amiaoDemo.unity`
+2. Play Mode 后按 F3 显隐面板
+3. 点击"新游戏"，观察 VN 剧情是否正常播放
+4. 剧情结束后自动进入游玩面板
+5. 通关后进入下一关剧情或结局判定
+
+---
+
 ## 2026-05-16 — amiaoDemo 完整流程演示
 
 ### 功能

@@ -258,9 +258,71 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a5c3cf8587bd4316a65e824842165b84, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+--- !u!1 &272395897
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 272395898}
+  - component: {fileID: 272395899}
+  m_Layer: 0
+  m_Name: FungusVNController
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &272395898
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 272395897}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &272395899
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 272395897}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3ccf659d409546deafce9a033b3bded4, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  dialogueText: {fileID: 0}
+  sayDialog: {fileID: 0}
+  vnCanvas: {fileID: 0}
+  backgroundImage: {fileID: 0}
+  midgroundImage: {fileID: 0}
+  foregroundImage: {fileID: 0}
+  sfxSource: {fileID: 0}
+  bgmSource: {fileID: 0}
+  dialogMask: {fileID: 0}
+  characters: []
+  backgrounds: []
+  soundEffects: []
+  bgmTracks: []
+  fastForwardInterval: 0.1
+  saveFlowchart: {fileID: 0}
+  skipToChoiceIfAvailable: 0
+  showSkipButtonOnStart: 1
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 272395893}
   - {fileID: 272395895}
+  - {fileID: 272395898}
