@@ -550,6 +550,18 @@ namespace Game.Card
             }
         }
 
+        /// <summary>
+        /// 移除运行时额外关联
+        /// </summary>
+        private void RemoveRuntimeAssociation(int cardId, int removeId)
+        {
+            if (runtimeExtraAssociations.TryGetValue(cardId, out var list))
+            {
+                list.Remove(removeId);
+                Debug.Log($"[CardManager] RemoveRuntimeAssociation: {removeId} 从 runtimeExtras[{cardId}] 中移除");
+            }
+        }
+
         /// <summary>仅保留可见，不触发生成</summary>
         private void AddKeepOnly(int cardId, int keepId)
         {
@@ -622,7 +634,7 @@ namespace Game.Card
                         isCard2016GenerationPaused = true;
                     }
                     // 触发局内剧情对话
-                    EventCenter.Instance.EventTrigger(E_EventType.GameDialogueStart, "Dialogue/Dialogue2");
+                    EventCenter.Instance.EventTrigger(E_EventType.GameDialogueStart, "Dialogue/Dialogue2-3");
                     Debug.Log("[CardManager] 特殊效果: 分享拌面 → 2016层数-1且隐藏, 暂停生成, 触发对话");
                     break;
                 }
@@ -638,9 +650,9 @@ namespace Game.Card
                 {
                     if (levelConfig != null && levelConfig.levelId == 1005)
                     {
-                        // 第五夜：拿走卫生纸 → 将2038(前往厕所)加入2005(下床)的运行时关联
-                        AddRuntimeAssociation(2005, 2038);
-                        Debug.Log("[CardManager] 特殊效果: 拿走卫生纸(2025) → 2005(下床)运行时关联新增 2038(前往厕所)");
+                        // 第五夜：拿走卫生纸 → 将2040(前往走廊)加入2005(下床)的运行时关联
+                        AddRuntimeAssociation(2005, 2040);
+                        Debug.Log("[CardManager] 特殊效果: 拿走卫生纸(2025) → 2005(下床)运行时关联新增 2040(前往走廊)");
                     }
                     else
                     {
@@ -661,9 +673,9 @@ namespace Game.Card
                     Task.TaskManager.Instance.RevealHiddenTask(2026);
                     if (levelConfig != null && levelConfig.levelId == 1005)
                     {
-                        // 第五夜：寻求宋明月帮助 → 将2038(前往厕所)加入2005(下床)的运行时关联
-                        AddRuntimeAssociation(2005, 2038);
-                        Debug.Log("[CardManager] 特殊效果: 寻求宋明月帮助(2026) → 2005(下床)运行时关联新增 2038(前往厕所)");
+                        // 第五夜：寻求宋明月帮助 → 将2040(前往走廊)加入2005(下床)的运行时关联
+                        AddRuntimeAssociation(2005, 2040);
+                        Debug.Log("[CardManager] 特殊效果: 寻求宋明月帮助(2026) → 2005(下床)运行时关联新增 2040(前往走廊)");
 
                         // 设置对话背景：5012(宋明月大图)，对话结束后回到5011(看向床对面宋明月)
                         GamePanel.DialogueBackgroundOverride = 5012;
@@ -702,6 +714,13 @@ namespace Game.Card
                             Debug.Log("[CardManager] 特殊效果: 拿走面包(2026) → 2025已用过，不执行关联注入");
                         }
                     }
+                    break;
+                }
+
+                case 2011: // 盖回被子：回到床上，清除下床的走廊关联
+                {
+                    RemoveRuntimeAssociation(2005, 2040);
+                    Debug.Log("[CardManager] 特殊效果: 盖回被子(2011) → 清除2005运行时关联中的2040");
                     break;
                 }
 

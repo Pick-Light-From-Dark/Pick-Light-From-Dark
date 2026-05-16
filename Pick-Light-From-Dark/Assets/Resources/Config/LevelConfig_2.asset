@@ -39,6 +39,7 @@ MonoBehaviour:
     targetCount: 1
     currentCount: 0
     state: 1
+    isHidden: 1
   preDialogueFile: Dialogue2-1
   postDialogueFile: Dialogue2-2
   isChoiceLevel: 0
