@@ -305,6 +305,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1500532621}
   - component: {fileID: 1500532620}
+  - component: {fileID: 1500532622}
   m_Layer: 0
   m_Name: LevelFlowCoordinator
   m_TagString: Untagged
@@ -325,15 +326,30 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   openingStory: {fileID: 4900000, guid: c9ce19d88bb7229448919231ce0216c5, type: 3}
-  endingStory: {fileID: 4900000, guid: ee37cd94096d9a34e8341a57afcde31c, type: 3}
+  endingStory: {fileID: 4900000, guid: d4e8a1f62b9c4d7e9f0a3b5c8d2e6f1a, type: 3}
   levelConfig: {fileID: 11400000, guid: 6bb4dd7b384d1a04e96a8b62866557c3, type: 2}
   levelId: 2
   vnController: {fileID: 1180333903}
-  nextLevelSceneName: Level3
+  nextLevelSceneName: Level2_end
   currentLevelSceneName: Level2
   nextLevelPrefab: {fileID: 0}
   ending1Prefab: {fileID: 1000, guid: cc00867e852a29a4ab3ba525b44f5c54, type: 3}
   deathEndingPrefab: {fileID: 6000, guid: f5bd8a962e8242ff92f62f72052e2cbd, type: 3}
+--- !u!114 &1500532622
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1500532619}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b8e4f1a23c5d4e9f8a7b6c2d1e0f4a5b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  hotKey: 310
+  levelId: 2
+  waitGameplaySeconds: 12
 --- !u!4 &1500532621
 Transform:
   m_ObjectHideFlags: 0

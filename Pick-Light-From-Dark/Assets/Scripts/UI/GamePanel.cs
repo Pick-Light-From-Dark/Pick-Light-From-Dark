@@ -423,8 +423,10 @@ public class GamePanel : BasePanel
             if (visibleGoals != null && i < visibleGoals.Count)
             {
                 var goal = visibleGoals[i];
-                string stateIcon = goal.state == TaskState.Completed ? "<color=#64DC64>✓ </color>" : "";
-                tmp.text = $"{stateIcon}{goal.taskName}  {goal.currentCount}/{goal.targetCount}";
+                string line = $"{goal.taskName}  {goal.currentCount}/{goal.targetCount}";
+                tmp.text = goal.state == TaskState.Completed
+                    ? $"<color=#64DC64>{line}</color>"
+                    : line;
                 tmp.gameObject.SetActive(true);
             }
             else
@@ -1043,8 +1045,12 @@ public class GamePanel : BasePanel
         // 通知 CardManager
         cardManager.OnCardUsed(readingCardData);
 
-        // 通知 TaskManager 推进任务进度
+        // 通知 TaskManager 推进任务进度（可能同步触发 GameWin / 结尾剧情）
         EventCenter.Instance.EventTrigger(E_EventType.CardReadComplete, readingCardData.id);
+
+        // 通关后不再刷新备选区/背景，避免与 Fungus 结尾剧情抢同一帧
+        if (Game.Flow.GameFlowController.Instance != null && Game.Flow.GameFlowController.Instance.IsGameOver())
+            return;
 
         // 跳转背景画面
         if (readingCardData.backgroundJumpId != 0)

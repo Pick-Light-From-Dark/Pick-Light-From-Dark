@@ -97,6 +97,7 @@ public class GameDialogueManager : MonoBehaviour
         if (text == null)
         {
             Debug.LogError($"[GameDialogueManager] 对话文本未找到: Resources/{resourcePath}");
+            EndDialogue();
             return;
         }
 
@@ -117,6 +118,15 @@ public class GameDialogueManager : MonoBehaviour
         }
 
         var line = lines[lineIndex];
+
+        // 跳过纯指令行（如 [bg:...]），避免空白面板卡住
+        if (line.type == "指令" || string.IsNullOrEmpty(line.speaker))
+        {
+            lineIndex++;
+            ShowCurrentLine();
+            return;
+        }
+
         bool isPlayer = line.speaker == "陆萤";
 
         if (playerInstance != null) playerInstance.SetActive(isPlayer);
