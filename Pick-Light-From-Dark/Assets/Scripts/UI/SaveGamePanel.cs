@@ -1,4 +1,6 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 using Game.Test;
 
 [UIPath("UI/MainFlow")]
@@ -10,13 +12,45 @@ public class SaveGamePanel : BasePanel
 
     public override void ShowMe()
     {
+        EnsureSaveSystem();
         DetermineMode();
+        RefreshButtonState();
     }
 
     void DetermineMode()
     {
-        // 游戏中打开 → 存档模式；主菜单/结局面板打开 → 读档模式
-        isSaveMode = GamePanel.Instance != null && GamePanel.Instance.gameObject.activeInHierarchy;
+        // 在关卡场景中打开 → 存档模式；其他场景（主菜单/结局面板）→ 读档模式
+        string sceneName = SceneManager.GetActiveScene().name;
+        isSaveMode = sceneName.StartsWith("Level");
+    }
+
+    CrossLevelSaveSystem EnsureSaveSystem()
+    {
+        if (CrossLevelSaveSystem.Instance == null)
+        {
+            var go = new GameObject("CrossLevelSaveSystem");
+            go.AddComponent<CrossLevelSaveSystem>();
+            Debug.Log("[SaveGamePanel] 自动创建 CrossLevelSaveSystem");
+        }
+        return CrossLevelSaveSystem.Instance;
+    }
+
+    void RefreshButtonState()
+    {
+        var btn = transform.Find("SaveGameBtn1")?.GetComponent<Button>();
+        if (btn == null) return;
+
+        var saveSystem = CrossLevelSaveSystem.Instance;
+        if (!isSaveMode)
+        {
+            // 读档模式：无存档时禁用按钮
+            btn.interactable = saveSystem != null && saveSystem.HasSave();
+        }
+        else
+        {
+            // 存档模式：始终可点击（即使无存档信息也会提示）
+            btn.interactable = true;
+        }
     }
 
     protected override void ClickBtn(string btnName)
@@ -33,8 +67,8 @@ public class SaveGamePanel : BasePanel
             case "BackBtn":
                 MusicMgr.Instance?.PlaySound("按钮点击音效");
                 UIMgr.Instance.HidePanel<SaveGamePanel>();
-                // 游戏中打开 → 返回暂停面板；主菜单打开 → 返回开始界面
-                if (GamePanel.Instance != null && GamePanel.Instance.gameObject.activeInHierarchy)
+                // 在关卡场景中 → 返回暂停面板；其他场景 → 返回开始界面
+                if (SceneManager.GetActiveScene().name.StartsWith("Level"))
                     UIMgr.Instance.ShowPanel<StopGamePanel>();
                 else
                     UIMgr.Instance.ShowPanel<BeginPanel>();
@@ -44,12 +78,7 @@ public class SaveGamePanel : BasePanel
 
     void DoSave()
     {
-        var saveSystem = CrossLevelSaveSystem.Instance;
-        if (saveSystem == null)
-        {
-            Debug.LogWarning("[SaveGamePanel] CrossLevelSaveSystem 未初始化");
-            return;
-        }
+        var saveSystem = EnsureSaveSystem();
 
         var cp = saveSystem.currentSave?.checkpoint;
         if (cp == null || cp.currentLevelId <= 0)
@@ -70,8 +99,8 @@ public class SaveGamePanel : BasePanel
 
     void DoLoad()
     {
-        var saveSystem = CrossLevelSaveSystem.Instance;
-        if (saveSystem == null || !saveSystem.HasSave())
+        var saveSystem = EnsureSaveSystem();
+        if (!saveSystem.HasSave())
         {
             Debug.LogWarning("[SaveGamePanel] 无存档可读取");
             return;
