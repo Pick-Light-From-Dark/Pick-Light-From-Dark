@@ -1231,6 +1231,9 @@ namespace Game.Test
                 return;
             }
 
+            // 选项面板打开时禁止推进，否则会顺序执行「选项」后面的 [block]/对白/[action]，出现分支错乱或直接进游戏
+            if (isChoosing) return;
+
             if (isProcessing) return;
             isProcessing = true;
 
@@ -1446,7 +1449,7 @@ namespace Game.Test
             string choiceId = choice == 1 ? currentChoiceLine.choice1Id : currentChoiceLine.choice2Id;
             if (!string.IsNullOrEmpty(choiceId))
             {
-                EventCenter.Instance.EventTrigger(E_EventType.StoryChoiceMade, choiceId);
+                EventCenter.Instance?.EventTrigger(E_EventType.StoryChoiceMade, choiceId);
             }
 
             string jumpTarget = choice == 1 ? currentChoiceLine.choice1JumpTarget : currentChoiceLine.choice2JumpTarget;
@@ -1639,7 +1642,8 @@ namespace Game.Test
                 vnCanvas.gameObject.SetActive(false);
             Debug.Log($"[FungusVNController] 对话结束，分支类型: {exitType}");
             OnDialogueExit?.Invoke(exitType);
-            OnDialogueComplete?.Invoke();
+            // 不再调用 OnDialogueComplete：LevelFlowCoordinator 等对开场/结尾同时订阅 Exit 与 Complete 到同一收尾时，
+            // 会在「结局」分支后再跑一次（例如又执行 OnOpeningStoryEnd → 进游玩）。段切换已由 OnDialogueExit 处理。
         }
     }
 }
