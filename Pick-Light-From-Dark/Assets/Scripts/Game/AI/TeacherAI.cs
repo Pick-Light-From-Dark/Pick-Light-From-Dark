@@ -252,12 +252,16 @@ namespace Game.AI
             // 停止脚步声
             StopFootstep();
 
-            // 根据检查类型显示不同动画
-            if (currentInspectType == InspectType.Flash)
+            // 玩家闭眼时才播放检查动画（未闭眼直接被抓，无需动画）
+            bool playerEyesClosed = playerState != null && playerState.IsEyesClosed();
+            if (playerEyesClosed)
             {
-                // 手电筒检查：显示老师画面 + 视线视频动画
-                GamePanel.Instance?.ShowTeacherImage();
-                GamePanel.Instance?.ShowEyeGazeOverlay(2f);
+                if (currentInspectType == InspectType.Flash)
+                {
+                    // 手电筒检查：显示老师画面 + 视线视频动画
+                    GamePanel.Instance?.ShowTeacherImage();
+                    GamePanel.Instance?.ShowEyeGazeOverlay(2f);
+                }
             }
 
             // 触发检查开始事件
