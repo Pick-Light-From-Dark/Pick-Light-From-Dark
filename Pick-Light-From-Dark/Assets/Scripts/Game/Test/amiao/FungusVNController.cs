@@ -164,11 +164,10 @@ namespace Game.Test
 
             // 重置状态
             hasEnded = false;
-            exitType = VNExitType.None;
+            exitType = forceFromStart ? VNExitType.Ending : VNExitType.None;
             isEndingStoryPlaythrough = forceFromStart;
             isProcessing = false;
-            if (forceFromStart)
-                Time.timeScale = 1f;
+            Time.timeScale = 1f;
             isChoosing = false;
             isFastForwarding = false;
             currentChoiceLine = null;
@@ -276,6 +275,8 @@ namespace Game.Test
             if (!Input.GetMouseButtonDown(0) && !Input.GetKeyDown(KeyCode.Space) && !Input.GetKeyDown(KeyCode.Return))
                 return;
 
+            Debug.Log($"[FungusVNController.Update] Input detected: mouse={Input.GetMouseButtonDown(0)} space={Input.GetKeyDown(KeyCode.Space)} return={Input.GetKeyDown(KeyCode.Return)} isWriting={(sayDialog != null ? sayDialog.GetComponent<Writer>()?.IsWriting : false)} isWaitingForInput={(sayDialog != null ? sayDialog.GetComponent<Writer>()?.IsWaitingForInput : false)}");
+
             // 交给 Fungus DialogInput / Writer 处理，不绕过 Say 协程
             ForwardDialogueInput();
         }
@@ -289,14 +290,24 @@ namespace Game.Test
             if (dialogInput != null)
             {
                 if (Input.GetMouseButtonDown(0))
+                {
+                    Debug.Log("[FungusVNController] ForwardDialogueInput: mouse click -> SetClickAnywhereClickedFlag");
                     dialogInput.SetClickAnywhereClickedFlag();
+                }
                 else
+                {
+                    Debug.Log("[FungusVNController] ForwardDialogueInput: key press -> SetNextLineFlag");
                     dialogInput.SetNextLineFlag();
+                }
                 return;
             }
 
             var writer = sayDialog.GetComponent<Writer>();
-            writer?.OnNextLineEvent();
+            if (writer != null)
+            {
+                Debug.Log("[FungusVNController] ForwardDialogueInput: no DialogInput, calling writer.OnNextLineEvent directly");
+                writer.OnNextLineEvent();
+            }
         }
 
         /// <summary>运行时自动查找/创建所有必需的组件</summary>
@@ -360,6 +371,25 @@ namespace Game.Test
                 bgmSource = gameObject.AddComponent<AudioSource>();
                 bgmSource.playOnAwake = false;
                 bgmSource.loop = true;
+            }
+
+            // 4.5 确保 Writer 的 targetTextObject 指向正确的 StoryText（避免 textAdapter.HasTextObject 为 false 导致 Writer 直接 yield break）
+            if (sayDialog != null)
+            {
+                var writer = sayDialog.GetComponent<Writer>();
+                if (writer != null && !writer.HasValidTextObject())
+                {
+                    var storyTextObj = sayDialog.transform.Find("Panel/StoryText");
+                    if (storyTextObj != null)
+                    {
+                        writer.SetTargetTextObject(storyTextObj.gameObject);
+                        Debug.Log("[FungusVNController] 已设置 Writer.targetTextObject 为 Panel/StoryText");
+                    }
+                    else
+                    {
+                        Debug.LogWarning("[FungusVNController] 未找到 Panel/StoryText，Writer 可能无法正常工作");
+                    }
+                }
             }
 
             // 5. 字体设置：自动加载项目中文字体并应用到 SayDialog
@@ -1299,6 +1329,13 @@ namespace Game.Test
             if (sayDialog == null) return;
             sayDialog.Stop();
             sayDialog.StopAllCoroutines();
+            // 强制重置 Writer 内部状态：StopAllCoroutines 会杀死协程，导致 isWriting/isWaitingForInput 永远残留
+            var writer = sayDialog.GetComponent<Writer>();
+            if (writer != null)
+            {
+                writer.ForceResetState();
+                Debug.Log("[StopActiveSayDialog] Writer.ForceResetState() called");
+            }
         }
 
         /// <summary>重开剧本前清空对白（仅用于 RestartDialogue / EndDialogue）</summary>
@@ -1345,19 +1382,31 @@ namespace Game.Test
         /// <summary>推进到下一行对话</summary>
         void ShowNextLine()
         {
+            Debug.Log($"[FungusVNController.ShowNextLine] ENTER lineIndex={lineIndex} lines.Count={(lines != null ? lines.Count : 0)} isProcessing={isProcessing} isChoosing={isChoosing} timeScale={Time.timeScale}");
+
             if (lines == null || lineIndex >= lines.Count)
             {
+                Debug.Log("[FungusVNController.ShowNextLine] No more lines, ending dialogue.");
                 EndDialogue();
                 return;
             }
 
             // 选项面板打开时禁止推进，否则会顺序执行「选项」后面的 [block]/对白/[action]，出现分支错乱或直接进游戏
-            if (isChoosing) return;
+            if (isChoosing)
+            {
+                Debug.Log("[FungusVNController.ShowNextLine] Choosing, returning.");
+                return;
+            }
 
-            if (isProcessing) return;
+            if (isProcessing)
+            {
+                Debug.Log("[FungusVNController.ShowNextLine] Already processing, returning.");
+                return;
+            }
             isProcessing = true;
 
             var line = lines[lineIndex++];
+            Debug.Log($"[FungusVNController.ShowNextLine] Processing line type={line.type} speaker='{line.speaker}' content='{line.content}' action='{line.action}'");
 
             // 段落标记行直接跳过
             if (line.type == "段落")
@@ -1483,8 +1532,8 @@ namespace Game.Test
                     sayDialog.SetCharacter(charMapping.fungusCharacter);
                 else
                 {
-                    sayDialog.SetCharacter(null);
-                    sayDialog.SetCharacterName(speaker, Color.white);
+                    // 不调用 SetCharacter(null)，避免触发 Fungus Writer 回调丢失
+                    sayDialog.NameText = speaker;
                     if (line.type == "对话")
                         ShowPlaceholder("Character", speaker);
                 }
@@ -1497,15 +1546,34 @@ namespace Game.Test
                 if (writer != null && (writer.IsWriting || writer.IsWaitingForInput))
                     StopActiveSayDialog();
 
+                // 保险：确保 Writer 的 targetTextObject 有效（避免 Awake 后 targetTextObject 被重置）
+                var writerComp = sayDialog.GetComponent<Writer>();
+                if (writerComp != null && !writerComp.HasValidTextObject())
+                {
+                    var storyTextObj = sayDialog.transform.Find("Panel/StoryText");
+                    if (storyTextObj != null)
+                    {
+                        writerComp.SetTargetTextObject(storyTextObj.gameObject);
+                        Debug.Log("[FungusVNController.ShowNextLine] 重新设置 Writer.targetTextObject");
+                    }
+                    else
+                    {
+                        Debug.LogError("[FungusVNController.ShowNextLine] 未找到 Panel/StoryText!");
+                    }
+                }
+
                 if (isFastForwarding)
                 {
+                    Debug.Log("[FungusVNController.ShowNextLine] FastForward mode: calling sayDialog.Say without wait");
                     sayDialog.Say(displayText, true, false, false, true, false, null, null);
                     StartCoroutine(FastForwardSkipRoutine());
                 }
                 else
                 {
+                    Debug.Log($"[FungusVNController.ShowNextLine] Normal mode: calling sayDialog.Say with text='{displayText.Substring(0, Mathf.Min(30, displayText.Length))}...' writer.HasValidTextObject={writerComp?.HasValidTextObject()}");
                     sayDialog.Say(displayText, true, true, false, true, false, null, () =>
                     {
+                        Debug.Log("[FungusVNController.ShowNextLine] SayDialog onComplete CALLBACK FIRED!");
                         CancelSayWatchdog();
                         isProcessing = false;
                         ShowNextLine();
@@ -1680,7 +1748,7 @@ namespace Game.Test
             yield return new WaitForSecondsRealtime(20f);
             sayWatchdogRoutine = null;
             if (!isProcessing || hasEnded) yield break;
-            Debug.LogWarning("[FungusVNController] Say 回调超时，强制推进下一行");
+            Debug.LogWarning($"[FungusVNController] Say 回调超时，强制推进下一行。isProcessing={isProcessing} hasEnded={hasEnded} timeScale={Time.timeScale}");
             isProcessing = false;
             ShowNextLine();
         }

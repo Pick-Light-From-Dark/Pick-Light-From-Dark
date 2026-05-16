@@ -129,6 +129,23 @@ public static class DialogueParser
                 d.type = "指令";
                 d.centerText = s.Substring(13).TrimEnd(']').Trim();
             }
+            else if (s.StartsWith("[pan:"))
+            {
+                d.type = "指令";
+                string panContent = s.Substring(5).TrimEnd(']');
+                string[] parts = panContent.Split(',');
+                if (parts.Length >= 3)
+                {
+                    d.panLayer = parts[0].Trim().ToLower();
+                    d.panDirection = parts[1].Trim().ToLower();
+                    if (float.TryParse(parts[2].Trim(), out float dur))
+                        d.panDuration = dur;
+                    if (parts.Length >= 4 && float.TryParse(parts[3].Trim(), out float dist))
+                        d.panDistance = dist;
+                    else
+                        d.panDistance = -1f;
+                }
+            }
             else if (s.StartsWith("[旁白]："))
             {
                 d.type = "旁白";
