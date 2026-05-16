@@ -20,7 +20,7 @@ namespace Game.Test
         [Header("调试")]
         public bool logOperations = true;
 
-        const string SAVE_KEY = "CrossLevelSave_v2";
+        const string SAVE_KEY = "CrossLevelSave_v3";
 
         void Awake()
         {
