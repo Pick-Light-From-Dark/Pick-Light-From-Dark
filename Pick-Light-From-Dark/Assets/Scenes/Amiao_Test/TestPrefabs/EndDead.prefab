@@ -18,7 +18,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &6001
 RectTransform:
   m_ObjectHideFlags: 0
@@ -93,7 +93,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   endingImage: {fileID: 0}
   returnButton: {fileID: 0}
-  restartButton: {fileID: 0}
+  returnGamePanelBtn: {fileID: 0}
 --- !u!1 &992881320457454250
 GameObject:
   m_ObjectHideFlags: 0
@@ -107,7 +107,7 @@ GameObject:
   - component: {fileID: 6703504817068129078}
   - component: {fileID: 8524023257089454353}
   m_Layer: 5
-  m_Name: LoadSaveButton
+  m_Name: ReturnGamePanel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -130,8 +130,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 0}
-  m_AnchoredPosition: {x: 180, y: 125}
-  m_SizeDelta: {x: 280, y: 70}
+  m_AnchoredPosition: {x: 316.18237, y: 172.33954}
+  m_SizeDelta: {x: 500, y: 190}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &582832420172122309
 CanvasRenderer:
@@ -244,15 +244,15 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 2366589712683120413}
   m_Father: {fileID: 6001}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 0}
-  m_AnchoredPosition: {x: -180, y: 125}
-  m_SizeDelta: {x: 280, y: 70}
+  m_AnchoredPosition: {x: -327.98, y: 168}
+  m_SizeDelta: {x: 500, y: 190}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &7084546593422874066
 CanvasRenderer:
@@ -403,7 +403,7 @@ MonoBehaviour:
       m_Calls: []
   m_FontData:
     m_Font: {fileID: 12800000, guid: bf1ff165edb075d40b49a17748f621cc, type: 3}
-    m_FontSize: 24
+    m_FontSize: 50
     m_FontStyle: 0
     m_BestFit: 0
     m_MinSize: 2
@@ -414,7 +414,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "\u8BFB\u53D6\u5B58\u6863"
+  m_Text: "\u8FD4\u56DE\u4E3B\u754C\u9762"
 --- !u!1 &3208393714619892358
 GameObject:
   m_ObjectHideFlags: 0
@@ -447,10 +447,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 6001}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 960, y: 480}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &727889935737784381
 CanvasRenderer:
@@ -557,15 +557,15 @@ MonoBehaviour:
       m_Calls: []
   m_FontData:
     m_Font: {fileID: 12800000, guid: bf1ff165edb075d40b49a17748f621cc, type: 3}
-    m_FontSize: 24
+    m_FontSize: 50
     m_FontStyle: 0
     m_BestFit: 0
     m_MinSize: 2
-    m_MaxSize: 60
+    m_MaxSize: 90
     m_Alignment: 4
     m_AlignByGeometry: 0
     m_RichText: 1
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "\u8FD4\u56DE\u4E3B\u754C\u9762"
+  m_Text: "\u91CD\u65B0\u5F00\u59CB"

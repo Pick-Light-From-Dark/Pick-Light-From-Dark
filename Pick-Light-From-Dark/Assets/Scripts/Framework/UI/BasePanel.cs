@@ -158,11 +158,36 @@ public abstract class BasePanel : MonoBehaviour
 
     }
 
+    /// <summary>子类可重写为false来禁用按钮悬停/点击音效</summary>
+    protected virtual bool EnableButtonSounds => true;
+
     private void BindControlEvent<T>(T control, string controlName) where T : UIBehaviour
     {
         if (control is Button btn)
         {
-            btn.onClick.AddListener(() => ClickBtn(controlName));
+            if (EnableButtonSounds)
+            {
+                btn.onClick.AddListener(() =>
+                {
+                    MusicMgr.Instance.PlaySound("DXH_SOUND/SOUND3/33.钢笔敲击纸的声音");
+                    ClickBtn(controlName);
+                });
+
+                // 悬停音效
+                var trigger = btn.gameObject.GetComponent<EventTrigger>();
+                if (trigger == null) trigger = btn.gameObject.AddComponent<EventTrigger>();
+                var enterEntry = new EventTrigger.Entry();
+                enterEntry.eventID = EventTriggerType.PointerEnter;
+                enterEntry.callback.AddListener((_) =>
+                {
+                    MusicMgr.Instance.PlaySound("DXH_SOUND/SOUND3/32.钢笔写字声");
+                });
+                trigger.triggers.Add(enterEntry);
+            }
+            else
+            {
+                btn.onClick.AddListener(() => ClickBtn(controlName));
+            }
         }
         else if (control is Slider slider)
         {
