@@ -81,7 +81,7 @@ public class StopGamePanel : BasePanel
             case "QuitGameBtn":
                 Game.Flow.GameFlowController.Instance.GameLose("主动退出");
                 UIMgr.Instance.HideAllPanels();
-                UIMgr.Instance.ShowPanel<BeginPanel>();
+                SceneMgr.Instance.LoadScene("GameScene");
                 break;
         }
     }

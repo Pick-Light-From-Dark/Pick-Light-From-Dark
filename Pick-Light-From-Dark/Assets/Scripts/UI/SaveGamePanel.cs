@@ -96,6 +96,15 @@ public class SaveGamePanel : BasePanel
     {
         var saveSystem = EnsureSaveSystem();
 
+        // 先从当前场景推断关卡ID，确保不保存过期的关卡号
+        string sceneName = SceneManager.GetActiveScene().name;
+        int inferredLevelId = 0;
+        if (sceneName.StartsWith("Level"))
+        {
+            string levelStr = sceneName.Substring(5);
+            int.TryParse(levelStr, out inferredLevelId);
+        }
+
         var cp = saveSystem.currentSave?.checkpoint;
         if (cp == null || cp.currentLevelId <= 0)
         {
@@ -107,6 +116,11 @@ public class SaveGamePanel : BasePanel
                 Debug.LogWarning("[SaveGamePanel] 无存档信息可保存");
                 return;
             }
+        }
+        else if (inferredLevelId > 0 && inferredLevelId != cp.currentLevelId)
+        {
+            // 当前场景推断的关卡号与 checkpoint 不一致，以当前场景为准
+            cp.currentLevelId = inferredLevelId;
         }
 
         MusicMgr.Instance?.PlaySound("按钮点击音效");
