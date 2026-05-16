@@ -313,7 +313,6 @@ namespace Game.Test
             var vn = currentInstance.GetComponentInChildren<FungusVNController>();
             if (vn != null)
             {
-                vn.OnDialogueComplete += OnSegmentEnd;
                 vn.OnDialogueExit += OnSegmentExit;
             }
             else
@@ -337,15 +336,9 @@ namespace Game.Test
             Debug.Log($"[StoryChainTestRunner] 剧情段结束，exitType={exitType}");
             if (exitType == VNExitType.Ending && !isEndingTriggered)
             {
-                isEndingTriggered = true;
                 EvaluateAndTriggerEnding();
             }
-        }
-
-        void OnSegmentEnd()
-        {
-            Debug.Log("[StoryChainTestRunner] 剧情段播放完成");
-            if (!isEndingTriggered)
+            else if (exitType != VNExitType.Ending && !isEndingTriggered)
             {
                 PlayNext();
             }

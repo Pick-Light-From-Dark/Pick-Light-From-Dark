@@ -27,7 +27,10 @@
       "PowerShell(Test-Path *)",
       "PowerShell(New-Item *)",
       "PowerShell(Get-Content \"E:\\\\UnityPro\\\\Pick-Light-From-Dark\\\\Pick-Light-From-Dark\\\\Assets\\\\Resources\\\\Dialogue\\\\Dialogue5-1.txt\" -TotalCount 5 -Encoding Byte | ForEach-Object { \"0x{0:X2}\" -f $_ })",
-      "PowerShell(git pull *)"
+      "PowerShell(git pull *)",
+      "WebSearch",
+      "PowerShell(head *)",
+      "PowerShell([guid]::NewGuid\\(\\).ToString\\(\"N\"\\))"
     ]
   }
 }

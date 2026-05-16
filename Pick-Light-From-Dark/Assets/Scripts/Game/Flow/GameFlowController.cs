@@ -170,9 +170,9 @@ namespace Game.Flow
                     updateCount = 0;
                 }
                 updateCount++;
-                if (updateCount > 1)
+                if (updateCount == 2) // 只在第一次检测到多次调用时输出，避免重复分配和日志刷屏
                 {
-                    // 查找所有GameFlowController组件
+                    // 查找所有GameFlowController组件（限制为一次，减少临时分配器压力）
                     GameFlowController[] allControllers = FindObjectsByType<GameFlowController>(FindObjectsSortMode.None);
                     Debug.LogError($"[GameFlow] InstanceID:{GetInstanceID()} Frame:{Time.frameCount} 检测到Update被多次调用！当前updateCount={updateCount}");
                     Debug.LogError($"[GameFlow] 当前场景中有 {allControllers.Length} 个GameFlowController组件：");

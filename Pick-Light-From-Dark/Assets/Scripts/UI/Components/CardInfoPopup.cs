@@ -43,10 +43,25 @@ namespace Game.UI
         private string functionFullText;
         private float typeSpeed = 0.02f;
 
+        static TMP_FontAsset cardFont;
+
         void Awake()
         {
             rectTransform = GetComponent<RectTransform>();
             gameObject.SetActive(false);
+
+            if (cardFont == null) cardFont = Resources.Load<TMP_FontAsset>("Font/siyuan");
+            if (cardFont != null)
+            {
+                if (nameText != null) nameText.font = cardFont;
+                if (functionText != null) functionText.font = cardFont;
+                if (panicText != null) panicText.font = cardFont;
+                if (exciteText != null) exciteText.font = cardFont;
+                if (totalTimeText != null) totalTimeText.font = cardFont;
+                if (loadingCDText != null) loadingCDText.font = cardFont;
+                if (interruptibleText != null) interruptibleText.font = cardFont;
+                if (nonInterruptibleText != null) nonInterruptibleText.font = cardFont;
+            }
         }
 
         public void Show(CardData data, RectTransform targetCard)

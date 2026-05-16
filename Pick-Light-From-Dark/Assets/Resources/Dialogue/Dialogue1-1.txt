@@ -56,3 +56,14 @@
 陆萤：（薯片包装被挤压的声音闷在被子里，我破天荒地想 ——）
 陆萤：（所有人都睡着了，不会被发现的…… 要不要试着吃掉它？）
 选项 - 吃 or - 不吃。
+
+【选项 - 吃】动作【gameplay】
+【选项 - 不吃】跳转【day1_noeat_branch】
+
+[block:day1_noeat_branch]
+陆萤：（那包薯片被我悄悄塞进了宋明月的课桌，不知道她有没有发现。反正，一切都和从前没什么区别，我觉得很安心。就这样吧。）
+[action:ending]
+
+#→【结局一：太阳照常升起】（策划备忘：演出由结局 Prefab / Ending 数据驱动）
+#→【结局描述：薯片改变不了任何事，你也是。】
+#「吃」分支通关后台词见 Dialogue1-2eat.txt（由 LevelFlowCoordinator endingStory 在 GameWin 后播放，同第五关 post 剧情）

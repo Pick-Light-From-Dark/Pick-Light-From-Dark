@@ -69,7 +69,7 @@ namespace Game.AI
         private void OnGameResume()
         {
             if (currentState == TeacherState.Approaching)
-                StartFootstep(0.2f * MusicMgr.Instance.SoundValue);
+                StartFootstep(0.5f * MusicMgr.Instance.SoundValue);
             else if (currentState == TeacherState.Leaving)
                 StartFootstep(MusicMgr.Instance.SoundValue);
         }
@@ -229,7 +229,7 @@ namespace Game.AI
 
             // 播放脚步声（循环），音量从20%渐增至100%
             if (!gameFlow.IsPaused())
-                StartFootstep(0.2f * MusicMgr.Instance.SoundValue);
+                StartFootstep(0.5f * MusicMgr.Instance.SoundValue);
         }
 
         void EnterInspecting()

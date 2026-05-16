@@ -103,10 +103,19 @@ public class UIMgr : BaseManager<UIMgr>
         }
 
         //��̬����EventSystem
-        GameObject uiEventSystemRes = ResMgr.Instance.Load<GameObject>("UI/Base/EventSystem");
-        if (uiEventSystemRes != null)
+        uiEventSystem = UnityEngine.Object.FindObjectOfType<EventSystem>();
+        if (uiEventSystem == null)
         {
-            uiEventSystem = GameObject.Instantiate(uiEventSystemRes).GetComponent<EventSystem>();
+            GameObject uiEventSystemRes = ResMgr.Instance.Load<GameObject>("UI/Base/EventSystem");
+            if (uiEventSystemRes != null)
+            {
+                uiEventSystem = GameObject.Instantiate(uiEventSystemRes).GetComponent<EventSystem>();
+            }
+        }
+        if (uiEventSystem != null)
+        {
+            if (uiEventSystem.GetComponent<StandaloneInputModule>() == null)
+                uiEventSystem.gameObject.AddComponent<StandaloneInputModule>();
             GameObject.DontDestroyOnLoad(uiEventSystem.gameObject);
         }
     }

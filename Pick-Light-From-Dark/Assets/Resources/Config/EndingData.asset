@@ -16,11 +16,11 @@ MonoBehaviour:
   - id: 6001
     endingName: "【结局一：太阳照常升起】"
     description: "薯片改变不了任何事，你也是。"
-    endingSprite: {fileID: 0}
+    endingSprite: {fileID: 21300000, guid: 88585cb5650b38e48a303432341dded0, type: 3}
   - id: 6002
     endingName: "【结局二：莫比乌斯环】"
     description: "一条走廊，离开起点之时，你就明白你终会回来。"
-    endingSprite: {fileID: 0}
+    endingSprite: {fileID: 21300000, guid: 1eefc8d115a53d24191e2e803ed8c471, type: 3}
   - id: 6003
     endingName: "【结局三：人心不足蛇吞象】"
     description: "得失荣枯总在天，机关用尽也徒然。"
@@ -28,8 +28,8 @@ MonoBehaviour:
   - id: 6004
     endingName: "【结局四：星垂之夜】"
     description: "仰仰天地之间——无愧于人，无愧于心，无愧于己。"
-    endingSprite: {fileID: 0}
+    endingSprite: {fileID: 21300000, guid: c7b0663dea5054f4295ed0523f1bd463, type: 3}
   - id: 6005
     endingName: "【结局五：北极星】"
     description: "我对你透露一个大秘密，这是人类最古老的玩笑——无论往哪走，都是向前走。"
-    endingSprite: {fileID: 0}
+    endingSprite: {fileID: 21300000, guid: c9558d27d55857f45a5019451cc90a02, type: 3}

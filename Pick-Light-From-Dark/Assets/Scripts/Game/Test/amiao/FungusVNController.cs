@@ -127,7 +127,11 @@ namespace Game.Test
 
         void Start()
         {
-            RestartDialogue();
+            // 若场景中有 LevelFlowCoordinator，由它统一管理 VN 启动，避免重复初始化
+            if (Game.Flow.LevelFlowCoordinator.Instance == null)
+            {
+                RestartDialogue();
+            }
             if (showSkipButtonOnStart)
                 SetSkipButtonVisible(true);
         }
@@ -141,6 +145,17 @@ namespace Game.Test
             {
                 Debug.LogError("[FungusVNController] dialogueText 未赋值");
                 return;
+            }
+
+            // 停止所有可能正在运行的协程，防止重入时状态污染
+            StopAllCoroutines();
+
+            // 停止 Fungus Writer，避免旧的打字机回调与新流程交错
+            if (sayDialog != null)
+            {
+                var writer = sayDialog.GetComponent<Writer>();
+                if (writer != null && writer.IsWriting)
+                    writer.Stop();
             }
 
             // 重置状态
@@ -437,7 +452,7 @@ namespace Game.Test
             var nameRect = nameTextObj.GetComponent<RectTransform>();
             if (nameRect != null)
             {
-                nameRect.anchoredPosition += new Vector2(0f, 20f);
+                nameRect.anchoredPosition += new Vector2(0f, 10f);
                 namePositionAdjusted = true;
             }
 
@@ -1216,6 +1231,9 @@ namespace Game.Test
                 return;
             }
 
+            // 选项面板打开时禁止推进，否则会顺序执行「选项」后面的 [block]/对白/[action]，出现分支错乱或直接进游戏
+            if (isChoosing) return;
+
             if (isProcessing) return;
             isProcessing = true;
 
@@ -1305,14 +1323,14 @@ namespace Game.Test
             if (!string.IsNullOrEmpty(line.centerText))
             {
                 ShowCenterText(line.centerText);
-                StartCoroutine(WaitAndContinue(3f));
+                StartCoroutine(WaitAndContinue(isFastForwarding ? 0.05f : 3f));
                 return;
             }
 
             // ========== 等待指令 ==========
             if (line.wait > 0)
             {
-                StartCoroutine(WaitAndContinue(line.wait));
+                StartCoroutine(WaitAndContinue(isFastForwarding ? 0.05f : line.wait));
                 return;
             }
 
@@ -1431,7 +1449,7 @@ namespace Game.Test
             string choiceId = choice == 1 ? currentChoiceLine.choice1Id : currentChoiceLine.choice2Id;
             if (!string.IsNullOrEmpty(choiceId))
             {
-                EventCenter.Instance.EventTrigger(E_EventType.StoryChoiceMade, choiceId);
+                EventCenter.Instance?.EventTrigger(E_EventType.StoryChoiceMade, choiceId);
             }
 
             string jumpTarget = choice == 1 ? currentChoiceLine.choice1JumpTarget : currentChoiceLine.choice2JumpTarget;
@@ -1624,7 +1642,8 @@ namespace Game.Test
                 vnCanvas.gameObject.SetActive(false);
             Debug.Log($"[FungusVNController] 对话结束，分支类型: {exitType}");
             OnDialogueExit?.Invoke(exitType);
-            OnDialogueComplete?.Invoke();
+            // 不再调用 OnDialogueComplete：LevelFlowCoordinator 等对开场/结尾同时订阅 Exit 与 Complete 到同一收尾时，
+            // 会在「结局」分支后再跑一次（例如又执行 OnOpeningStoryEnd → 进游玩）。段切换已由 OnDialogueExit 处理。
         }
     }
 }
