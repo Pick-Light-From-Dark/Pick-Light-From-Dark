@@ -1,9 +1,11 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using Fungus;
+using Game.Flow;
 
 namespace Game.Test
 {
@@ -118,6 +120,9 @@ namespace Game.Test
         private Coroutine fgTransitionRoutine;
         private Coroutine sayWatchdogRoutine;
 
+        /// <summary>当前是否为结尾剧情（forceFromStart 重播，用于补救切关）</summary>
+        private bool isEndingStoryPlaythrough;
+
         /// <summary>剧情全部结束后的回调（供流程控制器订阅，兼容旧代码）</summary>
         public System.Action OnDialogueComplete;
 
@@ -160,7 +165,10 @@ namespace Game.Test
             // 重置状态
             hasEnded = false;
             exitType = VNExitType.None;
+            isEndingStoryPlaythrough = forceFromStart;
             isProcessing = false;
+            if (forceFromStart)
+                Time.timeScale = 1f;
             isChoosing = false;
             isFastForwarding = false;
             currentChoiceLine = null;
@@ -1800,10 +1808,46 @@ namespace Game.Test
                 skipButton.gameObject.SetActive(false);
             if (vnCanvas != null)
                 vnCanvas.gameObject.SetActive(false);
-            Debug.Log($"[FungusVNController] 对话结束，分支类型: {exitType}");
-            OnDialogueExit?.Invoke(exitType);
-            // 不再调用 OnDialogueComplete：LevelFlowCoordinator 等对开场/结尾同时订阅 Exit 与 Complete 到同一收尾时，
-            // 会在「结局」分支后再跑一次（例如又执行 OnOpeningStoryEnd → 进游玩）。段切换已由 OnDialogueExit 处理。
+
+            var completedExitType = exitType;
+            Debug.Log($"[FungusVNController] 对话结束，分支类型: {completedExitType}");
+            OnDialogueExit?.Invoke(completedExitType);
+
+            // 同帧补救：避免等 2 帧再弹 Loading 造成「卡一下」
+            if (completedExitType == VNExitType.NextLevel
+                || (completedExitType == VNExitType.None && isEndingStoryPlaythrough))
+            {
+                TryApplyLevelSceneTransitionIfStillHere();
+            }
+        }
+
+        static LevelFlowCoordinator FindLevelFlowCoordinator()
+        {
+            return FindFirstObjectByType<LevelFlowCoordinator>();
+        }
+
+        /// <summary>
+        /// OnDialogueExit 未切走时同帧加载下一关（与 LevelFlowCoordinator.AdvanceToNextLevelScene 行为一致，不额外盖 Loading）。
+        /// </summary>
+        void TryApplyLevelSceneTransitionIfStillHere()
+        {
+            var coord = FindLevelFlowCoordinator();
+            if (coord == null) return;
+
+            string nextScene = coord.NextLevelSceneName;
+            string currentScene = coord.CurrentLevelSceneName;
+            if (string.IsNullOrEmpty(nextScene) || string.IsNullOrEmpty(currentScene))
+                return;
+
+            if (SceneManager.GetActiveScene().name != currentScene)
+                return;
+
+            Debug.Log($"[FungusVNController] 同帧补救关卡切换: {currentScene} → {nextScene}");
+            Time.timeScale = 1f;
+            UIMgr.Instance?.HideAllPanels();
+            if (vnCanvas != null)
+                vnCanvas.gameObject.SetActive(false);
+            SceneMgr.Instance.LoadScene(nextScene);
         }
     }
 }
