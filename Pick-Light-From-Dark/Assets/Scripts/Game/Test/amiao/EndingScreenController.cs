@@ -130,8 +130,11 @@ namespace Game.Test
 
             OnReturnToMainMenuRequested?.Invoke();
 
-            CrossLevelSaveSystem.Instance?.MarkGameCompleted();
+            // 死亡结局保留存档以支持"继续游戏"，其他结局清空
+            if (!isDeathEnding)
+                CrossLevelSaveSystem.Instance?.MarkGameCompleted();
 
+            MusicMgr.Instance?.StopBKMusic();
             if (!string.IsNullOrEmpty(mainMenuSceneName))
                 SceneManager.LoadScene(mainMenuSceneName);
         }

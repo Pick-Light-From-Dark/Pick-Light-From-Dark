@@ -771,7 +771,7 @@ public class GamePanel : BasePanel
             var img = hpImages[i].GetComponent<UnityEngine.UI.Image>();
             if (img != null && hpEyeOpen != null && hpEyeClose != null)
             {
-                img.sprite = alive ? hpEyeOpen : hpEyeClose;
+                img.sprite = alive ? hpEyeClose : hpEyeOpen;
             }
             else
             {

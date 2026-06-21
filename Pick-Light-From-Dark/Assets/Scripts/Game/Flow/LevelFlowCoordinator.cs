@@ -166,8 +166,13 @@ namespace Game.Flow
 
             // 清理跨场景单例可能残留的脏状态
             Time.timeScale = 1f;
-            // 清除上关卡牌使用记录，避免跨关污染结局判定
-            Game.Test.CrossLevelSaveSystem.Instance?.ClearCardsUsedThisLevel();
+            // 清除上关卡牌使用记录 + 预判结局ID，避免跨关污染结局判定
+            var save = Game.Test.CrossLevelSaveSystem.Instance;
+            if (save != null)
+            {
+                save.ClearCardsUsedThisLevel();
+                save.PreEvaluatedEndingId = 0;
+            }
             // 先初始化 GameFlowController，避免 GamePanel.Awake 用 TestLevelConfig 自初始化
             GameFlowController.Instance.Initialize(levelConfig);
 
@@ -232,6 +237,11 @@ namespace Game.Flow
 
             // 检查是否有预判结局（由卡牌2038或调试面板触发）
             int preEval = Game.Test.CrossLevelSaveSystem.Instance?.PreEvaluatedEndingId ?? 0;
+            if (preEval == 0 && string.IsNullOrEmpty(nextLevelSceneName))
+            {
+                // 最后一关：调用 EvaluateEnding 进行结局判定
+                preEval = Game.Test.CrossLevelSaveSystem.Instance?.EvaluateEnding() ?? 0;
+            }
             if (preEval != 0)
             {
                 Debug.Log($"[LevelFlowCoordinator] 预判结局: {preEval}，覆盖结尾剧情");
@@ -304,6 +314,9 @@ namespace Game.Flow
             CleanupTeacherAI();
             UIMgr.Instance.HidePanel<GamePanel>(true);
             UnsubscribeGameEvents();
+
+            // 保存当前进度，以便从主界面"继续"重回本关
+            Game.Test.CrossLevelSaveSystem.Instance?.SaveCurrentProgress();
 
             // 优先序列化引用，其次从Resources动态加载
             GameObject deadPrefab = deathEndingPrefab;
@@ -413,6 +426,21 @@ namespace Game.Flow
 
         void ShowVictoryPanel()
         {
+            int endingId = Game.Test.CrossLevelSaveSystem.Instance?.PreEvaluatedEndingId ?? 0;
+            if (endingId != 0)
+            {
+                var em = EndingManager.Instance;
+                if (em != null)
+                {
+                    if (em.GetEndingData() == null)
+                    {
+                        var data = Resources.Load<Game.Config.EndingDataSO>("Config/EndingData");
+                        if (data != null) em.Initialize(data);
+                    }
+                    em.TriggerEnding(endingId);
+                    return;
+                }
+            }
             UIMgr.Instance.ShowPanel<EndingContentPanel>();
         }
 

@@ -303,9 +303,8 @@ namespace Game.AI
             {
                 Debug.Log($"[TeacherAI] 玩家被抓！检查类型: {currentInspectType}");
 
-                // 停止脚步声，播放敲门声
+                // 停止脚步声
                 StopFootstep();
-                MusicMgr.Instance.PlaySound("DXH_SOUND/SOUND2/26.敲门声");
 
                 // 触发被抓音效事件
                 EventCenter.Instance.EventTrigger(E_EventType.PlayCaughtSound);
@@ -313,11 +312,14 @@ namespace Game.AI
                 // 触发被抓事件
                 EventCenter.Instance.EventTrigger(E_EventType.PlayerCaught);
 
-                // 通知游戏流程
+                // 通知游戏流程（暂停游戏、显示被抓界面）
                 if (gameFlow != null)
                 {
                     gameFlow.OnPlayerCaught();
                 }
+
+                // 在暂停后播放敲门声，避免被 PauseGame 打断
+                MusicMgr.Instance.PlaySound("DXH_SOUND/SOUND2/26.敲门声");
 
                 // 立即离开
                 EnterState(TeacherState.Leaving);

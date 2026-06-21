@@ -30,6 +30,7 @@ public class Main : MonoBehaviour
         if (SceneManager.GetActiveScene().name != MainMenuSceneName)
             return;
 
+        Time.timeScale = 1f;
         UIMgr.Instance.ShowPanel<BeginPanel>();
     }
 }

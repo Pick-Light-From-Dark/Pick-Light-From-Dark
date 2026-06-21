@@ -245,7 +245,7 @@ public class MusicMgr : BaseManager<MusicMgr>
         {
             soundIsPlay = true;
             for (int i = 0; i < soundList.Count; i++)
-                soundList[i].Play();
+                soundList[i].UnPause();
         }
         else
         {

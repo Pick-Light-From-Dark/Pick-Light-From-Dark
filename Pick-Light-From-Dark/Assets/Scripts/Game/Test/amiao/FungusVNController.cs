@@ -1304,7 +1304,17 @@ namespace Game.Test
                 return;
             }
 
-            // 无选项：标记本段已结束并清零行号，避免之后 RestartDialogue 续播跳过前位置
+            // 无选项：扫描后续行是否有 action 指令，据此修正 exitType
+            for (int i = lineIndex; i < lines.Count; i++)
+            {
+                if (!string.IsNullOrEmpty(lines[i].action))
+                {
+                    if (lines[i].action == "nextlevel") exitType = VNExitType.NextLevel;
+                    else if (lines[i].action == "ending") exitType = VNExitType.Ending;
+                    break;
+                }
+            }
+            // 标记本段已结束并清零行号，避免之后 RestartDialogue 续播跳过前位置
             FinalizeSkipProgress();
             ClearWriterAndDialogueUI();
             EndDialogue();

@@ -20,6 +20,14 @@ namespace Game.Flow
 
         public bool IsInitialized => isInitialized;
 
+        /// <summary>新游戏时重置状态，允许下次 Initialize 重新加载关卡配置</summary>
+        public void ResetForNewGame()
+        {
+            isInitialized = false;
+            isGameOver = false;
+            isPaused = false;
+        }
+
         private LevelConfigSO levelConfig;
         private EmotionSystem emotionSystem;
         private Task.TaskManager taskManager;

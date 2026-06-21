@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Game.Backend;
+using Fungus;
 
 namespace Game.Test
 {
@@ -251,11 +252,14 @@ namespace Game.Test
             Log("[Save] 已重置结局状态（保留存档进度）");
         }
 
-        /// <summary>游戏通关时调用，重置所有游戏进度（不影响设置）</summary>
+        /// <summary>游戏通关/新游戏时调用，重置所有游戏进度（不影响设置）</summary>
         public void MarkGameCompleted()
         {
+            PreEvaluatedEndingId = 0;
+            cardsUsedThisLevel.Clear();
             ClearAll();
-            Log("[Save] 游戏通关，已重置全部进度（设置保留）");
+            SaveManager.Delete("vn_save");
+            Log("[Save] 已重置全部进度（含跨关卡存档 + Fungus VN 存档，设置保留）");
         }
 
         // ========== 引导系统 ==========

@@ -13,6 +13,7 @@ public class BeginPanel : BasePanel
     {
         SetupAllButtonHover();
         UpdateContinueButton();
+        Time.timeScale = 1f;
         MusicMgr.Instance.ResumeBKMusic();
     }
 
@@ -74,7 +75,8 @@ public class BeginPanel : BasePanel
             case "StartBtn":
                 MusicMgr.Instance.PauseBKMusic();
                 Game.Test.CrossLevelSaveSystem.Instance?.MarkGameCompleted();
-                Time.timeScale = 1f; // 恢复可能被暂停残留的timeScale
+                Game.Flow.GameFlowController.Instance?.ResetForNewGame();
+                Time.timeScale = 1f;
                 UIMgr.Instance.HidePanel<BeginPanel>(true);
                 SceneMgr.Instance.LoadScene("Level1");
                 break;
