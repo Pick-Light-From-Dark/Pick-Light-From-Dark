@@ -39,7 +39,7 @@ namespace Game.Test
 
         /// <summary>
         /// 后端接口【主入口】：根据当前游玩记录判定结局
-        /// 返回结局ID（6001~6005），无匹配时返回默认结局
+        /// 返回结局ID（6001~6004），无匹配时返回默认结局
         /// </summary>
         public int EvaluateEnding()
         {
@@ -232,24 +232,21 @@ namespace Game.Test
         {
             if (gameplayRecord == null || gameplayRecord.branchChoices == null) return 0;
 
+            // 仅保留核心分支推断：不吃 → 结局一
             foreach (var choice in gameplayRecord.branchChoices)
             {
-                switch (choice)
-                {
-                    case "not_eat": return 6001;
-                    case "confused": return 6002;
-                    case "internet": return 6003;
-                    case "rooftop": return 6004;
-                    case "friend": return 6005;
-                }
+                if (choice == "not_eat")
+                    return 6001;
             }
+            // 其他结局（6002~6004）由卡牌使用和血量条件判定，不再由分支名推断
             return 0;
         }
 
         int GetDefaultEndingId() => 6001;
 
         /// <summary>
-        /// 若条件列表为空，自动填充默认的5结局条件
+        /// 若条件列表为空，自动填充默认的4结局条件
+        /// 结局由血量+卡牌使用判定（不再使用分支/天台选择）
         /// </summary>
         void EnsureDefaultConditions()
         {
@@ -267,36 +264,25 @@ namespace Game.Test
                     new EndingBranchCondition
                     {
                         endingId = 6002,
-                        comment = "结局二：莫比乌斯环 — 迷茫/未拿到钥匙",
-                        requiredBranchChoice = "confused",
+                        comment = "结局二：莫比乌斯环 — 四关通关血量全为1",
                         requiredLevel = 5,
-                        maxLives = 2
+                        minLives = 1,
+                        maxLives = 1
                     },
                     new EndingBranchCondition
                     {
                         endingId = 6003,
-                        comment = "结局三：人心不足蛇吞象 — 网吧结局",
-                        requiredBranchChoice = "internet",
+                        comment = "结局三：星垂之夜 — 仅使用一张关键卡（2017 XOR 2026）",
                         requiredLevel = 5,
-                        requiredItems = new List<string> { "rooftop_key" }
+                        requiredUsedCards = new List<int> { 2017 },
+                        excludedUsedCards = new List<int> { 2026 }
                     },
                     new EndingBranchCondition
                     {
                         endingId = 6004,
-                        comment = "结局四：星垂之夜 — 独自上天台",
-                        requiredBranchChoice = "rooftop",
+                        comment = "结局四：北极星 — 两卡全用（2017 AND 2026）",
                         requiredLevel = 5,
-                        minEmotion = 60,
-                        requiredItems = new List<string> { "rooftop_key" }
-                    },
-                    new EndingBranchCondition
-                    {
-                        endingId = 6005,
-                        comment = "结局五：北极星 — 邀友同行",
-                        requiredBranchChoice = "friend",
-                        requiredLevel = 5,
-                        minEmotion = 60,
-                        requiredItems = new List<string> { "rooftop_key" }
+                        requiredUsedCards = new List<int> { 2017, 2026 }
                     }
                 };
             }
@@ -313,7 +299,7 @@ namespace Game.Test
         [Tooltip("关卡ID")]
         public int levelId;
 
-        [Tooltip("分支选择记录（如 eat / not_eat / confused / internet / rooftop / friend）")]
+        [Tooltip("分支选择记录（如 eat / not_eat 等）")]
         public List<string> branchChoices = new List<string>();
 
         [Tooltip("最终生命值")]
@@ -325,7 +311,7 @@ namespace Game.Test
         [Tooltip("使用的卡牌ID列表")]
         public List<int> usedCards = new List<int>();
 
-        [Tooltip("收集的关键道具（如 rooftop_key）")]
+        [Tooltip("收集的关键道具")]
         public List<string> collectedItems = new List<string>();
 
         [Tooltip("通关时间（秒）")]
@@ -356,7 +342,7 @@ namespace Game.Test
     [System.Serializable]
     public class EndingBranchCondition
     {
-        [Tooltip("触发的结局ID（6001~6005）")]
+        [Tooltip("触发的结局ID（6001~6004）")]
         public int endingId = 6001;
 
         [Tooltip("备注说明")]
@@ -365,7 +351,7 @@ namespace Game.Test
         [Tooltip("必须完成的关卡ID（0=不检查）")]
         public int requiredLevel = 0;
 
-        [Tooltip("必须选择的分支（如 eat / not_eat / confused / internet / rooftop / friend）")]
+        [Tooltip("必须选择的分支（如 eat / not_eat 等）")]
         public string requiredBranchChoice = "";
 
         [Tooltip("必须排除的分支（选择了此分支则不能触发）")]
@@ -389,7 +375,7 @@ namespace Game.Test
         [Tooltip("禁止使用的卡牌ID列表（使用了则排除）")]
         public List<int> excludedUsedCards = new List<int>();
 
-        [Tooltip("必须收集的关键道具（如 rooftop_key）")]
+        [Tooltip("必须收集的关键道具")]
         public List<string> requiredItems = new List<string>();
     }
 }

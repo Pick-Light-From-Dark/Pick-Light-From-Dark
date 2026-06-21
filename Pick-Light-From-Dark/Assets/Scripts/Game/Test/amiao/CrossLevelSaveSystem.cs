@@ -12,7 +12,24 @@ namespace Game.Test
     /// </summary>
     public class CrossLevelSaveSystem : MonoBehaviour
     {
-        public static CrossLevelSaveSystem Instance { get; private set; }
+        public static CrossLevelSaveSystem Instance
+        {
+            get
+            {
+                if (_instance == null)
+                {
+                    _instance = FindObjectOfType<CrossLevelSaveSystem>();
+                    if (_instance == null)
+                    {
+                        var go = new GameObject("CrossLevelSaveSystem");
+                        DontDestroyOnLoad(go);
+                        _instance = go.AddComponent<CrossLevelSaveSystem>();
+                    }
+                }
+                return _instance;
+            }
+        }
+        private static CrossLevelSaveSystem _instance;
 
         [Header("当前存档")]
         public CrossLevelSaveData currentSave;
@@ -24,13 +41,20 @@ namespace Game.Test
 
         void Awake()
         {
-            Instance = this;
+            if (_instance != null && _instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+            _instance = this;
+            DontDestroyOnLoad(gameObject);
             LoadFromDisk();
+            _ = TutorialManager.Instance; // 触发引导系统初始化
         }
 
         void OnDestroy()
         {
-            if (Instance == this) Instance = null;
+            if (_instance == this) _instance = null;
         }
 
         // ========== 关卡进度操作 ==========
@@ -85,9 +109,11 @@ namespace Game.Test
             }
         }
 
-        // ========== 卡牌记录（全局快速查询） ==========
+        // ========== 卡牌记录（全局+本关） ==========
 
-        /// <summary>记录卡牌使用</summary>
+        private HashSet<int> cardsUsedThisLevel = new HashSet<int>();
+
+        /// <summary>记录卡牌使用（全局持久化 + 本关追踪）</summary>
         public void RecordCardUsed(int cardId)
         {
             EnsureData();
@@ -97,13 +123,26 @@ namespace Game.Test
                 SaveToDisk();
                 Log($"[Save] 记录卡牌: {cardId}");
             }
+            cardsUsedThisLevel.Add(cardId);
         }
 
-        /// <summary>是否使用过指定卡牌</summary>
+        /// <summary>是否使用过指定卡牌（全局，跨关卡）</summary>
         public bool HasUsedCard(int cardId)
         {
             EnsureData();
             return currentSave.endingData.cardsUsed.Contains(cardId);
+        }
+
+        /// <summary>是否在本关使用过指定卡牌</summary>
+        public bool HasUsedCardThisLevel(int cardId)
+        {
+            return cardsUsedThisLevel.Contains(cardId);
+        }
+
+        /// <summary>清除本关卡牌使用记录（关卡开始时调用）</summary>
+        public void ClearCardsUsedThisLevel()
+        {
+            cardsUsedThisLevel.Clear();
         }
 
         // ========== 关卡结果记录（结局判定用） ==========
@@ -135,11 +174,10 @@ namespace Game.Test
         // ========== 结局判定接口（供游玩部分调用） ==========
 
         /// <summary>
-        /// 判定第五关结局（6002/6004/6005）
-        /// 6001 由第一关剧情选项直接触发，不经过本接口
+        /// 判定第五关结局（6002/6003/6004）
+        /// 6001 太阳照常升起 由第一关剧情选项直接触发，不经过本接口
         /// </summary>
-        /// <param name="rooftopChoice">0=未选择, 1=独自前往(6004), 2=邀请宋明月(6005)</param>
-        public int EvaluateEnding(int rooftopChoice = 0)
+        public int EvaluateEnding()
         {
             var r1 = GetLevelResult(1);
             var r2 = GetLevelResult(2);
@@ -148,41 +186,46 @@ namespace Game.Test
 
             bool HasResult(LevelResult r) => r != null;
 
-            // P0: 6002 莫比乌斯环 — 1/2/3/5关 finalLives 全=1
+            // P0: 结局二 6002 莫比乌斯环 — 1/2/3/5关 finalLives 全=1，不论其他条件
             if (HasResult(r1) && HasResult(r2) && HasResult(r3) && HasResult(r5) &&
                 r1.finalLives == 1 && r2.finalLives == 1 && r3.finalLives == 1 && r5.finalLives == 1)
             {
-                Log("[Ending] 判定结果: 6002 莫比乌斯环");
+                Log("[Ending] 判定: 结局二 莫比乌斯环（四关血量全=1）");
+                PreEvaluatedEndingId = 6002;
                 return 6002;
             }
 
-            // P1: 基础条件 — 至少一关>1
+            // P1: 至少一关血量 > 1
             bool anyGreaterThanOne = (r1?.finalLives > 1) || (r2?.finalLives > 1) || (r3?.finalLives > 1) || (r5?.finalLives > 1);
-            if (!anyGreaterThanOne) return 0;
+            if (!anyGreaterThanOne) { PreEvaluatedEndingId = 0; return 0; }
 
-            bool bothCards = (r2?.usedCard2017 == true) && (r5?.usedCard2026 == true);
+            bool card2017Used = r2?.usedCard2017 == true;
+            bool card2026Used = r5?.usedCard2026 == true;
 
-            if (!bothCards)
+            // 只用了一张卡 → 结局三 6003 星垂之夜
+            if (card2017Used != card2026Used) // XOR: 只用了一张
             {
-                Log("[Ending] 判定结果: 6004 星垂之夜（未全卡）");
+                Log("[Ending] 判定: 结局三 星垂之夜（仅使用一张关键卡）");
+                PreEvaluatedEndingId = 6003;
+                return 6003;
+            }
+
+            // 两张卡都用 → 结局四 6004 北极星
+            if (card2017Used && card2026Used)
+            {
+                Log("[Ending] 判定: 结局四 北极星（两卡全用）");
+                PreEvaluatedEndingId = 6004;
                 return 6004;
             }
 
-            // 两卡都用，根据木门选项
-            if (rooftopChoice == 1)
-            {
-                Log("[Ending] 判定结果: 6004 星垂之夜（独自）");
-                return 6004;
-            }
-            if (rooftopChoice == 2)
-            {
-                Log("[Ending] 判定结果: 6005 北极星");
-                return 6005;
-            }
-
-            Log("[Ending] 条件满足但未选择木门选项");
-            return 0; // 需要弹出选项
+            // 两卡都没用 → 结局三 6003 星垂之夜
+            Log("[Ending] 判定: 结局三 星垂之夜（两卡均未使用，默认触发）");
+            PreEvaluatedEndingId = 6003;
+            return 6003;
         }
+
+        /// <summary>结局预判结果（0=未判定或无法判定）</summary>
+        [NonSerialized] public int PreEvaluatedEndingId;
 
         // ========== 整档操作 ==========
 
@@ -193,6 +236,62 @@ namespace Game.Test
             PlayerPrefs.DeleteKey(SAVE_KEY);
             PlayerPrefs.Save();
             Log("[Save] 已清除所有跨关卡存档");
+        }
+
+        /// <summary>重置结局相关状态（新游戏开始时调用），不影响关卡进度存档</summary>
+        public void ResetEndingState()
+        {
+            PreEvaluatedEndingId = 0;
+            cardsUsedThisLevel.Clear();
+            if (currentSave != null)
+            {
+                currentSave.levelResults?.Clear();
+                currentSave.endingData?.cardsUsed?.Clear();
+            }
+            Log("[Save] 已重置结局状态（保留存档进度）");
+        }
+
+        /// <summary>游戏通关时调用，重置所有游戏进度（不影响设置）</summary>
+        public void MarkGameCompleted()
+        {
+            ClearAll();
+            Log("[Save] 游戏通关，已重置全部进度（设置保留）");
+        }
+
+        // ========== 引导系统 ==========
+
+        /// <summary>指定关卡引导是否已完成</summary>
+        public bool HasCompletedTutorial(int levelId)
+        {
+            EnsureData();
+            bool has = currentSave.completedTutorials.Contains(levelId);
+            Log($"[Save] 查询引导状态 Level{levelId}: {(has ? "已完成" : "未完成")}, 已完成的: [{string.Join(",", currentSave.completedTutorials)}]");
+            return has;
+        }
+
+        /// <summary>标记关卡引导已完成（写入存档永久标记）</summary>
+        public void MarkTutorialCompleted(int levelId)
+        {
+            EnsureData();
+            if (!currentSave.completedTutorials.Contains(levelId))
+            {
+                currentSave.completedTutorials.Add(levelId);
+                SaveToDisk();
+                Debug.Log($"[Save] ★ 引导已标记完成: Level{levelId}, 已完成的: [{string.Join(",", currentSave.completedTutorials)}], PlayerPrefs已保存");
+            }
+            else
+            {
+                Log($"[Save] 引导 Level{levelId} 已标记过，跳过");
+            }
+        }
+
+        /// <summary>重置指定关卡引导（测试用）</summary>
+        public void ResetTutorial(int levelId)
+        {
+            EnsureData();
+            currentSave.completedTutorials.Remove(levelId);
+            SaveToDisk();
+            Log($"[Save] 引导已重置: Level{levelId}");
         }
 
         /// <summary>是否有存档</summary>
@@ -222,6 +321,8 @@ namespace Game.Test
                 currentSave.endingData = new EndingAccumulatedData();
             if (currentSave.levelResults == null)
                 currentSave.levelResults = new List<LevelResult>();
+            if (currentSave.completedTutorials == null)
+                currentSave.completedTutorials = new List<int>();
         }
 
         void SaveToDisk()
@@ -261,12 +362,14 @@ namespace Game.Test
         public LevelCheckpoint checkpoint;
         public EndingAccumulatedData endingData;
         public List<LevelResult> levelResults;
+        public List<int> completedTutorials;
 
         public CrossLevelSaveData()
         {
             checkpoint = new LevelCheckpoint();
             endingData = new EndingAccumulatedData();
             levelResults = new List<LevelResult>();
+            completedTutorials = new List<int>();
         }
     }
 

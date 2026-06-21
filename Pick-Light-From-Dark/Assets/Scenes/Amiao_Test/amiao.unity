@@ -3053,7 +3053,7 @@ PrefabInstance:
     - target: {fileID: 5002, guid: e4552e71773f41b1b1c45761d864d4cd, type: 3}
       propertyPath: ending1Prefab
       value: 
-      objectReference: {fileID: 8761397556599405992, guid: 0989ced22c6a0d44aa308f836b6b657b, type: 3}
+      objectReference: {fileID: 8991784606549992189, guid: 72a0053c01450ad4483e262154766d5c, type: 3}
     - target: {fileID: 5002, guid: e4552e71773f41b1b1c45761d864d4cd, type: 3}
       propertyPath: ending2Prefab
       value: 

@@ -6,5 +6,9 @@ public class SceneMusicConfig : MonoBehaviour
 
     void Start()
     {
+        if (!string.IsNullOrEmpty(bgmName))
+        {
+            MusicMgr.Instance.PlayBKMusic(bgmName);
+        }
     }
 }

@@ -49,8 +49,6 @@ namespace Game.Test
                 testEndingId = 6003;
             else if (Input.GetKeyDown(KeyCode.Alpha4))
                 testEndingId = 6004;
-            else if (Input.GetKeyDown(KeyCode.Alpha5))
-                testEndingId = 6005;
         }
 
         void EnsureEndingScreen()
@@ -96,9 +94,8 @@ namespace Game.Test
             {
                 new EndingEntry { id = 6001, endingName = "【结局一：太阳照常升起】", description = "薯片改变不了任何事，你也是。" },
                 new EndingEntry { id = 6002, endingName = "【结局二：莫比乌斯环】", description = "一条走廊，离开起点之时，你就明白你终会回来。" },
-                new EndingEntry { id = 6003, endingName = "【结局三：人心不足蛇吞象】", description = "得失荣枯总在天，机关用尽也徒然。" },
-                new EndingEntry { id = 6004, endingName = "【结局四：星垂之夜】", description = "俯仰天地之间——无愧于人，无愧于心，无愧于己。" },
-                new EndingEntry { id = 6005, endingName = "【结局五：北极星】", description = "我对你透露一个大秘密，这是人类最古老的玩笑——无论往哪走，都是向前走。" }
+                new EndingEntry { id = 6003, endingName = "【结局三：星垂之夜】", description = "俯仰天地之间——无愧于人，无愧于心，无愧于己。" },
+                new EndingEntry { id = 6004, endingName = "【结局四：北极星】", description = "我对你透露一个大秘密，这是人类最古老的玩笑——无论往哪走，都是向前走。" }
             };
             return so;
         }
@@ -110,7 +107,7 @@ namespace Game.Test
         {
             GUILayout.BeginArea(new Rect(10, Screen.height - 100, 400, 90));
             GUILayout.BeginVertical(GUI.skin.box);
-            GUILayout.Label("结局画面测试 (F3=显示 F4=切换死亡模式 1~5=切换结局)");
+            GUILayout.Label("结局画面测试 (F3=显示 F4=切换死亡模式 1~4=切换结局)");
             GUILayout.Label($"当前: ID={testEndingId} 死亡={testAsDeathEnding}");
             GUILayout.EndVertical();
             GUILayout.EndArea();

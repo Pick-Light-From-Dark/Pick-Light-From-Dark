@@ -75,6 +75,22 @@ namespace Game.Flow
 
         void OnChapterSplashFinished()
         {
+            // 继续游戏：跳过开场剧情，直接进游玩
+            var cp = Game.Test.CrossLevelSaveSystem.Instance?.LoadCheckpoint();
+            if (cp != null && cp.isInGameplay)
+            {
+                Debug.Log("[LevelFlowCoordinator] 检测到继续游戏存档，跳过开场剧情");
+                Game.Test.CrossLevelSaveSystem.Instance.SaveStoryProgress(levelId, "");
+                // 确保VN UI已隐藏
+                if (vnController != null)
+                {
+                    if (vnController.vnCanvas != null) vnController.vnCanvas.gameObject.SetActive(false);
+                    vnController.SetSkipButtonVisible(false);
+                }
+                StartGameplay();
+                return;
+            }
+
             if (openingStory == null)
                 StartGameplay();
             else
@@ -90,10 +106,11 @@ namespace Game.Flow
             }
 
             Debug.Log("[LevelFlowCoordinator] === 阶段1：开场剧情 ===");
+            if (vnController.vnCanvas != null)
+                vnController.vnCanvas.gameObject.SetActive(true);
             vnController.dialogueText = openingStory;
             vnController.OnDialogueExit = OnOpeningStoryExit;
             vnController.OnDialogueComplete = OnOpeningStoryEnd;
-            // 重置并启动 VN 控制器
             vnController.ClearPlaceholder();
             vnController.SetSkipButtonVisible(true);
             vnController.RestartDialogue();
@@ -149,6 +166,8 @@ namespace Game.Flow
 
             // 清理跨场景单例可能残留的脏状态
             Time.timeScale = 1f;
+            // 清除上关卡牌使用记录，避免跨关污染结局判定
+            Game.Test.CrossLevelSaveSystem.Instance?.ClearCardsUsedThisLevel();
             // 先初始化 GameFlowController，避免 GamePanel.Awake 用 TestLevelConfig 自初始化
             GameFlowController.Instance.Initialize(levelConfig);
 
@@ -178,11 +197,102 @@ namespace Game.Flow
             if (isGameOver) return;
             isGameOver = true;
 
+            // 记录关卡结果（跨关卡结局判定用，使用本关卡牌追踪避免跨关污染）
+            int lives = GameFlowController.Instance.GetCurrentLives();
+            var save = Game.Test.CrossLevelSaveSystem.Instance;
+            bool card2017Used = save?.HasUsedCardThisLevel(2017) ?? false;
+            bool card2026Used = save?.HasUsedCardThisLevel(2026) ?? false;
+            save?.RecordLevelResult(levelId, lives, card2017Used, card2026Used);
+            Debug.Log($"[LevelFlowCoordinator] 记录关卡结果: Lv.{levelId}, Lives={lives}, 2017={card2017Used}, 2026={card2026Used}");
+
+            // 如果有局内对话正在播放，等待对话结束后再处理 GameWin
+            if (GamePanel.IsInteractionLocked)
+            {
+                Debug.Log("[LevelFlowCoordinator] 局内对话进行中，延迟 GameWin 处理");
+                EventCenter.Instance.AddEventListener(E_EventType.GameDialogueEnd, OnDeferredGameWin);
+                return;
+            }
+
+            ProcessGameWin();
+        }
+
+        void OnDeferredGameWin()
+        {
+            EventCenter.Instance.RemoveEventListener(E_EventType.GameDialogueEnd, OnDeferredGameWin);
+            Debug.Log("[LevelFlowCoordinator] 局内对话结束，继续 GameWin 处理");
+            ProcessGameWin();
+        }
+
+        void ProcessGameWin()
+        {
             Debug.Log("[LevelFlowCoordinator] 游戏胜利，进入结尾剧情...");
             CleanupTeacherAI();
-            UIMgr.Instance.HidePanel<GamePanel>();
+            UIMgr.Instance.HidePanel<GamePanel>(true);
             UnsubscribeGameEvents();
+
+            // 检查是否有预判结局（由卡牌2038或调试面板触发）
+            int preEval = Game.Test.CrossLevelSaveSystem.Instance?.PreEvaluatedEndingId ?? 0;
+            if (preEval != 0)
+            {
+                Debug.Log($"[LevelFlowCoordinator] 预判结局: {preEval}，覆盖结尾剧情");
+
+                // 根据结局ID选择对应的结尾剧情文件
+                string dialogueFile = GetEndingDialogueFile(preEval);
+                TextAsset endingAsset = Resources.Load<TextAsset>($"Dialogue/{dialogueFile}");
+                if (endingAsset != null)
+                {
+                    endingStory = endingAsset;
+                    Debug.Log($"[LevelFlowCoordinator] 结尾剧情覆盖为: {dialogueFile}");
+                }
+                else
+                {
+                    Debug.LogWarning($"[LevelFlowCoordinator] 未找到对话文件: Dialogue/{dialogueFile}");
+                }
+            }
+
             StartEndingStory();
+        }
+
+        string GetEndingDialogueFile(int endingId)
+        {
+            switch (endingId)
+            {
+                case 6002: return "Dialogue5-2a"; // 结局二 莫比乌斯环
+                case 6003: return "Dialogue5-2c"; // 结局三 星垂之夜
+                case 6004: return "Dialogue5-2d"; // 结局四 北极星
+                default: return "";
+            }
+        }
+
+        void ShowEndingByEvaluatedId(int endingId)
+        {
+            string prefabPath = endingId switch
+            {
+                6002 => "UI/Ending2_Mobius",
+                6004 => "UI/Ending4_StarryNight",
+                _ => ""
+            };
+
+            GameObject prefab = null;
+            if (!string.IsNullOrEmpty(prefabPath))
+                prefab = Resources.Load<GameObject>(prefabPath);
+
+            if (prefab != null)
+            {
+                ShowEnding(prefab);
+            }
+            else
+            {
+                Debug.LogWarning($"[LevelFlowCoordinator] 未找到结局 {endingId} 的预制体 ({prefabPath})，显示 Ending2Panel 兜底");
+                // 兜底：动态创建 Ending2Panel
+                var canvas = FindFirstObjectByType<Canvas>();
+                if (canvas != null)
+                {
+                    var go = new GameObject($"Ending{endingId}_Panel");
+                    go.transform.SetParent(canvas.transform, false);
+                    go.AddComponent<Game.Test.Ending2Panel>();
+                }
+            }
         }
 
         void OnGameLose(string reason)
@@ -192,16 +302,20 @@ namespace Game.Flow
 
             Debug.Log($"[LevelFlowCoordinator] 游戏失败: {reason}");
             CleanupTeacherAI();
-            UIMgr.Instance.HidePanel<GamePanel>();
+            UIMgr.Instance.HidePanel<GamePanel>(true);
             UnsubscribeGameEvents();
 
-            if (reason == "生命值耗尽" && deathEndingPrefab != null)
+            // 优先序列化引用，其次从Resources动态加载
+            GameObject deadPrefab = deathEndingPrefab;
+            if (deadPrefab == null)
+                deadPrefab = Resources.Load<GameObject>("UI/Content/DeadEnd");
+            if (deadPrefab != null)
             {
-                ShowEnding(deathEndingPrefab);
+                ShowEnding(deadPrefab);
             }
             else
             {
-                UIMgr.Instance.ShowPanel<TipPanel>();
+                SceneMgr.Instance.LoadScene("GameScene");
             }
         }
 
@@ -235,6 +349,9 @@ namespace Game.Flow
                     TryAdvanceToNextLevel();
                     break;
                 case VNExitType.Ending:
+                    // VN 已显示结局画面，不做额外处理
+                    Debug.Log("[LevelFlowCoordinator] VN 已处理结局显示");
+                    break;
                 case VNExitType.Gameplay:
                 case VNExitType.None:
                 default:
@@ -303,8 +420,14 @@ namespace Game.Flow
         {
             if (prefab == null) return;
             var canvas = FindFirstObjectByType<Canvas>();
-            if (canvas == null) return;
-            var instance = Instantiate(prefab, canvas.transform, false);
+            Transform parent = null;
+            if (canvas != null)
+            {
+                // 挂到UIMgr的System层，确保在最上层渲染
+                var sysLayer = canvas.transform.Find("System");
+                parent = sysLayer != null ? sysLayer : canvas.transform;
+            }
+            Instantiate(prefab, parent, false);
             Debug.Log($"[LevelFlowCoordinator] 显示结局: {prefab.name}");
         }
 
@@ -327,6 +450,7 @@ namespace Game.Flow
         {
             CleanupTeacherAI();
             UnsubscribeGameEvents();
+            EventCenter.Instance.RemoveEventListener(E_EventType.GameDialogueEnd, OnDeferredGameWin);
             if (Instance == this) Instance = null;
         }
     }

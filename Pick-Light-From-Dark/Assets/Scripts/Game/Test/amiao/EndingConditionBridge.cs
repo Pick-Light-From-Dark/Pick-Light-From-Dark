@@ -64,13 +64,13 @@ namespace Game.Test
         }
 
         /// <summary>
-        /// 是否可以显示天台选项 — 两卡全部使用时返回 true
+        /// 是否两卡全部使用 — 两卡都使用时返回 true（触发结局四）
         /// Fungus 可将返回值存入 Boolean Variable，绑定到 Menu 的 hideThisOption
         /// </summary>
         public bool CanShowRooftopChoice()
         {
             bool result = HasUsedCard(2017) && HasUsedCard(2026);
-            Log($"[EndingConditionBridge] 天台选项检查: {result} (2017={HasUsedCard(2017)}, 2026={HasUsedCard(2026)})");
+            Log($"[EndingConditionBridge] 两卡检查: {result} (2017={HasUsedCard(2017)}, 2026={HasUsedCard(2026)})");
             return result;
         }
 

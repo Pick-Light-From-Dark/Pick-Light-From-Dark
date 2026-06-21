@@ -540,13 +540,12 @@ public class DialogueSystem : MonoBehaviour
             btnsUI = null;
         }
 
+        MusicMgr.Instance.StopBKMusic();
+
         if (panelUI != null)
         {
             panelUI.Hide();
         }
-
-        // [已注释] Fungus 桥接：隐藏 SayDialog
-        // FungusBridge.Instance?.HideSayDialog();
 
         onDialogueComplete?.Invoke();
         onDialogueComplete = null;

@@ -204,7 +204,6 @@ namespace Game.AI
 
         void EnterIdle()
         {
-            StopFootstep();
             stateTimer = Mathf.Max(0.5f, Random.Range(levelConfig.patrolIntervals.x, levelConfig.patrolIntervals.y));
             targetDuration = stateTimer;
             isVisible = false;
@@ -229,7 +228,7 @@ namespace Game.AI
             EventCenter.Instance.EventTrigger(E_EventType.TeacherFootstepStart, currentInspectType);
 
             // 播放脚步声（循环），音量从20%渐增至100%
-            if (!gameFlow.IsPaused())
+            if (!gameFlow.IsPaused() && footstepSource == null)
                 StartFootstep(0.5f * MusicMgr.Instance.SoundValue);
         }
 
@@ -255,9 +254,11 @@ namespace Game.AI
             // 根据检查类型显示不同动画
             if (currentInspectType == InspectType.Flash)
             {
-                // 手电筒检查：显示老师画面 + 视线视频动画
                 GamePanel.Instance?.ShowTeacherImage();
-                GamePanel.Instance?.ShowEyeGazeOverlay(2f);
+                // 仅闭眼时播放手电筒动画
+                bool eyesClosed = playerState != null && playerState.IsEyesClosed();
+                if (eyesClosed)
+                    GamePanel.Instance?.ShowEyeGazeOverlay(stateTimer, "视线 (1)");
             }
 
             // 触发检查开始事件
@@ -277,7 +278,7 @@ namespace Game.AI
 
             // 重新播放脚步声（循环），音量从满渐减，由Update根据approachProgress调整
             // 如果游戏已暂停（如被抓后），跳过，由 OnGameResume 负责恢复
-            if (!gameFlow.IsPaused())
+            if (!gameFlow.IsPaused() && footstepSource == null)
                 StartFootstep(MusicMgr.Instance.SoundValue);
 
             Debug.Log($"[TeacherAI] 离开中，耗时 {stateTimer:F1}秒 (第{patrolCount}次巡逻)");
@@ -433,24 +434,59 @@ namespace Game.AI
         }
 
         private int _footstepSerial;
+        private int _footstepCycle;
+        private Coroutine _footstepLoopRoutine;
 
-        void StartFootstep(float initialVolume)
+        void StartFootstep(float baseVolume)
         {
             StopFootstep();
             int serial = ++_footstepSerial;
-            MusicMgr.Instance.PlaySound("DXH_SOUND/08.脚步声", true, (source) =>
+
+            // 每次循环：进时递增音量，退时递减
+            float sv = MusicMgr.Instance.SoundValue;
+            float cycleVolume;
+            if (currentState == TeacherState.Approaching)
+                cycleVolume = Mathf.Lerp(0.2f * sv, sv, Mathf.Min(1f, _footstepCycle * 0.25f));
+            else if (currentState == TeacherState.Leaving)
+                cycleVolume = Mathf.Lerp(sv, 0.1f * sv, Mathf.Min(1f, _footstepCycle * 0.25f));
+            else
+                cycleVolume = baseVolume;
+            _footstepCycle++;
+
+            MusicMgr.Instance.PlaySound("DXH_SOUND/08.脚步声", false, (source) =>
             {
                 if (serial != _footstepSerial) { MusicMgr.Instance.StopSound(source); return; }
                 if (footstepSource != null)
                     MusicMgr.Instance.StopSound(footstepSource);
                 footstepSource = source;
-                footstepSource.volume = initialVolume;
+                footstepSource.volume = cycleVolume;
+
+                if (_footstepLoopRoutine != null) StopCoroutine(_footstepLoopRoutine);
+                _footstepLoopRoutine = StartCoroutine(FootstepLoop(serial, baseVolume));
             });
+        }
+
+        System.Collections.IEnumerator FootstepLoop(int serial, float baseVolume)
+        {
+            yield return new WaitForSeconds(10f);
+
+            if (serial != _footstepSerial) yield break;
+            if (footstepSource != null)
+            {
+                MusicMgr.Instance.StopSound(footstepSource);
+                footstepSource = null;
+            }
+            StartFootstep(baseVolume);
         }
 
         void StopFootstep()
         {
             _footstepSerial++;
+            if (_footstepLoopRoutine != null)
+            {
+                StopCoroutine(_footstepLoopRoutine);
+                _footstepLoopRoutine = null;
+            }
             if (footstepSource != null)
             {
                 MusicMgr.Instance.StopSound(footstepSource);
@@ -460,8 +496,8 @@ namespace Game.AI
 
         void ExitState(TeacherState state)
         {
-            if (state == TeacherState.Approaching || state == TeacherState.Leaving)
-                StopFootstep();
+            _footstepCycle = 0;
+            StopFootstep();
         }
 
         /// <summary>

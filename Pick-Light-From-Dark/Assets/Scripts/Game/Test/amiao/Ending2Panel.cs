@@ -18,10 +18,13 @@ namespace Game.Test
         {
             AutoFindComponents();
             BindButtons();
+            BindImageClick();
         }
 
         void AutoFindComponents()
         {
+            if (endingImage == null)
+                endingImage = GetComponent<Image>();
             if (endingImage == null)
                 endingImage = transform.Find("EndingImage")?.GetComponent<Image>();
             if (returnButton == null)
@@ -39,9 +42,28 @@ namespace Game.Test
                 loadSaveButton.onClick.AddListener(OnLoadSaveClick);
         }
 
+        /// <summary>结局图片本身也支持点击返回</summary>
+        void BindImageClick()
+        {
+            if (endingImage == null) return;
+            endingImage.raycastTarget = true;
+            var existingBtn = endingImage.GetComponent<Button>();
+            if (existingBtn == null)
+            {
+                var btn = endingImage.gameObject.AddComponent<Button>();
+                btn.onClick.AddListener(OnReturnClick);
+            }
+            else
+            {
+                existingBtn.onClick.AddListener(OnReturnClick);
+            }
+        }
+
         void OnReturnClick()
         {
             Debug.Log("[Ending2Panel] 返回主界面");
+            CrossLevelSaveSystem.Instance?.MarkGameCompleted();
+            MusicMgr.Instance?.StopBKMusic();
             SceneManager.LoadScene("GameScene");
         }
 

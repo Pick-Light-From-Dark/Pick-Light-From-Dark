@@ -1,3 +1,6 @@
 # 第一关 · 选择「吃」且通关后播放（Level1 场景 LevelFlowCoordinator.endingStory）
+[bg:black_sence]
+[hide_dialog]
+[show_dialog]
 陆萤：（因为薯片，我的心情确实变好了一点。明天…… 还是去向宋明月道谢吧。）
 [action:nextlevel]

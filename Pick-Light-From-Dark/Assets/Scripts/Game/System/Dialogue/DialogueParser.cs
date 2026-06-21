@@ -15,7 +15,34 @@ public static class DialogueParser
         {
             string s = rawLines[i].Trim();
             if (string.IsNullOrEmpty(s)) continue;
-            if (s.StartsWith("#")) continue;
+            if (s.StartsWith("#"))
+            {
+                // #【XX关结束】作为关卡结束标记，停止对话并显示结局画面
+                if (s.Contains("关结束】"))
+                {
+                    var endLine = new DialogueLine();
+                    endLine.type = "关卡结束";
+                    endLine.content = s.TrimStart('#').Trim();
+                    list.Add(endLine);
+                }
+                continue;
+            }
+
+            // 【关卡结束】标记：停止对话并显示结局画面
+            if (s.StartsWith("【") && s.Contains("关结束】"))
+            {
+                var endLine = new DialogueLine();
+                endLine.type = "关卡结束";
+                endLine.content = s;
+                list.Add(endLine);
+                continue;
+            }
+
+            // 【结局X：...】标记：跳过（#注释备用兼容）
+            if (s.StartsWith("【结局"))
+            {
+                continue;
+            }
 
             var d = new DialogueLine();
 

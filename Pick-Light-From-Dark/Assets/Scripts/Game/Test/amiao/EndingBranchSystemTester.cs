@@ -12,10 +12,10 @@ namespace Game.Test
 
         [Header("测试数据")]
         public int testLevelId = 5;
-        public string testBranchChoice = "friend";
+        public string testBranchChoice = "";
         public int testLives = 3;
-        public int testEmotion = 80;
-        public string testItem = "rooftop_key";
+        public int testEmotion = 50;
+        public string testItem = "";
 
         private GameplayRecord testRecord;
         private int lastResult = -1;
@@ -78,12 +78,11 @@ namespace Game.Test
             }
 
             GUILayout.Space(10);
-            GUILayout.Label("快捷分支", GUI.skin.box);
-            if (GUILayout.Button("结局一 (不吃)")) { testBranchChoice = "not_eat"; testLevelId = 1; RunEvaluation(); }
-            if (GUILayout.Button("结局二 (迷茫)")) { testBranchChoice = "confused"; testLevelId = 5; testLives = 1; RunEvaluation(); }
-            if (GUILayout.Button("结局三 (网吧)")) { testBranchChoice = "internet"; testLevelId = 5; RunEvaluation(); }
-            if (GUILayout.Button("结局四 (天台)")) { testBranchChoice = "rooftop"; testLevelId = 5; testEmotion = 80; RunEvaluation(); }
-            if (GUILayout.Button("结局五 (邀友)")) { testBranchChoice = "friend"; testLevelId = 5; testEmotion = 80; RunEvaluation(); }
+            GUILayout.Label("快捷结局测试", GUI.skin.box);
+            if (GUILayout.Button("结局一 (不吃分支)")) { testBranchChoice = "not_eat"; testLevelId = 1; RunEvaluation(); }
+            if (GUILayout.Button("结局二 (全1血)")) { testBranchChoice = ""; testLevelId = 5; testLives = 1; RunEvaluation(); }
+            if (GUILayout.Button("结局三 (仅2017卡)")) { testBranchChoice = ""; testLevelId = 5; testLives = 3; RunEvaluation(); }
+            if (GUILayout.Button("结局四 (2017+2026两卡)")) { testBranchChoice = ""; testLevelId = 5; testLives = 3; RunEvaluation(); }
 
             GUILayout.EndScrollView();
             GUI.DragWindow();
@@ -106,13 +105,13 @@ namespace Game.Test
             Debug.Log($"[EndingBranchSystemTester] 判定结果: {lastResult} (分支={testBranchChoice} 生命={testLives} 情绪={testEmotion})");
         }
 
-        [ContextMenu("测试：结局五")]
-        void TestEnding5()
+        [ContextMenu("测试：结局四")]
+        void TestEnding4()
         {
-            testBranchChoice = "friend";
+            testBranchChoice = "";
             testLevelId = 5;
-            testEmotion = 80;
-            testItem = "rooftop_key";
+            testLives = 3;
+            testItem = "";
             RunEvaluation();
         }
     }

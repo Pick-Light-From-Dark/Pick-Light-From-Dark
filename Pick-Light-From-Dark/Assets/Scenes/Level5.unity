@@ -174,6 +174,22 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1000000000000000002, guid: b7022360ea87421da2ab235934d5963f, type: 3}
+      propertyPath: ending1Prefab
+      value: 
+      objectReference: {fileID: 8991784606549992189, guid: 72a0053c01450ad4483e262154766d5c, type: 3}
+    - target: {fileID: 1000000000000000002, guid: b7022360ea87421da2ab235934d5963f, type: 3}
+      propertyPath: ending2Prefab
+      value: 
+      objectReference: {fileID: 4443451610753680907, guid: 9baec67c271436645bc5015fdfd9a8e1, type: 3}
+    - target: {fileID: 1000000000000000002, guid: b7022360ea87421da2ab235934d5963f, type: 3}
+      propertyPath: ending3Prefab
+      value: 
+      objectReference: {fileID: 5855622836145442154, guid: 5a375b3a3659921418264ca175735099, type: 3}
+    - target: {fileID: 1000000000000000002, guid: b7022360ea87421da2ab235934d5963f, type: 3}
+      propertyPath: ending4Prefab
+      value: 
+      objectReference: {fileID: 531080766788611453, guid: 2eb7b2dcf0341074b848b741b4db94b2, type: 3}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -202,6 +218,7 @@ GameObject:
   - component: {fileID: 813437210}
   - component: {fileID: 813437209}
   - component: {fileID: 813437212}
+  - component: {fileID: 813437213}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -295,6 +312,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6475552f507593044b2f1d34363fba22, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &813437213
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 813437208}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 58760fe5ed9c5e5498adf4188e8a74e4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1500532619
 GameObject:
   m_ObjectHideFlags: 0
@@ -334,6 +363,7 @@ MonoBehaviour:
   nextLevelPrefab: {fileID: 0}
   ending1Prefab: {fileID: 4000, guid: c08e78eaa18d4706a259be8650a4d972, type: 3}
   deathEndingPrefab: {fileID: 6000, guid: f5bd8a962e8242ff92f62f72052e2cbd, type: 3}
+  showChapterSplash: 1
 --- !u!4 &1500532621
 Transform:
   m_ObjectHideFlags: 0

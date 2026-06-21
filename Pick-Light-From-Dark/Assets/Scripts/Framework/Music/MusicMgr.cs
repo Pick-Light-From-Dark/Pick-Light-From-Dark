@@ -23,17 +23,28 @@ public class MusicMgr : BaseManager<MusicMgr>
     //音效是否在播放
     private bool soundIsPlay = true;
 
+    //总音量（独立乘数，不影响各子滑块的值）
+    private float masterVolume = 1f;
+    public float MasterVolume => masterVolume;
+
     private string currentBKName = "";
 
     private const string BkMusicPrefsKey = "BkMusicVolume";
     private const string SoundPrefsKey = "SoundVolume";
+    private const string MasterVolumePrefsKey = "MasterVolume";
 
     private MusicMgr()
     {
         bkMusicValue = PlayerPrefs.GetFloat(BkMusicPrefsKey, 0.5f);
         soundValue = PlayerPrefs.GetFloat(SoundPrefsKey, 0.5f);
+        masterVolume = PlayerPrefs.GetFloat(MasterVolumePrefsKey, 1f);
         MonoMgr.Instance.AddFixedUpdateListener(Update);
+        EventCenter.Instance.AddEventListener(E_EventType.GamePause, OnGamePause);
+        EventCenter.Instance.AddEventListener(E_EventType.GameResume, OnGameResume);
     }
+
+    void OnGamePause() { PlayOrPauseSound(false); }
+    void OnGameResume() { PlayOrPauseSound(true); }
 
 
     private void Update()
@@ -49,6 +60,8 @@ public class MusicMgr : BaseManager<MusicMgr>
                 continue;
             }
             var source = soundList[i];
+            // 循环音效由调用方管理生命周期，跳过自动回收
+            if (source.loop) continue;
             if (!source.isPlaying)
             {
                 source.clip = null;
@@ -108,14 +121,35 @@ public class MusicMgr : BaseManager<MusicMgr>
         bkMusic.Pause();
     }
 
+    //恢复背景音乐
+    public void ResumeBKMusic()
+    {
+        if (bkMusic == null)
+            return;
+        bkMusic.UnPause();
+    }
+
     //设置背景音乐大小
     public void ChangeBKMusicValue(float v)
     {
         bkMusicValue = v;
         PlayerPrefs.SetFloat(BkMusicPrefsKey, v);
-        if (bkMusic == null)
-            return;
-        bkMusic.volume = bkMusicValue;
+        ApplyBkMusicVolume();
+    }
+
+    void ApplyBkMusicVolume()
+    {
+        if (bkMusic != null)
+            bkMusic.volume = bkMusicValue * masterVolume;
+    }
+
+    /// <summary>设置总音量（独立乘数，不影响BGM/音效各自滑块值）</summary>
+    public void ChangeMasterVolume(float v)
+    {
+        masterVolume = v;
+        PlayerPrefs.SetFloat(MasterVolumePrefsKey, v);
+        ApplyBkMusicVolume();
+        ApplySoundToList();
     }
 
     /// <summary>
@@ -142,7 +176,7 @@ public class MusicMgr : BaseManager<MusicMgr>
 
         source.clip = clip;
         source.loop = isLoop;
-        source.volume = soundValue;
+        source.volume = soundValue * masterVolume;
         source.Play();
 
         if(!soundList.Contains(source))
@@ -189,9 +223,15 @@ public class MusicMgr : BaseManager<MusicMgr>
     {
         soundValue = v;
         PlayerPrefs.SetFloat(SoundPrefsKey, v);
+        ApplySoundToList();
+    }
+
+    void ApplySoundToList()
+    {
         for (int i = 0; i < soundList.Count; i++)
         {
-            soundList[i].volume = v;
+            if (soundList[i] != null)
+                soundList[i].volume = soundValue * masterVolume;
         }
     }
 

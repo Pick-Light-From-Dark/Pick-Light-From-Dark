@@ -11,14 +11,14 @@ namespace Game.Test
     public class EndingTestRunner : MonoBehaviour
     {
         [Header("测试配置")]
-        [Tooltip("要测试的结局ID（6001~6005）")]
+        [Tooltip("要测试的结局ID（6001~6004）")]
         public int testEndingId = 6001;
 
         [Tooltip("自动在Start时触发测试")]
         public bool autoTriggerOnStart = true;
 
         [Header("按键测试（运行时）")]
-        [Tooltip("按数字键1~5触发对应结局")]
+        [Tooltip("按数字键1~4触发对应结局")]
         public bool enableKeyInput = true;
 
         void Start()
@@ -52,8 +52,6 @@ namespace Game.Test
                 EndingManager.Instance.TriggerEnding(6003);
             else if (Input.GetKeyDown(KeyCode.Alpha4))
                 EndingManager.Instance.TriggerEnding(6004);
-            else if (Input.GetKeyDown(KeyCode.Alpha5))
-                EndingManager.Instance.TriggerEnding(6005);
         }
 
         void TriggerTestEnding()
@@ -63,7 +61,7 @@ namespace Game.Test
         }
 
         /// <summary>
-        /// 创建测试用结局数据（内置5个结局）
+        /// 创建测试用结局数据（内置4个结局）
         /// </summary>
         EndingDataSO CreateTestEndingData()
         {
@@ -85,19 +83,13 @@ namespace Game.Test
                 new EndingEntry
                 {
                     id = 6003,
-                    endingName = "【结局三：人心不足蛇吞象】",
-                    description = "得失荣枯总在天，机关用尽也徒然。"
-                },
-                new EndingEntry
-                {
-                    id = 6004,
-                    endingName = "【结局四：星垂之夜】",
+                    endingName = "【结局三：星垂之夜】",
                     description = "俯仰天地之间——无愧于人，无愧于心，无愧于己。"
                 },
                 new EndingEntry
                 {
-                    id = 6005,
-                    endingName = "【结局五：北极星】",
+                    id = 6004,
+                    endingName = "【结局四：北极星】",
                     description = "我对你透露一个大秘密，这是人类最古老的玩笑——无论往哪走，都是向前走。"
                 }
             };
@@ -115,8 +107,5 @@ namespace Game.Test
 
         [ContextMenu("测试结局4")]
         void TestEnding4() { EndingManager.Instance?.TriggerEnding(6004); }
-
-        [ContextMenu("测试结局5")]
-        void TestEnding5() { EndingManager.Instance?.TriggerEnding(6005); }
     }
 }

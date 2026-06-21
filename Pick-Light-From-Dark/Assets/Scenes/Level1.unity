@@ -159,8 +159,9 @@ MonoBehaviour:
   nextLevelSceneName: Level2
   currentLevelSceneName: Level1
   nextLevelPrefab: {fileID: 0}
-  ending1Prefab: {fileID: 8761397556599405992, guid: 0989ced22c6a0d44aa308f836b6b657b, type: 3}
+  ending1Prefab: {fileID: 8991784606549992189, guid: 72a0053c01450ad4483e262154766d5c, type: 3}
   deathEndingPrefab: {fileID: 6000, guid: f5bd8a962e8242ff92f62f72052e2cbd, type: 3}
+  showChapterSplash: 1
 --- !u!4 &283294897
 Transform:
   m_ObjectHideFlags: 0
@@ -228,6 +229,22 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1000000000000000002, guid: f60714ec8d6d7314191eb2169126262a, type: 3}
+      propertyPath: ending1Prefab
+      value: 
+      objectReference: {fileID: 8991784606549992189, guid: 72a0053c01450ad4483e262154766d5c, type: 3}
+    - target: {fileID: 1000000000000000002, guid: f60714ec8d6d7314191eb2169126262a, type: 3}
+      propertyPath: ending2Prefab
+      value: 
+      objectReference: {fileID: 4443451610753680907, guid: 9baec67c271436645bc5015fdfd9a8e1, type: 3}
+    - target: {fileID: 1000000000000000002, guid: f60714ec8d6d7314191eb2169126262a, type: 3}
+      propertyPath: ending3Prefab
+      value: 
+      objectReference: {fileID: 5855622836145442154, guid: 5a375b3a3659921418264ca175735099, type: 3}
+    - target: {fileID: 1000000000000000002, guid: f60714ec8d6d7314191eb2169126262a, type: 3}
+      propertyPath: ending4Prefab
+      value: 
+      objectReference: {fileID: 531080766788611453, guid: 2eb7b2dcf0341074b848b741b4db94b2, type: 3}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

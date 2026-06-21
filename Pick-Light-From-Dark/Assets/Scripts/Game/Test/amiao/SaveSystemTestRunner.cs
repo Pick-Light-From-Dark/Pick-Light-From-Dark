@@ -126,13 +126,13 @@ namespace Game.Test
             };
             PlayerDataStore.Instance.SaveLevelRecord(record3);
 
-            // 记录4：第五夜通关，结局五
+            // 记录4：第五夜通关，结局四
             var record4 = new JsonLevelRecord(1005)
             {
                 isWin = true,
                 timeUsed = 480.0f,
-                endingBranch = "corridor",
-                endingId = 6005,
+                endingBranch = "both_cards",
+                endingId = 6004,
                 cardUses = new List<CardUseEntry>
                 {
                     new CardUseEntry(2001, 10.0f, true),

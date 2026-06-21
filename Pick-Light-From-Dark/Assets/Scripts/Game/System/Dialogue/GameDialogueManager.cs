@@ -36,15 +36,27 @@ public class GameDialogueManager : MonoBehaviour
 
     private void LoadAndPositionPrefabs()
     {
-        if (thinkBubbleRt == null) return;
-
         if (playerDialoguePrefab == null)
             playerDialoguePrefab = Resources.Load<GameObject>("UI/Dialogue/PlayerGameDialogue");
         if (otherDialoguePrefab == null)
             otherDialoguePrefab = Resources.Load<GameObject>("UI/Dialogue/OtherGameDialogue");
 
-        // 实例化到思考框的同一父级，确保 anchoredPosition 坐标系一致
-        Transform parent = thinkBubbleRt.parent;
+        // 父级：优先用思考框的父级，兜底用 GamePanel 所在 Canvas
+        Transform parent = null;
+        if (thinkBubbleRt != null)
+            parent = thinkBubbleRt.parent;
+
+        if (parent == null)
+        {
+            var canvas = FindFirstObjectByType<Canvas>();
+            if (canvas != null) parent = canvas.transform;
+        }
+
+        if (parent == null)
+        {
+            Debug.LogError("[GameDialogueManager] 无法找到父级 Canvas，对话 UI 将不可见");
+            return;
+        }
 
         if (playerDialoguePrefab != null)
         {
@@ -52,7 +64,8 @@ public class GameDialogueManager : MonoBehaviour
             playerInstance.SetActive(false);
             playerText = playerInstance.transform.Find("PlayerDialogueText")?.GetComponent<TextMeshProUGUI>();
             playerSpeakerNameText = playerInstance.transform.Find("PlayerSpeakerNameImgBk/PlayerSpeakerNameText")?.GetComponent<TextMeshProUGUI>();
-            CopyRectTransform(playerInstance, mirror: false);
+            if (thinkBubbleRt != null) CopyRectTransform(playerInstance, mirror: false);
+            else SetupFullScreenRect(playerInstance);
         }
 
         if (otherDialoguePrefab != null)
@@ -61,8 +74,22 @@ public class GameDialogueManager : MonoBehaviour
             otherInstance.SetActive(false);
             otherText = otherInstance.transform.Find("OtherDialogueText")?.GetComponent<TextMeshProUGUI>();
             otherSpeakerNameText = otherInstance.transform.Find("OtherSpeakerNameImgBk/OtherSpeakerNameText")?.GetComponent<TextMeshProUGUI>();
-            CopyRectTransform(otherInstance, mirror: true);
+            if (thinkBubbleRt != null) CopyRectTransform(otherInstance, mirror: true);
+            else SetupFullScreenRect(otherInstance);
         }
+    }
+
+    /// <summary>
+    /// 兜底：全屏铺满（thinkBubbleRt 为 null 时使用）
+    /// </summary>
+    private void SetupFullScreenRect(GameObject panel)
+    {
+        var rt = panel.GetComponent<RectTransform>();
+        rt.anchorMin = Vector2.zero;
+        rt.anchorMax = Vector2.one;
+        rt.pivot = new Vector2(0.5f, 0.5f);
+        rt.anchoredPosition = Vector2.zero;
+        rt.sizeDelta = Vector2.zero;
     }
 
     /// <summary>

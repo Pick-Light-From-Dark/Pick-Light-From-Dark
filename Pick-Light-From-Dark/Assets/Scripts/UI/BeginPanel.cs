@@ -4,11 +4,36 @@ using UnityEngine.UI;
 
 public class BeginPanel : BasePanel
 {
+    private Button continueBtn;
+    private CanvasGroup continueBtnCanvasGroup;
+
     public override void HideMe() { }
 
     public override void ShowMe()
     {
         SetupAllButtonHover();
+        UpdateContinueButton();
+        MusicMgr.Instance.ResumeBKMusic();
+    }
+
+    private void UpdateContinueButton()
+    {
+        if (continueBtn == null)
+        {
+            var t = transform.Find("ContinueBtn");
+            if (t != null) continueBtn = t.GetComponent<Button>();
+        }
+        if (continueBtn != null)
+        {
+            bool hasSave = Game.Test.CrossLevelSaveSystem.Instance?.HasSave() == true;
+            continueBtn.interactable = hasSave;
+            if (continueBtnCanvasGroup == null)
+                continueBtnCanvasGroup = continueBtn.GetComponent<CanvasGroup>();
+            if (continueBtnCanvasGroup == null)
+                continueBtnCanvasGroup = continueBtn.gameObject.AddComponent<CanvasGroup>();
+            continueBtnCanvasGroup.alpha = hasSave ? 1f : 0.35f;
+            continueBtnCanvasGroup.interactable = hasSave;
+        }
     }
 
     private void SetupAllButtonHover()
@@ -47,8 +72,16 @@ public class BeginPanel : BasePanel
         switch (btnName)
         {
             case "StartBtn":
+                MusicMgr.Instance.PauseBKMusic();
+                Game.Test.CrossLevelSaveSystem.Instance?.MarkGameCompleted();
+                Time.timeScale = 1f; // 恢复可能被暂停残留的timeScale
                 UIMgr.Instance.HidePanel<BeginPanel>(true);
                 SceneMgr.Instance.LoadScene("Level1");
+                break;
+
+            case "ContinueBtn":
+                Time.timeScale = 1f;
+                ContinueGame();
                 break;
 
             case "SaveBtn":
@@ -72,8 +105,24 @@ public class BeginPanel : BasePanel
                 break;
 
             case "QuitBtn":
-                UIMgr.Instance.HidePanel<BeginPanel>();
+#if UNITY_EDITOR
+                UnityEditor.EditorApplication.isPlaying = false;
+#else
+                Application.Quit();
+#endif
                 break;
         }
+    }
+
+    private void ContinueGame()
+    {
+        var save = Game.Test.CrossLevelSaveSystem.Instance;
+        if (save == null || !save.HasSave()) return;
+
+        var cp = save.LoadCheckpoint();
+        string sceneName = cp.currentLevelId > 0 ? $"Level{cp.currentLevelId}" : "Level1";
+        MusicMgr.Instance.PauseBKMusic();
+        UIMgr.Instance.HidePanel<BeginPanel>(true);
+        SceneMgr.Instance.LoadScene(sceneName);
     }
 }

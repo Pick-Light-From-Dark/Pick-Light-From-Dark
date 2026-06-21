@@ -635,6 +635,8 @@ namespace Game.Card
                     }
                     // 触发局内剧情对话
                     EventCenter.Instance.EventTrigger(E_EventType.GameDialogueStart, "Dialogue/Dialogue2-3");
+                    // 记录卡牌使用（跨关卡存档）
+                    Game.Test.CrossLevelSaveSystem.Instance?.RecordCardUsed(2017);
                     Debug.Log("[CardManager] 特殊效果: 分享拌面 → 2016层数-1且隐藏, 暂停生成, 触发对话");
                     break;
                 }
@@ -671,9 +673,13 @@ namespace Game.Card
                 {
                     // 揭示隐藏任务
                     Task.TaskManager.Instance.RevealHiddenTask(2026);
-                    if (levelConfig != null && levelConfig.levelId == 1005)
+
+                    // 仅第三夜（1003）为"拿走面包"行为，其余关卡均为"寻求帮助"
+                    bool isThirdNight = levelConfig != null && levelConfig.levelId == 1003;
+
+                    if (!isThirdNight)
                     {
-                        // 第五夜：寻求宋明月帮助 → 将2040(前往走廊)加入2005(下床)的运行时关联
+                        // 寻求宋明月帮助 → 将2040(前往走廊)加入2005(下床)的运行时关联
                         AddRuntimeAssociation(2005, 2040);
                         Debug.Log("[CardManager] 特殊效果: 寻求宋明月帮助(2026) → 2005(下床)运行时关联新增 2040(前往走廊)");
 
@@ -681,8 +687,13 @@ namespace Game.Card
                         GamePanel.DialogueBackgroundOverride = 5012;
                         GamePanel.PostDialogueBackgroundOverride = 5011;
 
-                        // 触发局内对话
-                        EventCenter.Instance.EventTrigger(E_EventType.GameDialogueStart, "Dialogue/Dialogue5-3");
+                        // 根据关卡选择对话文件
+                        bool isLevel5 = levelConfig != null && levelConfig.levelId == 1005;
+                        string dialoguePath = isLevel5 ? "Dialogue/Dialogue5-3" : "Dialogue/Dialogue4-3";
+                        EventCenter.Instance.EventTrigger(E_EventType.GameDialogueStart, dialoguePath);
+
+                        // 记录卡牌使用（跨关卡存档）
+                        Game.Test.CrossLevelSaveSystem.Instance?.RecordCardUsed(2026);
                     }
                     else
                     {
@@ -724,6 +735,15 @@ namespace Game.Card
                     break;
                 }
 
+                case 2038: // 前往厕所：触发结局判定（仅第五关）
+                {
+                    if (levelConfig != null && levelConfig.levelId == 1005)
+                    {
+                        TriggerEndingEvaluation();
+                    }
+                    break;
+                }
+
                 case 2040: // 前往走廊：暂停老师的查寝逻辑
                 {
                     Game.AI.TeacherAI.IsPatrolPaused = true;
@@ -731,6 +751,32 @@ namespace Game.Card
                     break;
                 }
             }
+        }
+
+        /// <summary>
+        /// 触发第五关结局判定（由卡牌2038前往厕所触发）
+        /// </summary>
+        private void TriggerEndingEvaluation()
+        {
+            var saveSystem = Game.Test.CrossLevelSaveSystem.Instance;
+            if (saveSystem == null)
+            {
+                Debug.LogError("[CardManager] CrossLevelSaveSystem.Instance 为 null，无法判定结局");
+                return;
+            }
+
+            // 先记录第五关结果（结局判定需要本关的卡牌使用数据）
+            int lives = Game.Flow.GameFlowController.Instance.GetCurrentLives();
+            bool card2017ThisLevel = saveSystem.HasUsedCardThisLevel(2017);
+            bool card2026ThisLevel = saveSystem.HasUsedCardThisLevel(2026);
+            saveSystem.RecordLevelResult(5, lives, card2017ThisLevel, card2026ThisLevel);
+            Debug.Log($"[CardManager] 预记录第五关结果: Lives={lives}, 2017={card2017ThisLevel}, 2026={card2026ThisLevel}");
+
+            int endingId = saveSystem.EvaluateEnding();
+            Debug.Log($"[CardManager] 结局判定结果: {endingId}");
+
+            // 触发GameWin，由LevelFlowCoordinator根据PreEvaluatedEndingId选择对应剧情
+            EventCenter.Instance.EventTrigger(E_EventType.GameWin);
         }
 
         /// <summary>

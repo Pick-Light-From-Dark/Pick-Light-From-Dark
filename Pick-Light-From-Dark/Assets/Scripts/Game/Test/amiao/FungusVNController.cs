@@ -40,6 +40,16 @@ namespace Game.Test
         [Header("对话文本")]
         public TextAsset dialogueText;
 
+        [Header("结局预制体")]
+        [Tooltip("Ending1 结局一 太阳照常升起 (6001)")]
+        public GameObject ending1Prefab;
+        [Tooltip("Ending2 结局二 莫比乌斯环 (6002)")]
+        public GameObject ending2Prefab;
+        [Tooltip("Ending3 结局三 星垂之夜 (6003)")]
+        public GameObject ending3Prefab;
+        [Tooltip("Ending4 结局四 北极星 (6004)")]
+        public GameObject ending4Prefab;
+
         [Header("Fungus 组件（为空则运行时自动查找/创建）")]
         public SayDialog sayDialog;
 
@@ -1280,6 +1290,13 @@ namespace Game.Test
             if (choiceIndex != -1)
             {
                 StopAllCoroutines();
+                // 强制停止Writer，避免半截文字残留
+                if (sayDialog != null)
+                {
+                    var writer = sayDialog.GetComponent<Writer>();
+                    if (writer != null && writer.IsWriting)
+                        writer.Stop();
+                }
                 isProcessing = false;
                 isFastForwarding = false;
                 lineIndex = choiceIndex;
@@ -1413,6 +1430,25 @@ namespace Game.Test
             {
                 isProcessing = false;
                 ShowNextLine();
+                return;
+            }
+
+            // 关卡结束标记：停止对话。若为最终关卡则显示结局画面，否则正常结束
+            if (line.type == "关卡结束")
+            {
+                isProcessing = false;
+                var coord = FindLevelFlowCoordinator();
+                bool isFinalLevel = coord == null || string.IsNullOrEmpty(coord.NextLevelSceneName);
+                if (isFinalLevel && ending2Prefab != null)
+                {
+                    Debug.Log($"[FungusVNController] 到达关卡结束标记，最终关卡 → 显示结局画面");
+                    ShowEndingScreen();
+                }
+                else
+                {
+                    Debug.Log($"[FungusVNController] 到达关卡结束标记，中间关卡 → 正常结束对话");
+                    EndDialogue();
+                }
                 return;
             }
 
@@ -1608,7 +1644,8 @@ namespace Game.Test
             sayDialog.gameObject.SetActive(true);
             // 保留之前的文本，不清空 StoryText，使选项与旁白同时显示
 
-            // 向前查找最近一句对话/旁白/场景文本，确保跳过到达选项时对话框显示正确内容
+            // 显示选项行自身的文本（如"你要怎么做？"），并拼接前一句上下文
+            string displayText = SanitizeDisplayText(line.content);
             int choiceIdx = lines.IndexOf(line);
             if (choiceIdx >= 0 && sayDialog != null)
             {
@@ -1617,11 +1654,15 @@ namespace Game.Test
                     var prev = lines[i];
                     if ((prev.type == "对话" || prev.type == "旁白" || prev.type == "场景") && !string.IsNullOrEmpty(prev.content))
                     {
-                        sayDialog.StoryText = prev.content;
+                        displayText = string.IsNullOrEmpty(displayText)
+                            ? prev.content
+                            : prev.content + "\n" + displayText;
                         break;
                     }
                 }
             }
+            if (!string.IsNullOrEmpty(displayText))
+                sayDialog.StoryText = displayText;
 
             // 设置按钮文本并显示
             if (choiceText1 != null)
@@ -1847,14 +1888,150 @@ namespace Game.Test
             }
         }
 
-        private bool hasEnded = false;
+        /// <summary>根据结局ID获取对应的预制体（优先Inspector赋值，兜底Resources加载）</summary>
+        GameObject GetEndingPrefab(int endingId)
+        {
+            GameObject prefab = null;
+            string resPath = "";
 
-        void EndDialogue()
+            switch (endingId)
+            {
+                case 6001:
+                    prefab = ending1Prefab;
+                    if (prefab == null) { resPath = "UI/MainFlow/Ending1"; prefab = Resources.Load<GameObject>(resPath); }
+                    break;
+                case 6002:
+                    prefab = ending2Prefab;
+                    if (prefab == null) { resPath = "UI/MainFlow/Ending2"; prefab = Resources.Load<GameObject>(resPath); }
+                    break;
+                case 6003:
+                    prefab = ending3Prefab;
+                    if (prefab == null) { resPath = "UI/MainFlow/Ending3"; prefab = Resources.Load<GameObject>(resPath); }
+                    break;
+                case 6004:
+                    prefab = ending4Prefab;
+                    if (prefab == null) { resPath = "UI/MainFlow/Ending4"; prefab = Resources.Load<GameObject>(resPath); }
+                    break;
+            }
+
+            if (prefab != null)
+                Debug.Log($"[FungusVNController] 结局{endingId}预制体: {prefab.name}");
+            else if (!string.IsNullOrEmpty(resPath))
+                Debug.LogWarning($"[FungusVNController] 结局{endingId}预制体未找到: Resources/{resPath}");
+
+            return prefab ?? ending2Prefab;
+        }
+
+        /// <summary>
+        /// 显示结局画面，自行处理所有清理（不调用 EndDialogue 避免递归）
+        /// </summary>
+        void ShowEndingScreen()
         {
             if (hasEnded) return;
             hasEnded = true;
             isProcessing = false;
             isChoosing = false;
+
+            if (bgmSource != null)
+                bgmSource.Stop();
+
+            ClearWriterAndDialogueUI();
+            HideCenterText();
+
+            if (choicePanel != null)
+                choicePanel.SetActive(false);
+            if (sayDialog != null)
+                sayDialog.gameObject.SetActive(false);
+            if (skipButton != null)
+                skipButton.gameObject.SetActive(false);
+            if (vnCanvas != null)
+                vnCanvas.gameObject.SetActive(false);
+
+            // 读取预判结局ID（由卡牌2038触发判定后存储）
+            int endingId = Game.Test.CrossLevelSaveSystem.Instance?.PreEvaluatedEndingId ?? 0;
+            Debug.Log($"[FungusVNController] ShowEndingScreen 读取 PreEvaluatedEndingId={endingId}");
+            if (Game.Test.CrossLevelSaveSystem.Instance != null)
+                Game.Test.CrossLevelSaveSystem.Instance.PreEvaluatedEndingId = 0; // 清除已用
+
+            // 根据结局ID选择预制体
+            GameObject prefabToShow = GetEndingPrefab(endingId);
+            Debug.Log($"[FungusVNController] GetEndingPrefab({endingId}) = {(prefabToShow != null ? prefabToShow.name : "null")}");
+
+            if (prefabToShow != null)
+            {
+                var canvas = FindFirstObjectByType<Canvas>();
+                if (canvas != null)
+                {
+                    var endingObj = Instantiate(prefabToShow, canvas.transform, false);
+                    Debug.Log($"[FungusVNController] 结局画面已显示: {prefabToShow.name} (结局{endingId})");
+                    // 结局1使用Ending1SunRisesButtonBinder（预制体自带），其他使用Ending2Panel
+                    if (endingId != 6001)
+                    {
+                        var endingPanel = endingObj.GetComponent<Ending2Panel>();
+                        if (endingPanel == null)
+                            endingPanel = endingObj.AddComponent<Ending2Panel>();
+                    }
+                }
+                else
+                {
+                    Instantiate(prefabToShow);
+                }
+            }
+            else
+            {
+                // 兜底：使用任意已赋值的结局预制体
+                GameObject fallback = ending1Prefab ?? ending2Prefab ?? ending3Prefab ?? ending4Prefab;
+                if (fallback != null)
+                {
+                    var canvas = FindFirstObjectByType<Canvas>();
+                    if (canvas != null)
+                    {
+                        var endingObj = Instantiate(fallback, canvas.transform, false);
+                        var endingPanel = endingObj.GetComponent<Ending2Panel>();
+                        if (endingPanel == null)
+                            endingPanel = endingObj.AddComponent<Ending2Panel>();
+                        Debug.Log($"[FungusVNController] 兜底使用: {fallback.name}");
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning($"[FungusVNController] 未找到结局{endingId}的预制体，所有endingPrefab均未赋值");
+                }
+            }
+
+            // 通知 LevelFlowCoordinator 结局已由 VN 处理
+            exitType = VNExitType.Ending;
+            var completedExitType = exitType;
+            Debug.Log($"[FungusVNController] 对话结束（结局画面），分支类型: {completedExitType}");
+            OnDialogueExit?.Invoke(completedExitType);
+        }
+
+        private bool hasEnded = false;
+
+        void EndDialogue()
+        {
+            if (hasEnded) return;
+
+            // 最终关卡结尾剧情：对话结束时直接显示结局画面
+            if (isEndingStoryPlaythrough)
+            {
+                var coord = FindLevelFlowCoordinator();
+                bool isFinalLevel = coord == null || string.IsNullOrEmpty(coord.NextLevelSceneName);
+                if (isFinalLevel)
+                {
+                    Debug.Log("[FungusVNController] 最终关卡结尾剧情结束 → 显示结局画面");
+                    ShowEndingScreen();
+                    return;
+                }
+            }
+
+            hasEnded = true;
+            isProcessing = false;
+            isChoosing = false;
+
+            if (bgmSource != null)
+                bgmSource.Stop();
+
             ClearWriterAndDialogueUI();
             HideCenterText();
 

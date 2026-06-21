@@ -12,14 +12,14 @@ namespace Game.Test
     {
         // ========== 通用设置 ==========
         [Header("通用设置")]
-        [Tooltip("运行时按对应数字键触发结局 (1=结局一, 2=结局二, 4=结局四, 5=结局五, 0=死亡结局, Esc=销毁)")]
+        [Tooltip("运行时按对应数字键触发结局 (1=结局一, 2=结局二, 3=结局三, 4=结局四, 0=死亡结局, Esc=销毁)")]
         public bool enableHotkeys = true;
 
         [Header("结局预制体")]
         public GameObject ending1Prefab;
         public GameObject ending2Prefab;
+        public GameObject ending3Prefab;
         public GameObject ending4Prefab;
-        public GameObject ending5Prefab;
         public GameObject deathEndingPrefab;
 
         private GameObject currentEndingPanel;
@@ -45,7 +45,7 @@ namespace Game.Test
         }
 
         // ========== 区域三：结局分支 — 第五关条件区分 ==========
-        [Header("【区域三】结局分支 — 第五关条件区分")]
+        [Header("【区域三】结局分支 — 6002=四关血1 | 6003=只用一卡 | 6004=两卡全用")]
         [Range(0, 5)] public int level1Lives = 2;
         [Range(0, 5)] public int level2Lives = 2;
         [Range(0, 5)] public int level3Lives = 2;
@@ -56,19 +56,9 @@ namespace Game.Test
         [Tooltip("第五关是否使用了寻求宋明月帮助 (2026)")]
         public bool usedCard2026 = false;
 
-        [Tooltip("两卡全部使用后，在木门前做出的选择")]
-        public RooftopChoice rooftopChoice = RooftopChoice.None;
-
         [Header("判定结果（只读）")]
         [SerializeField]
         private string evaluateResult = "点击 Inspector 按钮进行判定";
-
-        public enum RooftopChoice
-        {
-            [InspectorName("未选择")] None,
-            [InspectorName("独自前往")] Alone,
-            [InspectorName("邀请宋明月")] WithFriend
-        }
 
         // ========== 生命周期 ==========
 
@@ -110,8 +100,6 @@ namespace Game.Test
                 ShowEnding(ending2Prefab, 6002);
             else if (Input.GetKeyDown(KeyCode.Alpha4))
                 ShowEnding(ending4Prefab, 6004);
-            else if (Input.GetKeyDown(KeyCode.Alpha5))
-                ShowEnding(ending5Prefab, 6005);
             else if (Input.GetKeyDown(KeyCode.Alpha0))
                 TriggerDeadEnd(currentLives);
             else if (Input.GetKeyDown(KeyCode.Escape) && currentEndingPanel != null)
@@ -167,52 +155,44 @@ namespace Game.Test
         public void EvaluateAndTriggerEnding5FromInspector()
         {
             TriggerEnding5Branch(level1Lives, level2Lives, level3Lives, level5Lives,
-                usedCard2017, usedCard2026, rooftopChoice);
+                usedCard2017, usedCard2026);
         }
 
         /// <summary>
         /// 后端接口：根据第五关条件判定并触发对应结局
         /// </summary>
-        public void TriggerEnding5Branch(int l1, int l2, int l3, int l5, bool card2017, bool card2026, RooftopChoice choice)
+        public void TriggerEnding5Branch(int l1, int l2, int l3, int l5, bool card2017, bool card2026)
         {
-            int endingId = 0;
-            string endingName = "";
-            string reason = "";
+            int endingId;
+            string endingName;
+            string reason;
 
             // P0: 莫比乌斯环
             if (l1 == 1 && l2 == 1 && l3 == 1 && l5 == 1)
             {
                 endingId = 6002;
                 endingName = "莫比乌斯环";
-                reason = "P0：第1/2/3/5关通关血量全部为 1 点";
+                reason = "四关血量全为1";
             }
             else if (l1 > 1 || l2 > 1 || l3 > 1 || l5 > 1)
             {
-                bool bothCardsUsed = card2017 && card2026;
-
-                if (!bothCardsUsed)
+                if (card2017 != card2026) // XOR: 只用了一张
+                {
+                    endingId = 6003;
+                    endingName = "星垂之夜";
+                    reason = card2017 ? "仅使用了分享拌面(2017)" : "仅使用了寻求帮助(2026)";
+                }
+                else if (card2017 && card2026)
                 {
                     endingId = 6004;
-                    endingName = "星垂之夜";
-                    reason = "P1-情况A：至少一关血量>1，两卡未全部使用";
-                }
-                else if (choice == RooftopChoice.Alone)
-                {
-                    endingId = 6004;
-                    endingName = "星垂之夜";
-                    reason = "P1-情况B：至少一关血量>1，两卡全部使用，选择【独自前往】";
-                }
-                else if (choice == RooftopChoice.WithFriend)
-                {
-                    endingId = 6005;
                     endingName = "北极星";
-                    reason = "P1：至少一关血量>1，两卡全部使用，选择【邀请宋明月】";
+                    reason = "两卡全部使用";
                 }
                 else
                 {
-                    evaluateResult = "请在 Inspector 中选择【独自前往】或【邀请宋明月】后再次测试";
-                    Debug.LogWarning($"[EndingTriggerTester] {evaluateResult}");
-                    return;
+                    endingId = 0;
+                    endingName = "无法判定";
+                    reason = "两卡均未使用";
                 }
             }
             else
@@ -222,14 +202,14 @@ namespace Game.Test
                 return;
             }
 
-            evaluateResult = $"结局 [{endingId}] {endingName}\n原因：{reason}";
+            evaluateResult = $"结局 [{endingId}] {endingName}\n{reason}";
             Debug.Log($"[EndingTriggerTester] 判定结果：{evaluateResult}");
 
             GameObject prefab = endingId switch
             {
                 6002 => ending2Prefab,
+                6003 => ending3Prefab,
                 6004 => ending4Prefab,
-                6005 => ending5Prefab,
                 _ => null
             };
 
@@ -245,7 +225,6 @@ namespace Game.Test
             level5Lives = 2;
             usedCard2017 = false;
             usedCard2026 = false;
-            rooftopChoice = RooftopChoice.None;
             evaluateResult = "已重置为默认值";
             Debug.Log("[EndingTriggerTester] 第五关条件已重置为默认值");
         }

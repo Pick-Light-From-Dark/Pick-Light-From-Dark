@@ -79,7 +79,8 @@ public class StopGamePanel : BasePanel
                 break;
 
             case "QuitGameBtn":
-                Game.Flow.GameFlowController.Instance.GameLose("主动退出");
+                Game.Test.CrossLevelSaveSystem.Instance?.SaveCurrentProgress();
+                Time.timeScale = 1f;
                 UIMgr.Instance.HideAllPanels();
                 SceneMgr.Instance.LoadScene("GameScene");
                 break;

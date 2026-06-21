@@ -12,17 +12,13 @@ namespace Game.Test
     {
         public enum EndingBranchOption
         {
-            Ending6004_XingChui = 6004,
-            Ending6005_BeiJiXing = 6005
+            Ending6003_XingChui = 6003,
+            Ending6004_BeiJiXing = 6004
         }
 
         [Header("结局配置")]
-        [Tooltip("6004=星垂之夜, 6005=北极星")]
-        public EndingBranchOption endingBranch = EndingBranchOption.Ending6005_BeiJiXing;
-
-        [Tooltip("0=未选择, 1=独自前往(6004), 2=邀请宋明月(6005)")]
-        [Range(0, 2)]
-        public int rooftopChoice = 2;
+        [Tooltip("6003=星垂之夜(仅一卡), 6004=北极星(两卡全用)")]
+        public EndingBranchOption endingBranch = EndingBranchOption.Ending6004_BeiJiXing;
 
         [Header("状态配置")]
         [Tooltip("最终血量，默认2即满血")]
@@ -114,7 +110,7 @@ namespace Game.Test
             PlayerDataStore.Instance.SaveLevelRecord(recordLv5);
 
             statusLog = $"已生成: {endingBranch} | 血量={finalLives} | 2026已用";
-            Debug.Log($"[L5Save] 完美存档已生成 — {endingBranch} | rooftopChoice={rooftopChoice} | lives={finalLives}");
+            Debug.Log($"[L5Save] 完美存档已生成 — {endingBranch} | lives={finalLives}");
             PrintSaveSummary();
         }
 
@@ -184,7 +180,7 @@ namespace Game.Test
             {
                 isWin = true,
                 endingId = (int)endingBranch,
-                endingBranch = (int)endingBranch == 6004 ? "rooftop" : "friend",
+                endingBranch = (int)endingBranch == 6003 ? "xor_card" : "both_cards",
                 timeUsed = 480f,
                 cardUses = new List<CardUseEntry>(),
                 taskGoals = new List<TaskGoalRecord>()
@@ -265,10 +261,8 @@ namespace Game.Test
             var cards = saveSystem.currentSave.endingData.cardsUsed;
             Debug.Log($"[L5Save] 全局卡牌: {(cards.Count > 0 ? string.Join(", ", cards) : "无")}");
 
-            int endingNone = saveSystem.EvaluateEnding(0);
-            int endingAlone = saveSystem.EvaluateEnding(1);
-            int endingFriend = saveSystem.EvaluateEnding(2);
-            Debug.Log($"[L5Save] 结局判定 — 未选:{endingNone} | 独自:{endingAlone} | 邀请:{endingFriend}");
+            int endingResult = saveSystem.EvaluateEnding();
+            Debug.Log($"[L5Save] 结局判定结果: {endingResult}");
 
             var records = PlayerDataStore.Instance.GetAllRecords();
             Debug.Log($"[L5Save] 历史记录: {records.Count} 条");

@@ -74,6 +74,9 @@ public class GamePanel : BasePanel
 
     [Header("生命值图片（按顺序 HpImg_0, HpImg_1...）")]
     [SerializeField] private GameObject[] hpImages;
+    private Sprite hpEyeOpen;
+    private Sprite hpEyeClose;
+    private int prevLives = -1;
 
     [Header("被抓UI — 剩余生命时显示")]
     [SerializeField] private GameObject caughtOverlay;
@@ -195,6 +198,9 @@ public class GamePanel : BasePanel
                 hpImages = hps.ToArray();
             }
         }
+        // 加载生命值图标
+        hpEyeOpen = Resources.Load<Sprite>("UI/Icon/redeye_open");
+        hpEyeClose = Resources.Load<Sprite>("UI/Icon/redeye_close");
         if (caughtOverlay == null)
             caughtOverlay = transform.Find("ImgBk/Bg5003")?.gameObject;
         if (failOverlay == null)
@@ -654,7 +660,7 @@ public class GamePanel : BasePanel
     {
         if (isReading)
         {
-            readTime += Time.unscaledDeltaTime;
+            readTime += Time.deltaTime;
             float progress = totalReadTime > 0f ? Mathf.Clamp01(readTime / totalReadTime) : 0f;
 
             // 黑色加载条从左向右逐步覆盖分段色条
@@ -673,6 +679,13 @@ public class GamePanel : BasePanel
 
         UpdateTeacherStatusDisplay();
         UpdateTimeDisplay();
+
+        // ESC 打开暂停面板
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            if (!Game.Test.TutorialManager.IsTutorialActive)
+                OnStopBtnClicked();
+        }
     }
 
     private void UpdateTimeDisplay()
@@ -729,6 +742,8 @@ public class GamePanel : BasePanel
         EventCenter.Instance.RemoveEventListener<int>(E_EventType.TaskProgressChanged, OnTaskProgressChanged);
         EventCenter.Instance.RemoveEventListener<int>(E_EventType.TaskGoalCompleted, OnTaskGoalCompleted);
         EventCenter.Instance.RemoveEventListener<string>(E_EventType.GameLose, OnGameLose);
+        EventCenter.Instance.RemoveEventListener<string>(E_EventType.GameDialogueStart, OnGameDialogueStart);
+        EventCenter.Instance.RemoveEventListener(E_EventType.GameDialogueEnd, OnGameDialogueEnd);
         if (Instance == this) Instance = null;
     }
 
@@ -749,9 +764,22 @@ public class GamePanel : BasePanel
         if (hpImages == null) return;
         for (int i = 0; i < hpImages.Length; i++)
         {
-            if (hpImages[i] != null)
-                hpImages[i].SetActive(i < currentLives);
+            if (hpImages[i] == null) continue;
+            bool alive = i < currentLives;
+            hpImages[i].SetActive(true); // 始终激活以显示闭眼状态
+
+            var img = hpImages[i].GetComponent<UnityEngine.UI.Image>();
+            if (img != null && hpEyeOpen != null && hpEyeClose != null)
+            {
+                img.sprite = alive ? hpEyeOpen : hpEyeClose;
+            }
+            else
+            {
+                // 无Image组件或sprite未加载时回退到显隐
+                hpImages[i].SetActive(alive);
+            }
         }
+        prevLives = currentLives;
     }
 
     public void ShowCaughtOverlay()
@@ -825,9 +853,9 @@ public class GamePanel : BasePanel
         ShowVideoOverlay(flashlightOverlay, duration);
     }
 
-    public void ShowEyeGazeOverlay(float duration)
+    public void ShowEyeGazeOverlay(float duration, string videoName = "视线")
     {
-        EnsureVideoOverlay(ref eyeGazeOverlay, "视线", null);
+        EnsureVideoOverlay(ref eyeGazeOverlay, videoName, null);
         ShowVideoOverlay(eyeGazeOverlay, duration);
     }
 

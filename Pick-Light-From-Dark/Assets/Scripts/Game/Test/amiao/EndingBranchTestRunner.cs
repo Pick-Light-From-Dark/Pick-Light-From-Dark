@@ -27,9 +27,9 @@ namespace Game.Test
         private Rect menuRect = new Rect(10, 10, 220, 320);
         private Vector2 scrollPos;
 
-        // 分支结局映射
-        private readonly string[] branchNames = { "迷茫结局 (6002)", "网吧结局 (6003)", "天台结局 (6004)", "邀友同行 (6005)" };
-        private readonly int[] endingIds = { 6002, 6003, 6004, 6005 };
+        // 结局映射（由卡牌使用+血量判定，不再由分支名映射）
+        private readonly string[] branchNames = { "结局二：莫比乌斯环 (6002)", "结局三：星垂之夜 (6003)", "结局四：北极星 (6004)" };
+        private readonly int[] endingIds = { 6002, 6003, 6004 };
 
         void Start()
         {
@@ -171,7 +171,7 @@ namespace Game.Test
         }
 
         /// <summary>
-        /// 创建默认结局数据（内置5个结局）
+        /// 创建默认结局数据（内置4个结局）
         /// </summary>
         EndingDataSO CreateDefaultEndingData()
         {
@@ -180,9 +180,8 @@ namespace Game.Test
             {
                 new EndingEntry { id = 6001, endingName = "【结局一：太阳照常升起】", description = "薯片改变不了任何事，你也是。" },
                 new EndingEntry { id = 6002, endingName = "【结局二：莫比乌斯环】", description = "一条走廊，离开起点之时，你就明白你终会回来。" },
-                new EndingEntry { id = 6003, endingName = "【结局三：人心不足蛇吞象】", description = "得失荣枯总在天，机关用尽也徒然。" },
-                new EndingEntry { id = 6004, endingName = "【结局四：星垂之夜】", description = "俯仰天地之间——无愧于人，无愧于心，无愧于己。" },
-                new EndingEntry { id = 6005, endingName = "【结局五：北极星】", description = "我对你透露一个大秘密，这是人类最古老的玩笑——无论往哪走，都是向前走。" }
+                new EndingEntry { id = 6003, endingName = "【结局三：星垂之夜】", description = "俯仰天地之间——无愧于人，无愧于心，无愧于己。" },
+                new EndingEntry { id = 6004, endingName = "【结局四：北极星】", description = "我对你透露一个大秘密，这是人类最古老的玩笑——无论往哪走，都是向前走。" }
             };
             return so;
         }
@@ -195,8 +194,5 @@ namespace Game.Test
 
         [ContextMenu("触发结局四")]
         void TestEnding4() { EndingManager.Instance?.TriggerEnding(6004); }
-
-        [ContextMenu("触发结局五")]
-        void TestEnding5() { EndingManager.Instance?.TriggerEnding(6005); }
     }
 }

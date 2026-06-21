@@ -226,10 +226,15 @@ namespace Game.Test
         void TestEndingEvaluation()
         {
             EnsureSaveSystem();
-            int none = saveSystem.EvaluateEnding(0);
-            int alone = saveSystem.EvaluateEnding(1);
-            int friend = saveSystem.EvaluateEnding(2);
-            Log($"[Test] 结局判定 — 未选:{none} 独自:{alone} 邀请:{friend}");
+            int result = saveSystem.EvaluateEnding();
+            string name = result switch
+            {
+                6002 => "结局二：莫比乌斯环",
+                6003 => "结局三：星垂之夜",
+                6004 => "结局四：北极星",
+                _ => "无法判定"
+            };
+            Log($"[Test] 结局判定结果: {result} ({name})");
         }
 
         IEnumerator FullFlowTest()

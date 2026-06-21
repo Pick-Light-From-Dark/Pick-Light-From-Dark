@@ -106,6 +106,8 @@ namespace Game.Test
             // 触发预留接口（供存档系统接入）
             OnRestartRequested?.Invoke();
 
+            CrossLevelSaveSystem.Instance?.ResetEndingState();
+
             if (isDeathEnding)
             {
                 // 死亡结局：从本关游玩部分开始
@@ -127,6 +129,8 @@ namespace Game.Test
             Debug.Log("[EndingScreenController] 返回主界面");
 
             OnReturnToMainMenuRequested?.Invoke();
+
+            CrossLevelSaveSystem.Instance?.MarkGameCompleted();
 
             if (!string.IsNullOrEmpty(mainMenuSceneName))
                 SceneManager.LoadScene(mainMenuSceneName);

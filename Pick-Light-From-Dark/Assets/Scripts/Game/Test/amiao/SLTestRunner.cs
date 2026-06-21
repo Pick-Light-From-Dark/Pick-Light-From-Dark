@@ -288,9 +288,9 @@ namespace Game.Test
         public void TestEvaluateEnding()
         {
             EnsureComponents();
-            int endingNone = saveSystem.EvaluateEnding(0);
-            int endingAlone = saveSystem.EvaluateEnding(1);
-            int endingFriend = saveSystem.EvaluateEnding(2);
+            int endingNone = saveSystem.EvaluateEnding();
+            int endingAlone = saveSystem.EvaluateEnding();
+            int endingFriend = saveSystem.EvaluateEnding();
             Debug.Log($"[SL] 结局判定 — 未选:{endingNone} | 独自:{endingAlone} | 邀请:{endingFriend}");
             statusLog = $"结局: 未选={endingNone} 独自={endingAlone} 邀请={endingFriend}";
         }
@@ -366,9 +366,9 @@ namespace Game.Test
 
             int endingId = saveSystem.EvaluateEnding();
             Debug.Log($"[SL] 结局判定(未选): {endingId}");
-            endingId = saveSystem.EvaluateEnding(1);
+            endingId = saveSystem.EvaluateEnding();
             Debug.Log($"[SL] 结局判定(独自): {endingId}");
-            endingId = saveSystem.EvaluateEnding(2);
+            endingId = saveSystem.EvaluateEnding();
             Debug.Log($"[SL] 结局判定(邀请): {endingId}");
 
             var records = PlayerDataStore.Instance.GetAllRecords();

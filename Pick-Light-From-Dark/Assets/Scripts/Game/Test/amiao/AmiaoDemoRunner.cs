@@ -16,8 +16,8 @@ namespace Game.Test
 
         [Header("结局预制体")]
         public GameObject endingPrefab6002;
+        public GameObject endingPrefab6003;
         public GameObject endingPrefab6004;
-        public GameObject endingPrefab6005;
 
         CrossLevelSaveSystem saveSystem;
         FungusVNController vnController;
@@ -28,7 +28,6 @@ namespace Game.Test
         int selectedLives = 3;
         bool useCard2017 = false;
         bool useCard2026 = false;
-        int rooftopChoice = 0;
 
         Rect winRect = new Rect(20, 20, 500, 560);
         Vector2 scroll;
@@ -190,39 +189,21 @@ namespace Game.Test
             GUILayout.Label($"第二关卡牌2017: {r2?.usedCard2017 ?? false}");
             GUILayout.Label($"第五关卡牌2026: {r5?.usedCard2026 ?? false}");
 
-            if (bothCards)
+            if (GUILayout.Button("判定结局（卡牌+血量）", GUILayout.Height(32)))
             {
-                GUILayout.Label("两卡全部使用，请选择木门选项:");
-                if (GUILayout.Button("独自前往"))
-                {
-                    rooftopChoice = 1;
-                    TriggerEnding();
-                }
-                if (GUILayout.Button("邀请宋明月"))
-                {
-                    rooftopChoice = 2;
-                    TriggerEnding();
-                }
-            }
-            else
-            {
-                if (GUILayout.Button("自动判定结局", GUILayout.Height(32)))
-                {
-                    rooftopChoice = 0;
-                    TriggerEnding();
-                }
+                TriggerEnding();
             }
         }
 
         void DrawEnding()
         {
             GUILayout.Label("结局已触发", GUI.skin.box);
-            int endingId = saveSystem.EvaluateEnding(rooftopChoice);
+            int endingId = saveSystem.EvaluateEnding();
             string name = endingId switch
             {
                 6002 => "结局二：莫比乌斯环",
-                6004 => "结局四：星垂之夜",
-                6005 => "结局五：北极星",
+                6003 => "结局三：星垂之夜",
+                6004 => "结局四：北极星",
                 _ => "未知结局"
             };
             GUILayout.Label($"结局ID: {endingId}");
@@ -232,13 +213,12 @@ namespace Game.Test
             {
                 currentPhase = Phase.Menu;
                 currentLevel = 0;
-                rooftopChoice = 0;
             }
         }
 
         void TriggerEnding()
         {
-            int endingId = saveSystem.EvaluateEnding(rooftopChoice);
+            int endingId = saveSystem.EvaluateEnding();
             currentPhase = Phase.Ending;
             statusMsg = $"触发结局 {endingId}";
             Debug.Log($"[Demo] 结局判定: {endingId}");
@@ -246,8 +226,8 @@ namespace Game.Test
             GameObject prefab = endingId switch
             {
                 6002 => endingPrefab6002,
+                6003 => endingPrefab6003,
                 6004 => endingPrefab6004,
-                6005 => endingPrefab6005,
                 _ => null
             };
 
@@ -293,8 +273,8 @@ namespace Game.Test
             {
                 Debug.Log($"[Demo]   Lv.{r.levelId}: 血量={r.finalLives} 2017={r.usedCard2017} 2026={r.usedCard2026}");
             }
-            int ending = saveSystem.EvaluateEnding(0);
-            Debug.Log($"[Demo] 结局判定(未选): {ending}");
+            int ending = saveSystem.EvaluateEnding();
+            Debug.Log($"[Demo] 结局判定结果: {ending}");
         }
 
         void EnsureSystems()

@@ -20,15 +20,15 @@ namespace Game.Test
         [Tooltip("场景中无 EndingManager 时是否自动创建")]
         public bool autoInitManager = true;
 
-        [Tooltip("运行时按对应数字键触发结局 (1/2/4/5=结局1/2/4/5, 0=死亡结局)")]
+        [Tooltip("运行时按对应数字键触发结局 (1/2/3/4=结局1/2/3/4, 0=死亡结局)")]
         public bool enableHotkeys = true;
 
         public enum DirectTriggerEnding
         {
             [InspectorName("结局一：太阳照常升起")] Ending1_SunRises = 6001,
             [InspectorName("结局二：莫比乌斯环")] Ending2_Mobius = 6002,
-            [InspectorName("结局四：星垂之夜")] Ending4_StarryNight = 6004,
-            [InspectorName("结局五：北极星")] Ending5_Polaris = 6005,
+            [InspectorName("结局三：星垂之夜")] Ending3_StarryNight = 6003,
+            [InspectorName("结局四：北极星")] Ending4_Polaris = 6004,
             [InspectorName("死亡结局")] Death = -1,
         }
 
@@ -48,19 +48,9 @@ namespace Game.Test
         [Tooltip("第五关是否使用了寻求宋明月帮助 (2026)")]
         public bool usedCard2026 = false;
 
-        [Tooltip("两卡全部使用后，在木门前做出的选择")]
-        public RooftopChoice rooftopChoice = RooftopChoice.None;
-
         [Header("判定结果（只读）")]
         [SerializeField]
         private string lastResult = "点击右键菜单 '测试结局判定' 或按 T 键进行测试";
-
-        public enum RooftopChoice
-        {
-            [InspectorName("未选择")] None,
-            [InspectorName("独自前往")] Alone,
-            [InspectorName("邀请宋明月")] WithFriend
-        }
 
         void Start()
         {
@@ -75,10 +65,10 @@ namespace Game.Test
                 TriggerDirectEnding(DirectTriggerEnding.Ending1_SunRises);
             else if (Input.GetKeyDown(KeyCode.Alpha2))
                 TriggerDirectEnding(DirectTriggerEnding.Ending2_Mobius);
+            else if (Input.GetKeyDown(KeyCode.Alpha3))
+                TriggerDirectEnding(DirectTriggerEnding.Ending3_StarryNight);
             else if (Input.GetKeyDown(KeyCode.Alpha4))
-                TriggerDirectEnding(DirectTriggerEnding.Ending4_StarryNight);
-            else if (Input.GetKeyDown(KeyCode.Alpha5))
-                TriggerDirectEnding(DirectTriggerEnding.Ending5_Polaris);
+                TriggerDirectEnding(DirectTriggerEnding.Ending4_Polaris);
             else if (Input.GetKeyDown(KeyCode.Alpha0))
                 TriggerDirectEnding(DirectTriggerEnding.Death);
             else if (Input.GetKeyDown(KeyCode.T))
@@ -146,40 +136,36 @@ namespace Game.Test
             string endingName = "";
             string reason = "";
 
-            // P0: 莫比乌斯环
+            // P0: 结局二 莫比乌斯环 — 第1/2/3/5关 finalLives 全=1
             if (level1Lives == 1 && level2Lives == 1 && level3Lives == 1 && level5Lives == 1)
             {
                 endingId = 6002;
                 endingName = "莫比乌斯环";
                 reason = "P0：第1/2/3/5关通关血量全部为 1 点";
             }
+            // P1: 至少一关血量 > 1
             else if (level1Lives > 1 || level2Lives > 1 || level3Lives > 1 || level5Lives > 1)
             {
-                bool bothCardsUsed = usedCard2017 && usedCard2026;
-
-                if (!bothCardsUsed)
+                // XOR: 只使用了一张关键卡 → 结局三 星垂之夜
+                if (usedCard2017 != usedCard2026)
+                {
+                    endingId = 6003;
+                    endingName = "星垂之夜";
+                    reason = usedCard2017 ? "仅使用了分享泡面(2017)" : "仅使用了寻求帮助(2026)";
+                }
+                // 两卡全用 → 结局四 北极星
+                else if (usedCard2017 && usedCard2026)
                 {
                     endingId = 6004;
-                    endingName = "星垂之夜";
-                    reason = "P1-情况A：至少一关血量>1，两卡未全部使用";
-                }
-                else if (rooftopChoice == RooftopChoice.Alone)
-                {
-                    endingId = 6004;
-                    endingName = "星垂之夜";
-                    reason = "P1-情况B：至少一关血量>1，两卡全部使用，选择【独自前往】";
-                }
-                else if (rooftopChoice == RooftopChoice.WithFriend)
-                {
-                    endingId = 6005;
                     endingName = "北极星";
-                    reason = "P1：至少一关血量>1，两卡全部使用，选择【邀请宋明月】";
+                    reason = "两卡全部使用（2017 + 2026）";
                 }
+                // 两卡均未使用 → 无法判定
                 else
                 {
                     endingId = -1;
-                    endingName = "待选择";
-                    reason = "P1：两卡全部使用，请在 Inspector 中选择【独自前往】或【邀请宋明月】后再次测试";
+                    endingName = "无法判定";
+                    reason = "两卡均未使用，至少需要使用一张关键卡";
                 }
             }
             else
@@ -202,7 +188,6 @@ namespace Game.Test
             level5Lives = 2;
             usedCard2017 = false;
             usedCard2026 = false;
-            rooftopChoice = RooftopChoice.None;
             lastResult = "已重置";
             Debug.Log("[EndingConditionTester] 条件已重置为默认值");
         }

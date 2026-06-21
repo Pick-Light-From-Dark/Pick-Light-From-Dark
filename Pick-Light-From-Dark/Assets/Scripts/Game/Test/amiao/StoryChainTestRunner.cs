@@ -39,12 +39,10 @@ namespace Game.Test
         public GameObject day5_2a;
         [Tooltip("第五关 网吧结局分支")]
         public GameObject day5_2b;
-        [Tooltip("第五关 天台结局分支")]
+        [Tooltip("第五关 结局三分支")]
         public GameObject day5_2c;
-        [Tooltip("第五关 邀友同行结局分支")]
+        [Tooltip("第五关 结局四分支")]
         public GameObject day5_2d;
-        [Tooltip("第五关 邀友同行结局分支（备用）")]
-        public GameObject day5_2e;
 
         [Header("选项分支配置")]
         [Tooltip("是否强制进入 吃 分支（测试用）")]
@@ -105,7 +103,6 @@ namespace Game.Test
             AddToNodeMap("day5_2b", day5_2b);
             AddToNodeMap("day5_2c", day5_2c);
             AddToNodeMap("day5_2d", day5_2d);
-            AddToNodeMap("day5_2e", day5_2e);
         }
 
         void AddToNodeMap(string id, GameObject prefab)
@@ -132,14 +129,13 @@ namespace Game.Test
             // 第五关分支（选项映射到不同分支 prefab）
             branchRoutes["day5_2|confused"] = "day5_2a";
             branchRoutes["day5_2|internet"] = "day5_2b";
-            branchRoutes["day5_2|rooftop"] = "day5_2c";
-            branchRoutes["day5_2|friend"] = "day5_2d";
+            // 结局由卡牌+血量判定，不再由分支名映射到特定结局
+            branchRoutes["day5_2c|next"] = "day5_2d";
             // 第五关分支 prefab 结束后 → 对应结局
             branchRoutes["day5_2a|next"] = "ENDING_6002";
             branchRoutes["day5_2b|next"] = "ENDING_6003";
-            branchRoutes["day5_2c|next"] = "ENDING_6004";
-            branchRoutes["day5_2d|next"] = "ENDING_6005";
-            branchRoutes["day5_2e|next"] = "ENDING_6005";
+            branchRoutes["day5_2c|next"] = "ENDING_6003";
+            branchRoutes["day5_2d|next"] = "ENDING_6004";
         }
 
         void InitializeEndingManager()
@@ -163,9 +159,8 @@ namespace Game.Test
             {
                 new EndingEntry { id = 6001, endingName = "【结局一：太阳照常升起】", description = "薯片改变不了任何事，你也是。" },
                 new EndingEntry { id = 6002, endingName = "【结局二：莫比乌斯环】", description = "一条走廊，离开起点之时，你就明白你终会回来。" },
-                new EndingEntry { id = 6003, endingName = "【结局三：人心不足蛇吞象】", description = "得失荣枯总在天，机关用尽也徒然。" },
-                new EndingEntry { id = 6004, endingName = "【结局四：星垂之夜】", description = "俯仰天地之间——无愧于人，无愧于心，无愧于己。" },
-                new EndingEntry { id = 6005, endingName = "【结局五：北极星】", description = "我对你透露一个大秘密，这是人类最古老的玩笑——无论往哪走，都是向前走。" }
+                new EndingEntry { id = 6003, endingName = "【结局三：星垂之夜】", description = "俯仰天地之间——无愧于人，无愧于心，无愧于己。" },
+                new EndingEntry { id = 6004, endingName = "【结局四：北极星】", description = "我对你透露一个大秘密，这是人类最古老的玩笑——无论往哪走，都是向前走。" }
             };
 
 #if UNITY_EDITOR
@@ -175,8 +170,7 @@ namespace Game.Test
                 "b228fbb248c9a9347a59cad511d61ae7", // 结局1
                 "891b939176dee734d82be9c3a98f542b", // 结局2
                 "70fd483ae45d8214385bbb5646de088f", // 结局3
-                "c7b0663dea5054f4295ed0523f1bd463", // 结局4
-                "c9558d27d55857f45a5019451cc90a02"  // 结局5
+                "c7b0663dea5054f4295ed0523f1bd463"  // 结局4
             };
             for (int i = 0; i < so.endings.Count && i < guids.Length; i++)
             {
@@ -387,9 +381,8 @@ namespace Game.Test
                     case "day1_2b": return 6001;
                     case "day5_2a": return 6002;
                     case "day5_2b": return 6003;
-                    case "day5_2c": return 6004;
-                    case "day5_2d": return 6005;
-                    case "day5_2e": return 6005;
+                    case "day5_2c": return 6003;
+                    case "day5_2d": return 6004;
                 }
             }
 
@@ -398,8 +391,6 @@ namespace Game.Test
             {
                 case Day5Branch.Confused: return 6002;
                 case Day5Branch.Internet: return 6003;
-                case Day5Branch.Rooftop: return 6004;
-                case Day5Branch.Friend: return 6005;
             }
 
             // 默认结局一
@@ -451,14 +442,6 @@ namespace Game.Test
             {
                 choiceResult = "internet";
             }
-            else if (choiceId.Contains("rooftop") || choiceId.Contains("天台") || choiceId.Contains("独自"))
-            {
-                choiceResult = "rooftop";
-            }
-            else if (choiceId.Contains("friend") || choiceId.Contains("邀友") || choiceId.Contains("同行"))
-            {
-                choiceResult = "friend";
-            }
             else
             {
                 choiceResult = choiceId;
@@ -500,16 +483,10 @@ namespace Game.Test
             TriggerEnding(6003);
         }
 
-        [ContextMenu("测试：触发结局四（天台）")]
+        [ContextMenu("测试：触发结局四")]
         void TestEnding4()
         {
             TriggerEnding(6004);
-        }
-
-        [ContextMenu("测试：触发结局五（邀友）")]
-        void TestEnding5()
-        {
-            TriggerEnding(6005);
         }
 
         void RestartWithChoice(string choice)
@@ -535,9 +512,7 @@ namespace Game.Test
     {
         None,
         Confused,
-        Internet,
-        Rooftop,
-        Friend
+        Internet
     }
 
     /// <summary>
@@ -546,7 +521,7 @@ namespace Game.Test
     [System.Serializable]
     public class EndingCondition
     {
-        [Tooltip("触发的结局ID（6001~6005）")]
+        [Tooltip("触发的结局ID（6001~6004）")]
         public int endingId = 6001;
 
         [Tooltip("必须使用的卡牌ID列表（为空则不检查）")]
@@ -564,7 +539,7 @@ namespace Game.Test
         [Tooltip("最大情绪值（包含）")]
         public int maxEmotion = 999;
 
-        [Tooltip("必需的分支标识（如 eat / not_eat / confused / internet / rooftop / friend）")]
+        [Tooltip("必需的分支标识（如 eat / not_eat / confused / internet 等）")]
         public string requiredBranch = "";
     }
 }
