@@ -51,6 +51,7 @@ namespace Game.Test
         private GameObject _currentTarget;
         private UnityAction _targetClickHook;
         private float _prevTimeScale;
+        private Canvas[] _cachedCanvases;
 
         void Awake()
         {
@@ -262,10 +263,22 @@ namespace Game.Test
             var go = GameObject.Find(objectName);
             if (go != null) return go;
 
-            // 在所有 Canvas 中递归查找
-            var canvases = FindObjectsOfType<Canvas>();
-            foreach (var canvas in canvases)
+            // 在所有 Canvas 中递归查找（缓存 Canvas 列表，仅在未命中时刷新）
+            if (_cachedCanvases == null)
+                _cachedCanvases = FindObjectsOfType<Canvas>();
+
+            foreach (var canvas in _cachedCanvases)
             {
+                if (canvas == null) continue;
+                var found = FindInChildren(canvas.transform, objectName);
+                if (found != null) return found;
+            }
+
+            // 缓存未命中，刷新 Canvas 列表再试一次
+            _cachedCanvases = FindObjectsOfType<Canvas>();
+            foreach (var canvas in _cachedCanvases)
+            {
+                if (canvas == null) continue;
                 var found = FindInChildren(canvas.transform, objectName);
                 if (found != null) return found;
             }

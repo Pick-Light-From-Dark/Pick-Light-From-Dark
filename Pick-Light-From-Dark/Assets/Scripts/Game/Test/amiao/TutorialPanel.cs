@@ -32,6 +32,11 @@ namespace Game.Test
         // 当前镂空区域（屏幕空间像素坐标，以屏幕中心为原点）
         private Rect _currentCutout;
 
+        // 预缓存数组，避免 foreach 时分配临时数组
+        private RectTransform[] _allMasksAndBorders;
+        private RectTransform[] _borderLines;
+        private RectTransform[] _masks;
+
         void Awake()
         {
             try
@@ -105,6 +110,12 @@ namespace Game.Test
 
             // 初始全隐藏
             HideAll();
+
+            // 预缓存数组
+            _masks = new RectTransform[] { _topMask, _bottomMask, _leftMask, _rightMask };
+            _borderLines = new RectTransform[] { _borderTop, _borderBottom, _borderLeft, _borderRight };
+            _allMasksAndBorders = new RectTransform[] { _topMask, _bottomMask, _leftMask, _rightMask,
+                _borderTop, _borderBottom, _borderLeft, _borderRight };
         }
 
         RectTransform CreateMaskPanel(string name)
@@ -207,8 +218,7 @@ namespace Game.Test
             SetInteractionMode(true);
 
             // 遮罩可见性
-            foreach (var mask in new[] { _topMask, _bottomMask, _leftMask, _rightMask,
-                                         _borderTop, _borderBottom, _borderLeft, _borderRight })
+            foreach (var mask in _allMasksAndBorders)
             {
                 if (mask != null) mask.gameObject.SetActive(showMask);
             }
@@ -272,7 +282,7 @@ namespace Game.Test
                 PositionBorderLine(_borderLeft,   leftN, leftN,  bottomN, topN,    borderThickness, true);
                 PositionBorderLine(_borderRight,  rightN, rightN, bottomN, topN,   borderThickness, true);
             }
-            foreach (var b in new[] { _borderTop, _borderBottom, _borderLeft, _borderRight })
+            foreach (var b in _borderLines)
                 if (b != null) b.gameObject.SetActive(hasCutout);
 
             // 文案始终居中
@@ -356,7 +366,7 @@ namespace Game.Test
 
         void SetMaskRaycast(bool block)
         {
-            foreach (var mask in new[] { _topMask, _bottomMask, _leftMask, _rightMask })
+            foreach (var mask in _masks)
             {
                 if (mask == null) continue;
                 var img = mask.GetComponent<Image>();
@@ -371,9 +381,7 @@ namespace Game.Test
         public void HideAll()
         {
             StopAllCoroutines();
-            // 只隐藏遮罩和边框的GameObject（跳过click catcher）
-            foreach (var mask in new[] { _topMask, _bottomMask, _leftMask, _rightMask,
-                                         _borderTop, _borderBottom, _borderLeft, _borderRight })
+            foreach (var mask in _allMasksAndBorders)
             {
                 if (mask != null) mask.gameObject.SetActive(false);
             }

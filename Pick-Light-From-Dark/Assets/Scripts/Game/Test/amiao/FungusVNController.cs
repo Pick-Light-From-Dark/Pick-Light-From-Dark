@@ -136,12 +136,20 @@ namespace Game.Test
         /// <summary>剧情全部结束后的回调（供流程控制器订阅，兼容旧代码）</summary>
         public System.Action OnDialogueComplete;
 
+        // ====== 性能优化：缓存不可变对象，避免每帧/每次 GC 分配 ======
+        private static readonly WaitForSecondsRealtime _waitPointZeroTwo = new WaitForSecondsRealtime(0.02f);
+        private static readonly WaitForSecondsRealtime _waitTwentySeconds = new WaitForSecondsRealtime(20f);
+        private WaitForSecondsRealtime _waitFastForwardInterval;
+        private Font _cachedChineseFont;
+        private readonly Dictionary<string, Sprite> _bgSpriteCache = new Dictionary<string, Sprite>();
+        private readonly Dictionary<string, AudioClip> _audioClipCache = new Dictionary<string, AudioClip>();
+
         void Awake()
         {
+            _waitFastForwardInterval = new WaitForSecondsRealtime(fastForwardInterval);
             EnsureComponents();
             CreateUI();
         }
-
         void Start()
         {
             // 若场景中有 LevelFlowCoordinator，由它统一管理 VN 启动，避免重复初始化
@@ -434,20 +442,19 @@ namespace Game.Test
         {
             if (sayDialog == null) return;
 
-            // 尝试加载项目中文字体
-            var chineseFont = Resources.Load<Font>("Font/LXGWWenKaiScreen");
-            if (chineseFont == null)
+            if (_cachedChineseFont == null)
             {
-                chineseFont = Resources.Load<Font>("Font/文软雅黑");
+                _cachedChineseFont = Resources.Load<Font>("Font/LXGWWenKaiScreen");
+                if (_cachedChineseFont == null)
+                    _cachedChineseFont = Resources.Load<Font>("Font/文软雅黑");
             }
 
-            if (chineseFont != null)
+            if (_cachedChineseFont != null)
             {
-                // 设置 SayDialog 子对象中的 Text 字体
                 var texts = sayDialog.GetComponentsInChildren<Text>(true);
                 foreach (var txt in texts)
                 {
-                    txt.font = chineseFont;
+                    txt.font = _cachedChineseFont;
                 }
                 Debug.Log("[FungusVNController] 已设置中文字体");
             }
@@ -845,27 +852,19 @@ namespace Game.Test
         Sprite LoadBgSprite(string name)
         {
             if (string.IsNullOrEmpty(name))
-            {
-                Debug.Log("[LoadBgSprite] name 为空，返回 null");
                 return null;
-            }
+
+            if (_bgSpriteCache.TryGetValue(name, out Sprite cached))
+                return cached;
 
             Sprite s = Resources.Load<Sprite>("CG/" + name);
-            if (s != null) { Debug.Log($"[LoadBgSprite] 从 Resources/CG 找到: {name}"); return s; }
-
-            s = Resources.Load<Sprite>("Backgrounds/" + name);
-            if (s != null) { Debug.Log($"[LoadBgSprite] 从 Resources/Backgrounds 找到: {name}"); return s; }
-
-            s = Resources.Load<Sprite>("UI/Dialogue/Backgrounds/" + name);
-            if (s != null) { Debug.Log($"[LoadBgSprite] 从 Resources/UI/Dialogue/Backgrounds 找到: {name}"); return s; }
-
-            s = Resources.Load<Sprite>("UI/Background/" + name);
-            if (s != null) { Debug.Log($"[LoadBgSprite] 从 Resources/UI/Background 找到: {name}"); return s; }
+            if (s == null) s = Resources.Load<Sprite>("Backgrounds/" + name);
+            if (s == null) s = Resources.Load<Sprite>("UI/Dialogue/Backgrounds/" + name);
+            if (s == null) s = Resources.Load<Sprite>("UI/Background/" + name);
 
 #if UNITY_EDITOR
             if (s == null)
             {
-                // 1. 先查常见硬编码路径（快路径）
                 string[] artPaths = new string[]
                 {
                     $"Assets/Art/Characters/cg/{name}.png",
@@ -876,46 +875,31 @@ namespace Game.Test
                 foreach (var path in artPaths)
                 {
                     s = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(path);
-                    if (s != null)
-                    {
-                        Debug.Log($"[LoadBgSprite] 从 Art 路径找到 Sprite: {path}");
-                        return s;
-                    }
+                    if (s != null) break;
                     Texture2D tex = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>(path);
-                    if (tex != null)
-                    {
-                        Debug.LogWarning($"[LoadBgSprite] {path} 是 Texture2D，非 Sprite。尝试动态创建 Sprite。");
-                        s = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
-                        return s;
-                    }
+                    if (tex != null) { s = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f)); break; }
                 }
 
-                // 2. 递归扫描 Assets/Art 所有子目录（兜底）
-                if (System.IO.Directory.Exists("Assets/Art"))
+                if (s == null && System.IO.Directory.Exists("Assets/Art"))
                 {
                     var files = System.IO.Directory.GetFiles("Assets/Art", $"{name}.png", System.IO.SearchOption.AllDirectories);
                     foreach (var file in files)
                     {
                         string path = file.Replace('\\', '/');
                         s = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(path);
-                        if (s != null)
-                        {
-                            Debug.Log($"[LoadBgSprite] 从 Art 子目录递归找到 Sprite: {path}");
-                            return s;
-                        }
+                        if (s != null) break;
                         Texture2D tex = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>(path);
-                        if (tex != null)
-                        {
-                            Debug.LogWarning($"[LoadBgSprite] {path} 是 Texture2D，非 Sprite。尝试动态创建 Sprite。");
-                            s = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
-                            return s;
-                        }
+                        if (tex != null) { s = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f)); break; }
                     }
                 }
             }
 #endif
 
-            Debug.LogError($"[LoadBgSprite] 最终未找到任何匹配资源: {name}");
+            if (s != null)
+                _bgSpriteCache[name] = s;
+            else
+                Debug.LogError($"[LoadBgSprite] 最终未找到任何匹配资源: {name}");
+
             return s;
         }
 
@@ -1095,14 +1079,13 @@ namespace Game.Test
             txt.alignment = TextAnchor.MiddleCenter;
             txt.font = Resources.Load<Font>("Font/LXGWWenKaiScreen") ?? Resources.Load<Font>("Font/文软雅黑");
 
-            var chineseFont = Resources.Load<Font>("Font/文软雅黑");
-            if (chineseFont == null) chineseFont = Resources.Load<Font>("Fonts/文软雅黑");
-            if (chineseFont == null && sayDialog != null)
+            if (_cachedChineseFont != null)
+                txt.font = _cachedChineseFont;
+            else if (sayDialog != null)
             {
                 var existingText = sayDialog.GetComponentInChildren<Text>(true);
-                if (existingText != null) chineseFont = existingText.font;
+                if (existingText != null) txt.font = existingText.font;
             }
-            if (chineseFont != null) txt.font = chineseFont;
 
             return btn;
         }
@@ -1202,28 +1185,38 @@ namespace Game.Test
         {
             if (string.IsNullOrEmpty(name)) return null;
 
+            string cacheKey = (isBgm ? "bgm:" : "sfx:") + name;
+            if (_audioClipCache.TryGetValue(cacheKey, out AudioClip cached))
+                return cached;
+
             string[] resPaths = isBgm
                 ? new string[] { "Sound/BkMusic/" + name, "Audio/Music/" + name }
                 : new string[] { "Sound/sound/" + name, "Sound/sound/DXH_SOUND/" + name, "Audio/SFX/" + name, "Audio/SFX/DXH_SOUND/" + name };
 
+            AudioClip clip = null;
             foreach (var path in resPaths)
             {
-                var clip = Resources.Load<AudioClip>(path);
-                if (clip != null) return clip;
+                clip = Resources.Load<AudioClip>(path);
+                if (clip != null) break;
             }
 
 #if UNITY_EDITOR
-            string[] editorPaths = isBgm
-                ? new string[] { $"Assets/Audio/Music/{name}.wav", $"Assets/Audio/Music/{name}.mp3", $"Assets/Resources/Sound/BkMusic/{name}.wav", $"Assets/Resources/Sound/BkMusic/{name}.mp3" }
-                : new string[] { $"Assets/Audio/SFX/{name}.wav", $"Assets/Audio/SFX/{name}.mp3", $"Assets/Audio/SFX/DXH_SOUND/{name}.wav", $"Assets/Audio/SFX/DXH_SOUND/{name}.mp3", $"Assets/Resources/Sound/sound/{name}.wav", $"Assets/Resources/Sound/sound/{name}.mp3" };
-
-            foreach (var path in editorPaths)
+            if (clip == null)
             {
-                var clip = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>(path);
-                if (clip != null) return clip;
+                string[] editorPaths = isBgm
+                    ? new string[] { $"Assets/Audio/Music/{name}.wav", $"Assets/Audio/Music/{name}.mp3", $"Assets/Resources/Sound/BkMusic/{name}.wav", $"Assets/Resources/Sound/BkMusic/{name}.mp3" }
+                    : new string[] { $"Assets/Audio/SFX/{name}.wav", $"Assets/Audio/SFX/{name}.mp3", $"Assets/Audio/SFX/DXH_SOUND/{name}.wav", $"Assets/Audio/SFX/DXH_SOUND/{name}.mp3", $"Assets/Resources/Sound/sound/{name}.wav", $"Assets/Resources/Sound/sound/{name}.mp3" };
+
+                foreach (var path in editorPaths)
+                {
+                    clip = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>(path);
+                    if (clip != null) break;
+                }
             }
 #endif
-            return null;
+            if (clip != null)
+                _audioClipCache[cacheKey] = clip;
+            return clip;
         }
 
         /// <summary>手动保存当前剧情进度（使用 Fungus SaveManager）</summary>
@@ -1593,13 +1586,12 @@ namespace Game.Test
                     StopActiveSayDialog();
 
                 // 保险：确保 Writer 的 targetTextObject 有效（避免 Awake 后 targetTextObject 被重置）
-                var writerComp = sayDialog.GetComponent<Writer>();
-                if (writerComp != null && !writerComp.HasValidTextObject())
+                if (writer != null && !writer.HasValidTextObject())
                 {
                     var storyTextObj = sayDialog.transform.Find("Panel/StoryText");
                     if (storyTextObj != null)
                     {
-                        writerComp.SetTargetTextObject(storyTextObj.gameObject);
+                        writer.SetTargetTextObject(storyTextObj.gameObject);
                         Debug.Log("[FungusVNController.ShowNextLine] 重新设置 Writer.targetTextObject");
                     }
                     else
@@ -1616,7 +1608,7 @@ namespace Game.Test
                 }
                 else
                 {
-                    Debug.Log($"[FungusVNController.ShowNextLine] Normal mode: calling sayDialog.Say with text='{displayText.Substring(0, Mathf.Min(30, displayText.Length))}...' writer.HasValidTextObject={writerComp?.HasValidTextObject()}");
+                    Debug.Log($"[FungusVNController.ShowNextLine] Normal mode: calling sayDialog.Say with text='{displayText.Substring(0, Mathf.Min(30, displayText.Length))}...' writer.HasValidTextObject={writer?.HasValidTextObject()}");
                     sayDialog.Say(displayText, true, true, false, true, false, null, () =>
                     {
                         Debug.Log("[FungusVNController.ShowNextLine] SayDialog onComplete CALLBACK FIRED!");
@@ -1758,11 +1750,11 @@ namespace Game.Test
 
         IEnumerator FastForwardChoiceRoutine(string action)
         {
-            yield return new WaitForSeconds(0.02f);
+            yield return _waitPointZeroTwo;
             var writer = sayDialog.GetComponent<Writer>();
             if (writer != null && writer.IsWriting)
                 writer.Stop();
-            yield return new WaitForSeconds(fastForwardInterval);
+            yield return _waitFastForwardInterval;
             isProcessing = false;
             if (!string.IsNullOrEmpty(action))
                 ExecuteAction(action);
@@ -1772,13 +1764,13 @@ namespace Game.Test
 
         IEnumerator FastForwardSkipRoutine()
         {
-            yield return new WaitForSecondsRealtime(0.02f);
+            yield return _waitPointZeroTwo;
 
             var writer = sayDialog != null ? sayDialog.GetComponent<Writer>() : null;
             if (writer != null && writer.IsWriting)
                 writer.Stop();
 
-            yield return new WaitForSecondsRealtime(fastForwardInterval);
+            yield return _waitFastForwardInterval;
 
             isProcessing = false;
             ShowNextLine();
@@ -1796,7 +1788,7 @@ namespace Game.Test
         /// <summary>Say 回调丢失时超时自动推进（用 unscaled 避免 timeScale=0 卡死）</summary>
         IEnumerator SayWatchdog()
         {
-            yield return new WaitForSecondsRealtime(20f);
+            yield return _waitTwentySeconds;
             sayWatchdogRoutine = null;
             if (!isProcessing || hasEnded) yield break;
             Debug.LogWarning($"[FungusVNController] Say 回调超时，强制推进下一行。isProcessing={isProcessing} hasEnded={hasEnded} timeScale={Time.timeScale}");
@@ -1847,10 +1839,7 @@ namespace Game.Test
                 outline.effectColor = Color.black;
                 outline.effectDistance = new Vector2(2f, -2f);
 
-                // 加载中文字体
-                var chineseFont = Resources.Load<Font>("Font/LXGWWenKaiScreen");
-                if (chineseFont == null) chineseFont = Resources.Load<Font>("Font/文软雅黑");
-                if (chineseFont != null) centerTextDisplay.font = chineseFont;
+                if (_cachedChineseFont != null) centerTextDisplay.font = _cachedChineseFont;
             }
 
             centerTextDisplay.text = text;
